@@ -291,6 +291,73 @@
 
   .seq-controls { text-align: center; margin: 1rem 0; }
 
+  /* ========================================
+     PUZZLE 4: MATRIX REASONING
+  ======================================== */
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 0 auto;
+    width: fit-content;
+    margin-bottom: 2rem;
+  }
+  .matrix-cell {
+    width: 100px;
+    height: 100px;
+    background: var(--stone);
+    border: 2px solid var(--gold-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 2.5rem;
+  }
+  .matrix-cell.missing {
+    border: 2px dashed var(--danger);
+    background: rgba(192,64,64,0.1);
+  }
+  .matrix-cell svg { width: 100%; height: 100%; }
+
+  .matrix-answers {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+  .matrix-answer-btn {
+    width: 90px;
+    height: 90px;
+    background: var(--stone-light);
+    border: 2px solid var(--gold-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .matrix-answer-btn:hover {
+    background: rgba(201,148,58,0.2);
+    border-color: var(--gold);
+    transform: scale(1.05);
+  }
+  .matrix-answer-btn.selected {
+    background: rgba(201,148,58,0.3);
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(201,148,58,0.3);
+  }
+  .matrix-answer-btn.correct {
+    background: rgba(90,170,112,0.3);
+    border-color: var(--success);
+  }
+  .matrix-answer-btn.incorrect {
+    background: rgba(192,64,64,0.3);
+    border-color: var(--danger);
+  }
+
   /* === DM PANEL === */
   .dm-panel {
     background: rgba(201,148,58,0.05);
@@ -358,6 +425,7 @@
   <button class="tab-btn active" onclick="showPuzzle('pipe')">Pipe Maze</button>
   <button class="tab-btn" onclick="showPuzzle('slider')">Rune Slider</button>
   <button class="tab-btn" onclick="showPuzzle('sequence')">Symbol Sequence</button>
+  <button class="tab-btn" onclick="showPuzzle('matrix')">Matrix Reasoning</button>
 </nav>
 
 <main>
@@ -466,6 +534,42 @@
         Change <code>SEQ_SOLUTION</code> to set the correct order (indices into <code>SEQ_SYMBOLS</code>),
         and edit <code>SEQ_RIDDLE</code> to give players the in-game clue. Players tap symbols to build
         the sequence; order matters.
+      </p>
+    </div>
+  </div>
+
+  <!-- ======= PUZZLE 4: MATRIX REASONING ======= -->
+  <div id="matrix" class="puzzle-section">
+    <div class="puzzle-frame">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+      <p class="flavor-text">
+        "A grid of patterns unfolds before you. Eight cells contain abstract forms arranged in a hidden logic.
+        Study the pattern carefully—identify the missing cell and select the answer that completes the sequence."
+      </p>
+
+      <div class="matrix-grid" id="matrix-grid"></div>
+
+      <div style="text-align:center; color:var(--gold-dim); font-size:0.9rem; margin-bottom:1.5rem;">
+        Select the correct answer:
+      </div>
+
+      <div class="matrix-answers" id="matrix-answers"></div>
+
+      <div class="status-msg" id="matrix-status"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkMatrix()">Submit Answer</button>
+        <button class="btn" onclick="initMatrix()">New Puzzle</button>
+      </div>
+    </div>
+
+    <div class="dm-panel">
+      <div class="dm-label">⚙ DM Configuration</div>
+      <p>
+        The matrix contains 9 cells in a 3×3 grid. The bottom-right cell is missing, and players must identify
+        the pattern (by row, column, or diagonal rules) and select the correct answer from six options.
+        Each puzzle is randomly generated with different difficulty levels.
       </p>
     </div>
   </div>
@@ -889,12 +993,250 @@ function checkSequence() {
 }
 
 // ════════════════════════════════════════
+//  PUZZLE 4: MATRIX REASONING
+// ════════════════════════════════════════
+
+// Shape definitions: simple geometric shapes drawn as SVG
+const SHAPES = {
+  circle: '<circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" stroke-width="3"/>',
+  square: '<rect x="25" y="25" width="50" height="50" fill="none" stroke="currentColor" stroke-width="3"/>',
+  triangle: '<polygon points="50,25 75,70 25,70" fill="none" stroke="currentColor" stroke-width="3"/>',
+  diamond: '<polygon points="50,20 75,50 50,80 25,50" fill="none" stroke="currentColor" stroke-width="3"/>',
+  cross: '<g stroke="currentColor" stroke-width="3"><line x1="35" y1="50" x2="65" y2="50"/><line x1="50" y1="35" y2="65"/></g>',
+  line: '<line x1="25" y1="50" x2="75" y2="50" stroke="currentColor" stroke-width="3"/>'
+};
+
+const COLORS = ['#c9943a', '#7ecfc0', '#5aaa70', '#e8d9b0', '#c04040', '#f0bf5a'];
+
+let matrixPuzzle = null;
+let matrixSelected = null;
+
+// Matrix puzzle rules
+function generateMatrixPuzzle() {
+  const cells = [];
+  
+  // Different puzzle types based on random selection
+  const type = Math.floor(Math.random() * 4);
+  
+  if (type === 0) {
+    // Pattern: Each row rotates through shapes
+    const shapes = ['circle', 'square', 'triangle'];
+    const colors = COLORS.slice(0, 3);
+    for (let i = 0; i < 9; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      if (i === 8) {
+        cells.push(null); // Missing cell
+      } else {
+        cells.push({
+          shape: shapes[(col + row) % 3],
+          color: colors[row],
+          rotation: 0
+        });
+      }
+    }
+    const correctAnswer = {
+      shape: shapes[(2) % 3],
+      color: colors[2],
+      rotation: 0
+    };
+    return { cells, correctAnswer, type: 'rotation' };
+  } else if (type === 1) {
+    // Pattern: Colors change per row, shapes per column
+    const shapes = ['circle', 'square', 'diamond'];
+    const colors = COLORS.slice(0, 3);
+    for (let i = 0; i < 9; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      if (i === 8) {
+        cells.push(null);
+      } else {
+        cells.push({
+          shape: shapes[col],
+          color: colors[row],
+          rotation: 0
+        });
+      }
+    }
+    const correctAnswer = {
+      shape: shapes[2],
+      color: colors[2],
+      rotation: 0
+    };
+    return { cells, correctAnswer, type: 'grid' };
+  } else if (type === 2) {
+    // Pattern: Diagonal rule - shapes increase complexity
+    const shapes = ['circle', 'square', 'triangle', 'diamond', 'cross', 'line'];
+    for (let i = 0; i < 9; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      if (i === 8) {
+        cells.push(null);
+      } else {
+        const dist = Math.abs(row - col);
+        cells.push({
+          shape: shapes[dist % 6],
+          color: COLORS[dist % 6],
+          rotation: 0
+        });
+      }
+    }
+    const correctAnswer = {
+      shape: shapes[0],
+      color: COLORS[0],
+      rotation: 0
+    };
+    return { cells, correctAnswer, type: 'diagonal' };
+  } else {
+    // Pattern: Symmetrical - reflection across center
+    const shapes = ['circle', 'square', 'triangle', 'diamond'];
+    for (let i = 0; i < 9; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      if (i === 8) {
+        cells.push(null);
+      } else {
+        cells.push({
+          shape: shapes[(row + col) % 4],
+          color: COLORS[(row + col) % 6],
+          rotation: 0
+        });
+      }
+    }
+    const correctAnswer = {
+      shape: shapes[(2 + 2) % 4],
+      color: COLORS[(2 + 2) % 6],
+      rotation: 0
+    };
+    return { cells, correctAnswer, type: 'symmetry' };
+  }
+}
+
+function initMatrix() {
+  matrixPuzzle = generateMatrixPuzzle();
+  matrixSelected = null;
+  document.getElementById('matrix-status').textContent = '';
+  document.getElementById('matrix-status').className = 'status-msg';
+  renderMatrix();
+  renderMatrixAnswers();
+}
+
+function renderMatrix() {
+  const grid = document.getElementById('matrix-grid');
+  grid.innerHTML = '';
+  
+  for (let i = 0; i < 9; i++) {
+    const cell = matrixPuzzle.cells[i];
+    const div = document.createElement('div');
+    div.className = 'matrix-cell';
+    
+    if (cell === null) {
+      div.classList.add('missing');
+    } else {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('style', `color: ${cell.color};`);
+      svg.innerHTML = SHAPES[cell.shape];
+      div.appendChild(svg);
+    }
+    grid.appendChild(div);
+  }
+}
+
+function renderMatrixAnswers() {
+  const container = document.getElementById('matrix-answers');
+  container.innerHTML = '';
+  
+  // Create 6 answer options: 1 correct + 5 distractors
+  const answers = [matrixPuzzle.correctAnswer];
+  
+  // Generate distractors
+  const shapes = ['circle', 'square', 'triangle', 'diamond', 'cross', 'line'];
+  while (answers.length < 6) {
+    const distractor = {
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      rotation: 0
+    };
+    
+    // Make sure it's different from the correct answer and other distractors
+    const isDuplicate = answers.some(a => a.shape === distractor.shape && a.color === distractor.color);
+    if (!isDuplicate) {
+      answers.push(distractor);
+    }
+  }
+  
+  // Shuffle
+  answers.sort(() => Math.random() - 0.5);
+  
+  for (let i = 0; i < answers.length; i++) {
+    const answer = answers[i];
+    const btn = document.createElement('button');
+    btn.className = 'matrix-answer-btn';
+    
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('style', `color: ${answer.color};`);
+    svg.innerHTML = SHAPES[answer.shape];
+    btn.appendChild(svg);
+    
+    btn.onclick = () => selectMatrixAnswer(i, answer);
+    btn.dataset.index = i;
+    btn.dataset.correct = (answer === matrixPuzzle.correctAnswer) ? 'true' : 'false';
+    
+    container.appendChild(btn);
+  }
+}
+
+function selectMatrixAnswer(index, answer) {
+  // Remove previous selection
+  document.querySelectorAll('.matrix-answer-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  // Add selection to current
+  document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+  matrixSelected = answer;
+}
+
+function checkMatrix() {
+  const st = document.getElementById('matrix-status');
+  
+  if (matrixSelected === null) {
+    st.textContent = 'Select an answer first.';
+    st.className = 'status-msg fail';
+    return;
+  }
+  
+  const isCorrect = matrixSelected === matrixPuzzle.correctAnswer;
+  
+  const btns = document.querySelectorAll('.matrix-answer-btn');
+  btns.forEach(btn => {
+    if (btn.dataset.correct === 'true') {
+      btn.classList.add('correct');
+    } else if (btn.classList.contains('selected')) {
+      btn.classList.add('incorrect');
+    }
+  });
+  
+  if (isCorrect) {
+    st.textContent = '✦ The pattern reveals itself! ✦';
+    st.className = 'status-msg success';
+    setTimeout(() => showWin('You have discerned the hidden logic. The way forward opens.'), 600);
+  } else {
+    st.textContent = 'The pattern eludes you. Study more carefully.';
+    st.className = 'status-msg fail';
+  }
+}
+
+// ════════════════════════════════════════
 //  INITIALIZATION
 // ════════════════════════════════════════
 window.onload = function() {
   initPipe();
   initSlider();
   initSequence();
+  initMatrix();
 };
 </script>
 </body>
