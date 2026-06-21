@@ -569,7 +569,7 @@
       <p>
         The matrix contains 9 cells in a 3×3 grid. The bottom-right cell is missing, and players must identify
         the pattern (by row, column, or diagonal rules) and select the correct answer from six options.
-        Each puzzle is randomly generated with different difficulty levels.
+        Each puzzle uses ONLY shapes that appear in the grid, with multiple shapes per cell for greater complexity.
       </p>
     </div>
   </div>
@@ -624,7 +624,7 @@ function showWin(msg) {
 // Pipe types: 'L' (corner), 'I' (straight), 'T' (tee), '+' (cross)
 // connections[type][rotation] = [N,E,S,W] booleans
 const PIPE_CONN = {
-  'L': [[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]], // wait what -- N open means connects north (to cell above)
+  'L': [[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]],
   'I': [[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]],
   'T': [[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]],
   '+': [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],
@@ -993,7 +993,7 @@ function checkSequence() {
 }
 
 // ════════════════════════════════════════
-//  PUZZLE 4: MATRIX REASONING
+//  PUZZLE 4: MATRIX REASONING (IMPROVED)
 // ════════════════════════════════════════
 
 // Shape definitions: simple geometric shapes drawn as SVG
@@ -1011,105 +1011,42 @@ const COLORS = ['#c9943a', '#7ecfc0', '#5aaa70', '#e8d9b0', '#c04040', '#f0bf5a'
 let matrixPuzzle = null;
 let matrixSelected = null;
 
-// Matrix puzzle rules
+// ---- FIXED MATRIX GENERATION ----
 function generateMatrixPuzzle() {
   const cells = [];
+  const shapesList = Object.keys(SHAPES);
+  const usedShapes = new Set();
   
-  // Different puzzle types based on random selection
-  const type = Math.floor(Math.random() * 4);
-  
-  if (type === 0) {
-    // Pattern: Each row rotates through shapes
-    const shapes = ['circle', 'square', 'triangle'];
-    const colors = COLORS.slice(0, 3);
-    for (let i = 0; i < 9; i++) {
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-      if (i === 8) {
-        cells.push(null); // Missing cell
-      } else {
-        cells.push({
-          shape: shapes[(col + row) % 3],
-          color: colors[row],
-          rotation: 0
-        });
-      }
+  // Generate 8 cells using ONLY shapes that will be in the puzzle
+  // Multi-shape cells for complexity
+  for (let i = 0; i < 8; i++) {
+    const numShapes = Math.random() > 0.5 ? 2 : 1; // 1 or 2 shapes per cell
+    const cellShapes = [];
+    for (let s = 0; s < numShapes; s++) {
+      const shape = shapesList[Math.floor(Math.random() * shapesList.length)];
+      cellShapes.push(shape);
+      usedShapes.add(shape);
     }
-    const correctAnswer = {
-      shape: shapes[(2) % 3],
-      color: colors[2],
-      rotation: 0
-    };
-    return { cells, correctAnswer, type: 'rotation' };
-  } else if (type === 1) {
-    // Pattern: Colors change per row, shapes per column
-    const shapes = ['circle', 'square', 'diamond'];
-    const colors = COLORS.slice(0, 3);
-    for (let i = 0; i < 9; i++) {
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-      if (i === 8) {
-        cells.push(null);
-      } else {
-        cells.push({
-          shape: shapes[col],
-          color: colors[row],
-          rotation: 0
-        });
-      }
-    }
-    const correctAnswer = {
-      shape: shapes[2],
-      color: colors[2],
-      rotation: 0
-    };
-    return { cells, correctAnswer, type: 'grid' };
-  } else if (type === 2) {
-    // Pattern: Diagonal rule - shapes increase complexity
-    const shapes = ['circle', 'square', 'triangle', 'diamond', 'cross', 'line'];
-    for (let i = 0; i < 9; i++) {
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-      if (i === 8) {
-        cells.push(null);
-      } else {
-        const dist = Math.abs(row - col);
-        cells.push({
-          shape: shapes[dist % 6],
-          color: COLORS[dist % 6],
-          rotation: 0
-        });
-      }
-    }
-    const correctAnswer = {
-      shape: shapes[0],
-      color: COLORS[0],
-      rotation: 0
-    };
-    return { cells, correctAnswer, type: 'diagonal' };
-  } else {
-    // Pattern: Symmetrical - reflection across center
-    const shapes = ['circle', 'square', 'triangle', 'diamond'];
-    for (let i = 0; i < 9; i++) {
-      const row = Math.floor(i / 3);
-      const col = i % 3;
-      if (i === 8) {
-        cells.push(null);
-      } else {
-        cells.push({
-          shape: shapes[(row + col) % 4],
-          color: COLORS[(row + col) % 6],
-          rotation: 0
-        });
-      }
-    }
-    const correctAnswer = {
-      shape: shapes[(2 + 2) % 4],
-      color: COLORS[(2 + 2) % 6],
-      rotation: 0
-    };
-    return { cells, correctAnswer, type: 'symmetry' };
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    cells.push({ shapes: cellShapes, color, rotation: 0 });
   }
+  
+  // Generate correct answer using ONLY shapes that appear in the puzzle
+  const correctShapes = [];
+  const maxShapesToUse = Array.from(usedShapes)[Math.floor(Math.random() * usedShapes.size)];
+  correctShapes.push(maxShapesToUse);
+  if (Math.random() > 0.5 && usedShapes.size > 1) {
+    const otherShape = Array.from(usedShapes).filter(s => s !== maxShapesToUse)[0];
+    correctShapes.push(otherShape);
+  }
+  
+  const correctAnswer = {
+    shapes: correctShapes,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    rotation: 0
+  };
+  
+  return { cells, correctAnswer, usedShapes: Array.from(usedShapes) };
 }
 
 function initMatrix() {
@@ -1130,14 +1067,24 @@ function renderMatrix() {
     const div = document.createElement('div');
     div.className = 'matrix-cell';
     
-    if (cell === null) {
+    if (i === 8) {
       div.classList.add('missing');
     } else {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 100 100');
-      svg.setAttribute('style', `color: ${cell.color};`);
-      svg.innerHTML = SHAPES[cell.shape];
-      div.appendChild(svg);
+      const svgContainer = document.createElement('div');
+      svgContainer.style.position = 'relative';
+      svgContainer.style.width = '100%';
+      svgContainer.style.height = '100%';
+      
+      // Render all shapes in this cell (overlapping or stacked)
+      cell.shapes.forEach((shapeKey, idx) => {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.setAttribute('style', `color: ${cell.color}; position: absolute; width: 100%; height: 100%; opacity: ${0.7 + idx * 0.15};`);
+        svg.innerHTML = SHAPES[shapeKey];
+        svgContainer.appendChild(svg);
+      });
+      
+      div.appendChild(svgContainer);
     }
     grid.appendChild(div);
   }
@@ -1150,17 +1097,25 @@ function renderMatrixAnswers() {
   // Create 6 answer options: 1 correct + 5 distractors
   const answers = [matrixPuzzle.correctAnswer];
   
-  // Generate distractors
-  const shapes = ['circle', 'square', 'triangle', 'diamond', 'cross', 'line'];
+  // Generate distractors using ONLY available shapes and colors
   while (answers.length < 6) {
     const distractor = {
-      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      shapes: [matrixPuzzle.usedShapes[Math.floor(Math.random() * matrixPuzzle.usedShapes.length)]],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       rotation: 0
     };
     
-    // Make sure it's different from the correct answer and other distractors
-    const isDuplicate = answers.some(a => a.shape === distractor.shape && a.color === distractor.color);
+    // Add a second shape sometimes
+    if (Math.random() > 0.6 && matrixPuzzle.usedShapes.length > 1) {
+      const otherShape = matrixPuzzle.usedShapes.filter(s => s !== distractor.shapes[0])[0];
+      distractor.shapes.push(otherShape);
+    }
+    
+    // Check if this distractor is different from all existing answers
+    const isDuplicate = answers.some(a => 
+      JSON.stringify(a.shapes.sort()) === JSON.stringify(distractor.shapes.sort()) && 
+      a.color === distractor.color
+    );
     if (!isDuplicate) {
       answers.push(distractor);
     }
@@ -1169,23 +1124,29 @@ function renderMatrixAnswers() {
   // Shuffle
   answers.sort(() => Math.random() - 0.5);
   
-  for (let i = 0; i < answers.length; i++) {
-    const answer = answers[i];
+  // Render buttons
+  answers.forEach((answer, idx) => {
     const btn = document.createElement('button');
     btn.className = 'matrix-answer-btn';
     
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 100 100');
-    svg.setAttribute('style', `color: ${answer.color};`);
-    svg.innerHTML = SHAPES[answer.shape];
-    btn.appendChild(svg);
+    const svgContainer = document.createElement('div');
+    svgContainer.style.position = 'relative';
+    svgContainer.style.width = '100%';
+    svgContainer.style.height = '100%';
     
-    btn.onclick = () => selectMatrixAnswer(i, answer);
-    btn.dataset.index = i;
-    btn.dataset.correct = (answer === matrixPuzzle.correctAnswer) ? 'true' : 'false';
+    answer.shapes.forEach((shapeKey, shapeIdx) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('style', `color: ${answer.color}; position: absolute; width: 100%; height: 100%; opacity: ${0.7 + shapeIdx * 0.15};`);
+      svg.innerHTML = SHAPES[shapeKey];
+      svgContainer.appendChild(svg);
+    });
     
+    btn.appendChild(svgContainer);
+    btn.onclick = () => selectMatrixAnswer(idx, answer);
+    btn.dataset.answer = JSON.stringify(answer);
     container.appendChild(btn);
-  }
+  });
 }
 
 function selectMatrixAnswer(index, answer) {
@@ -1195,7 +1156,7 @@ function selectMatrixAnswer(index, answer) {
   });
   
   // Add selection to current
-  document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+  document.querySelectorAll('.matrix-answer-btn')[index].classList.add('selected');
   matrixSelected = answer;
 }
 
@@ -1208,13 +1169,30 @@ function checkMatrix() {
     return;
   }
   
-  const isCorrect = matrixSelected === matrixPuzzle.correctAnswer;
+  // FIXED: Check shapes and color separately
+  const correctShapesSet = new Set(matrixPuzzle.correctAnswer.shapes);
+  const selectedShapesSet = new Set(matrixSelected.shapes);
   
-  const btns = document.querySelectorAll('.matrix-answer-btn');
-  btns.forEach(btn => {
-    if (btn.dataset.correct === 'true') {
+  const shapesMatch = correctShapesSet.size === selectedShapesSet.size &&
+    Array.from(correctShapesSet).every(s => selectedShapesSet.has(s));
+  
+  const colorMatch = matrixPuzzle.correctAnswer.color === matrixSelected.color;
+  
+  const isCorrect = shapesMatch && colorMatch;
+  
+  // Show feedback
+  const buttons = document.querySelectorAll('.matrix-answer-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('correct', 'incorrect');
+    const btnAnswer = JSON.parse(btn.dataset.answer);
+    const btnShapesSet = new Set(btnAnswer.shapes);
+    const btnShapesMatch = correctShapesSet.size === btnShapesSet.size &&
+      Array.from(correctShapesSet).every(s => btnShapesSet.has(s));
+    const btnColorMatch = matrixPuzzle.correctAnswer.color === btnAnswer.color;
+    
+    if (btnShapesMatch && btnColorMatch) {
       btn.classList.add('correct');
-    } else if (btn.classList.contains('selected')) {
+    } else if (btn.classList.contains('selected') && !isCorrect) {
       btn.classList.add('incorrect');
     }
   });
