@@ -1,813 +1,463 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Puzzle Vault — TTRPG Puzzle Kit</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+.status-msg.hint { color: var(--rune); }
 
-  :root {
-    --stone: #1a1610;
-    --stone-mid: #2a2218;
-    --stone-light: #3d3224;
-    --gold: #c9943a;
-    --gold-bright: #f0bf5a;
-    --gold-dim: #7a5920;
-    --rune: #7ecfc0;
-    --rune-dim: #2a5f58;
-    --danger: #c04040;
-    --parchment: #e8d9b0;
-    --parchment-dark: #c4b07a;
-    --success: #5aaa70;
-    --shadow: rgba(0,0,0,0.7);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--stone);
-    color: var(--parchment);
-    font-family: 'Crimson Pro', serif;
-    font-size: 18px;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse at 20% 20%, rgba(201,148,58,0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(126,207,192,0.04) 0%, transparent 50%),
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9943a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  /* === HEADER === */
-  header {
-    text-align: center;
-    padding: 3rem 2rem 2rem;
-    position: relative;
-  }
-  header::after {
-    content: '';
-    display: block;
-    width: 80%;
-    max-width: 600px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    margin: 1.5rem auto 0;
-  }
-  .vault-title {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    font-weight: 900;
-    color: var(--gold-bright);
-    letter-spacing: 0.1em;
-    text-shadow: 0 0 40px rgba(201,148,58,0.4), 0 2px 4px rgba(0,0,0,0.8);
-    line-height: 1.1;
-  }
-  .vault-subtitle {
-    font-family: 'Crimson Pro', serif;
-    font-style: italic;
-    color: var(--parchment-dark);
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-    letter-spacing: 0.05em;
-  }
-
-  /* === NAV TABS === */
-  .puzzle-nav {
+/* ========================================
+     PUZZLE 1: COMBINATION LOCK
+  ======================================== */
+  .lock-container {
     display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 2rem 1rem 0;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
   }
-  .tab-btn {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.12em;
-    padding: 0.6rem 1.4rem;
-    background: var(--stone-mid);
-    border: 1px solid var(--gold-dim);
-    color: var(--parchment-dark);
-    cursor: pointer;
-    transition: all 0.2s;
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    text-transform: uppercase;
-  }
-  .tab-btn:hover { background: var(--stone-light); color: var(--gold-bright); border-color: var(--gold); }
-  .tab-btn.active { background: var(--stone-light); color: var(--gold-bright); border-color: var(--gold); box-shadow: 0 0 15px rgba(201,148,58,0.2); }
-
-  /* === MAIN AREA === */
-  main {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
-  }
-  .puzzle-section { display: none; }
-  .puzzle-section.active { display: block; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* === PUZZLE FRAME === */
-  .puzzle-frame {
-    background: var(--stone-mid);
-    border: 1px solid var(--gold-dim);
+  .lock-body {
+    background: var(--stone);
+    border: 2px solid var(--gold-dim);
     padding: 2rem;
-    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3);
     position: relative;
   }
-  .puzzle-frame::before, .puzzle-frame::after {
-    content: '✦';
-    position: absolute;
-    color: var(--gold-dim);
-    font-size: 1.2rem;
+  .dial-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
   }
-  .puzzle-frame::before { top: -0.7rem; left: 50%; transform: translateX(-50%); background: var(--stone-mid); padding: 0 0.5rem; }
-  .puzzle-frame::after { display: none; }
-  .corner { position: absolute; width: 16px; height: 16px; border-color: var(--gold); border-style: solid; }
-  .corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-  .corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
-  .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
-  .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
-
-  .flavor-text {
-    font-style: italic;
-    color: var(--parchment-dark);
-    font-size: 1rem;
-    text-align: center;
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-    padding: 0 1rem;
-  }
-
-  /* === BUTTONS === */
-  .btn {
-    font-family: 'Cinzel', serif;
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 0.6rem 1.5rem;
-    background: transparent;
+  .dial-btn {
+    width: 44px;
+    height: 24px;
+    background: var(--stone-light);
     border: 1px solid var(--gold-dim);
     color: var(--gold);
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn:hover { background: var(--stone-light); border-color: var(--gold); color: var(--gold-bright); }
-  .btn-primary { background: var(--stone-light); border-color: var(--gold); }
-  .btn-row { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
-
-  /* === STATUS MESSAGE === */
-  .status-msg {
-    text-align: center;
-    font-family: 'Cinzel', serif;
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
-    min-height: 2rem;
-    padding: 0.5rem;
-    margin-top: 1rem;
-    transition: all 0.3s;
-  }
-  .status-msg.success { color: var(--success); text-shadow: 0 0 20px rgba(90,170,112,0.5); }
-  .status-msg.fail { color: var(--danger); }
-  .status-msg.hint { color: var(--rune); }
-
-  /* ========================================
-     PUZZLE 1: PIPE/PATH PUZZLE
-  ======================================== */
-  .pipe-grid {
-    display: grid;
-    gap: 3px;
-    margin: 0 auto;
-    width: fit-content;
-  }
-  .pipe-cell {
-    width: 56px;
-    height: 56px;
-    background: var(--stone);
-    border: 1px solid var(--stone-light);
-    cursor: pointer;
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-family: 'Cinzel', serif;
     user-select: none;
   }
-  .pipe-cell:hover { background: var(--stone-light); }
-  .pipe-cell.source { background: rgba(201,148,58,0.15); border-color: var(--gold); cursor: default; }
-  .pipe-cell.target { background: rgba(90,170,112,0.15); border-color: var(--success); cursor: default; }
-  .pipe-cell.lit { background: rgba(126,207,192,0.1); }
-  .pipe-cell svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-
-  /* ========================================
-     PUZZLE 2: SLIDER PUZZLE
-  ======================================== */
-  .slider-grid {
-    display: grid;
-    gap: 4px;
-    margin: 0 auto;
-    width: fit-content;
-    background: var(--stone);
-    padding: 4px;
-    border: 2px solid var(--gold-dim);
-  }
-  .slider-cell {
-    width: 70px;
-    height: 70px;
-    background: var(--stone-light);
-    border: 1px solid var(--gold-dim);
+  .dial-btn:hover { background: var(--gold-dim); }
+  .dial-btn:active { background: var(--gold); color: var(--stone); }
+  .dial-face {
+    width: 44px;
+    height: 54px;
+    background: linear-gradient(180deg, var(--stone) 0%, #0f0d09 100%);
+    border: 2px solid var(--gold);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Cinzel', serif;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: var(--gold-bright);
-    cursor: pointer;
-    transition: all 0.15s;
+    text-shadow: 0 0 10px rgba(240,191,90,0.6);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.7);
     position: relative;
-    user-select: none;
+    overflow: hidden;
   }
-  .slider-cell:hover:not(.empty) { background: var(--stone-mid); border-color: var(--gold); }
-  .slider-cell.empty {
-    background: var(--stone);
-    border-color: var(--stone-light);
-    cursor: default;
+  .dial-separator {
+    color: var(--gold-dim);
+    font-size: 1.5rem;
+    margin: 0 0.2rem;
+    align-self: center;
+    padding-bottom: 2px;
   }
-  .slider-cell .rune-glyph {
-    font-size: 2rem;
-    text-shadow: 0 0 12px rgba(240,191,90,0.5);
-  }
-
-  /* ========================================
-     PUZZLE 3: SYMBOL SEQUENCE
-  ======================================== */
-  .sequence-display {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-  }
-  .seq-slot {
-    width: 56px;
-    height: 56px;
-    background: var(--stone);
-    border: 2px solid var(--gold-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    transition: all 0.3s;
-    position: relative;
-  }
-  .seq-slot.filled { border-color: var(--gold); background: rgba(201,148,58,0.1); }
-  .seq-slot.correct { border-color: var(--success); background: rgba(90,170,112,0.15); }
-  .seq-slot.wrong { border-color: var(--danger); background: rgba(192,64,64,0.15); animation: shake 0.3s; }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-  }
-  .symbol-bank {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .sym-btn {
-    width: 56px;
-    height: 56px;
-    background: var(--stone-light);
-    border: 1px solid var(--gold-dim);
-    font-size: 1.8rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .sym-btn:hover { background: rgba(201,148,58,0.2); border-color: var(--gold); transform: scale(1.05); }
-  .sym-btn:active { transform: scale(0.95); }
-  .sym-btn.used { opacity: 0.3; cursor: not-allowed; }
-
-  .seq-controls { text-align: center; margin: 1rem 0; }
-
-  /* ========================================
-     PUZZLE 4: MATRIX REASONING
-  ======================================== */
-  .matrix-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+  .lock-shackle {
+    width: 60px;
+    height: 30px;
+    border: 4px solid var(--gold-dim);
+    border-bottom: none;
+    border-radius: 30px 30px 0 0;
     margin: 0 auto;
-    width: fit-content;
-    margin-bottom: 2rem;
+    transition: all 0.4s;
   }
-  .matrix-cell {
-    width: 100px;
-    height: 100px;
-    background: var(--stone);
-    border: 2px solid var(--gold-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    font-size: 2.5rem;
-  }
-  .matrix-cell.missing {
-    border: 2px dashed var(--danger);
-    background: rgba(192,64,64,0.1);
-  }
-  .matrix-cell svg { width: 100%; height: 100%; }
-
-  .matrix-answers {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 2rem;
-  }
-  .matrix-answer-btn {
-    width: 90px;
-    height: 90px;
-    background: var(--stone-light);
-    border: 2px solid var(--gold-dim);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .matrix-answer-btn:hover {
-    background: rgba(201,148,58,0.2);
-    border-color: var(--gold);
-    transform: scale(1.05);
-  }
-  .matrix-answer-btn.selected {
-    background: rgba(201,148,58,0.3);
-    border-color: var(--gold);
-    box-shadow: 0 0 15px rgba(201,148,58,0.3);
-  }
-  .matrix-answer-btn.correct {
-    background: rgba(90,170,112,0.3);
+  .lock-shackle.open {
+    transform: translateY(-20px) rotate(30deg);
     border-color: var(--success);
   }
-  .matrix-answer-btn.incorrect {
-    background: rgba(192,64,64,0.3);
-    border-color: var(--danger);
+  .lock-hint {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    color: var(--parchment-dark);
+    font-size: 0.95rem;
+    text-align: center;
   }
+  #lock-hint-reveal { display: none; color: var(--rune); margin-top: 0.5rem; }
 
-  /* === DM PANEL === */
-  .dm-panel {
-    background: rgba(201,148,58,0.05);
-    border: 1px solid var(--gold-dim);
-    border-left: 3px solid var(--gold);
-    padding: 1.25rem 1.5rem;
-    margin-top: 2rem;
+  /* ========================================
+     PUZZLE 2: PIPE/PATH PUZZLE
+     PUZZLE 1: PIPE/PATH PUZZLE
+ ======================================== */
+.pipe-grid {
+display: grid;
+@@ -285,7 +198,7 @@
+.pipe-cell svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* ========================================
+     PUZZLE 3: SLIDER PUZZLE
+     PUZZLE 2: SLIDER PUZZLE
+ ======================================== */
+.slider-grid {
+display: grid;
+@@ -324,7 +237,7 @@
+}
+
+/* ========================================
+     PUZZLE 4: SYMBOL SEQUENCE
+     PUZZLE 3: SYMBOL SEQUENCE
+ ======================================== */
+.sequence-display {
+display: flex;
+@@ -378,76 +291,6 @@
+
+.seq-controls { text-align: center; margin: 1rem 0; }
+
+  /* ========================================
+     PUZZLE 5: LIGHT TOGGLE GRID (Nonogram-style)
+  ======================================== */
+  .toggle-grid {
+    display: grid;
+    gap: 4px;
+    margin: 0 auto 1rem;
+    width: fit-content;
   }
-  .dm-label {
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    color: var(--gold-dim);
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-  }
-  .dm-panel p { color: var(--parchment-dark); font-size: 0.95rem; line-height: 1.6; }
-  .dm-panel code {
-    font-family: monospace;
+  .toggle-cell {
+    width: 52px;
+    height: 52px;
     background: var(--stone);
-    color: var(--rune);
-    padding: 0.1rem 0.4rem;
-    font-size: 0.85rem;
-  }
-
-  /* Separator */
-  .sep { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); margin: 1.5rem 0; }
-
-  /* Move counter */
-  .move-counter { text-align: center; font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--gold-dim); letter-spacing: 0.1em; margin-top: 0.75rem; }
-
-  /* Win overlay */
-  .win-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    z-index: 100;
+    border: 1px solid var(--rune-dim);
+    cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-    gap: 1rem;
+    transition: all 0.2s;
+    font-size: 1.4rem;
+    user-select: none;
   }
-  .win-overlay.show { display: flex; animation: fadeIn 0.4s; }
-  .win-box {
-    background: var(--stone-mid);
-    border: 2px solid var(--gold);
-    padding: 3rem;
+  .toggle-cell.on {
+    background: rgba(126,207,192,0.25);
+    border-color: var(--rune);
+    box-shadow: 0 0 12px rgba(126,207,192,0.3), inset 0 0 8px rgba(126,207,192,0.1);
+  }
+  .toggle-cell.on::after { content: '᛫'; color: var(--rune); text-shadow: 0 0 8px var(--rune); }
+  .toggle-hints {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .hint-cell {
+    width: 52px;
     text-align: center;
-    max-width: 400px;
-    box-shadow: 0 0 60px rgba(201,148,58,0.3);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--gold-dim);
+    line-height: 1.2;
   }
-  .win-title { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold-bright); margin-bottom: 1rem; }
-  .win-msg { color: var(--parchment-dark); font-style: italic; line-height: 1.6; }
-</style>
-</head>
-<body>
+  .toggle-side-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-right: 4px;
+    justify-content: flex-start;
+  }
+  .side-hint-cell {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--gold-dim);
+    min-width: 30px;
+  }
+  .toggle-area {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .toggle-area-inner {
+    display: flex;
+    flex-direction: column;
+  }
 
-<header>
-  <div class="vault-title">The Puzzle Vault</div>
-  <div class="vault-subtitle">Interactive Mechanisms for Discord-Based TTRPGs</div>
+/* === DM PANEL === */
+.dm-panel {
+background: rgba(201,148,58,0.05);
+@@ -512,54 +355,15 @@
 </header>
 
 <nav class="puzzle-nav">
+  <button class="tab-btn active" onclick="showPuzzle('lock')">Combination Lock</button>
+  <button class="tab-btn" onclick="showPuzzle('pipe')">Pipe Maze</button>
   <button class="tab-btn active" onclick="showPuzzle('pipe')">Pipe Maze</button>
-  <button class="tab-btn" onclick="showPuzzle('slider')">Rune Slider</button>
-  <button class="tab-btn" onclick="showPuzzle('sequence')">Symbol Sequence</button>
-  <button class="tab-btn" onclick="showPuzzle('matrix')">Matrix Reasoning</button>
+<button class="tab-btn" onclick="showPuzzle('slider')">Rune Slider</button>
+<button class="tab-btn" onclick="showPuzzle('sequence')">Symbol Sequence</button>
+  <button class="tab-btn" onclick="showPuzzle('toggle')">Runic Grid</button>
 </nav>
 
 <main>
 
+  <!-- ======= PUZZLE 1: COMBINATION LOCK ======= -->
+  <div id="lock" class="puzzle-section active">
+    <div class="puzzle-frame">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+      <p class="flavor-text">
+        "A heavy iron lock seals the iron chest, its dials engraved with ancient runes.
+        The inscription below reads: <em id="lock-riddle-display">The number of moons in a season, the legs of a spider, and the year's final count.</em>"
+      </p>
+
+      <div class="lock-container">
+        <div class="lock-shackle" id="lock-shackle"></div>
+        <div class="lock-body">
+          <!-- Dials generated by JS -->
+        </div>
+        <div class="lock-hint" id="lock-hint-area"></div>
+      </div>
+
+      <div class="status-msg" id="lock-status"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkLock()">Try Lock</button>
+        <button class="btn" onclick="resetLock()">Reset</button>
+        <button class="btn" onclick="showLockHint()">Reveal Hint</button>
+      </div>
+    </div>
+
+    <div class="dm-panel">
+      <div class="dm-label">⚙ DM Configuration</div>
+      <p>
+        Set the solution below. The default is <code>3 · 8 · 12</code> (moons in a season · spider legs · months in a year).
+        Change <code>LOCK_SOLUTION</code> and <code>LOCK_RIDDLE</code> in the script to customize.
+        You can also change <code>LOCK_SYMBOLS</code> to use rune glyphs instead of numbers.
+      </p>
+    </div>
+  </div>
+
+  <!-- ======= PUZZLE 2: PIPE MAZE ======= -->
+  <div id="pipe" class="puzzle-section">
   <!-- ======= PUZZLE 1: PIPE MAZE ======= -->
   <div id="pipe" class="puzzle-section active">
-    <div class="puzzle-frame">
-      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+<div class="puzzle-frame">
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div><div class="corner corner-br"></div>
+@@ -592,7 +396,7 @@
+</div>
+</div>
 
-      <p class="flavor-text">
-        "Stone channels carved into the floor of the chamber. Water flows from the glowing
-        <span style="color:var(--gold)">golden source</span>. Rotate the carved tiles until the flow
-        reaches the <span style="color:var(--success)">green seal</span>."
-      </p>
-
-      <div style="display:flex; flex-direction:column; align-items:center; gap:1rem;">
-        <div class="pipe-grid" id="pipe-grid"></div>
-        <div class="move-counter" id="pipe-moves">Rotations: 0</div>
-      </div>
-
-      <div class="status-msg" id="pipe-status"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkPipe()">Check Flow</button>
-        <button class="btn" onclick="initPipe()">New Puzzle</button>
-      </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        Click any non-source/target tile to rotate it 90°. The puzzle auto-generates a solvable path.
-        Players click tiles to rotate them and then press <em>Check Flow</em>.
-        The puzzle highlights the connected path in teal when solved.
-      </p>
-    </div>
-  </div>
-
+  <!-- ======= PUZZLE 3: RUNE SLIDER ======= -->
   <!-- ======= PUZZLE 2: RUNE SLIDER ======= -->
-  <div id="slider" class="puzzle-section">
-    <div class="puzzle-frame">
-      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+<div id="slider" class="puzzle-section">
+<div class="puzzle-frame">
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+@@ -628,7 +432,7 @@
+</div>
+</div>
 
-      <p class="flavor-text">
-        "Eight rune-carved stone tablets rest in a frame, one space empty. The faded inscription
-        on the wall shows the correct order. Slide the tablets into their proper arrangement."
-      </p>
-
-      <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
-        <div style="font-size:1.8rem;letter-spacing:0.3em;color:var(--gold-dim);text-align:center;">
-          Goal: <span id="slider-goal"></span>
-        </div>
-        <div class="slider-grid" id="slider-grid"></div>
-        <div class="move-counter" id="slider-moves">Moves: 0</div>
-      </div>
-
-      <div class="status-msg" id="slider-status"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkSlider()">Examine Tablets</button>
-        <button class="btn" onclick="initSlider()">Scramble</button>
-      </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        Click any tile adjacent to the empty space to slide it. Change <code>SLIDER_GLYPHS</code>
-        in the script to swap symbols (use numbers, letters, or emoji). The goal order is shown above the grid.
-        Works best on desktop; mobile drag coming soon.
-      </p>
-    </div>
-  </div>
-
+  <!-- ======= PUZZLE 4: SYMBOL SEQUENCE ======= -->
   <!-- ======= PUZZLE 3: SYMBOL SEQUENCE ======= -->
-  <div id="sequence" class="puzzle-section">
+<div id="sequence" class="puzzle-section">
+<div class="puzzle-frame">
+<div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+@@ -666,39 +470,6 @@
+</div>
+</div>
+
+  <!-- ======= PUZZLE 5: RUNIC TOGGLE GRID ======= -->
+  <div id="toggle" class="puzzle-section">
     <div class="puzzle-frame">
       <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
       <div class="corner corner-bl"></div><div class="corner corner-br"></div>
 
       <p class="flavor-text">
-        "Five glyphs must be pressed upon the altar in the correct order. The ancient text reads:
-        <em id="seq-riddle"></em>"
+        "A stone tablet of rune-circles, some glowing, some dark. The pattern on the left wall
+        shows what must be illuminated. Click the circles to toggle them — but beware, each
+        touches its neighbours."
       </p>
 
-      <div class="sequence-display" id="seq-slots"></div>
+      <div class="toggle-area" id="toggle-area"></div>
 
-      <div class="sep"></div>
-
-      <div class="symbol-bank" id="sym-bank"></div>
-
-      <div class="seq-controls">
-        <button class="btn" onclick="clearSequence()" style="font-size:0.7rem">✕ Clear Last</button>
-      </div>
-
-      <div class="status-msg" id="seq-status"></div>
+      <div class="move-counter" id="toggle-moves">Presses: 0</div>
+      <div class="status-msg" id="toggle-status"></div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkSequence()">Invoke Sequence</button>
-        <button class="btn" onclick="initSequence()">Reset</button>
-      </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        Change <code>SEQ_SOLUTION</code> to set the correct order (indices into <code>SEQ_SYMBOLS</code>),
-        and edit <code>SEQ_RIDDLE</code> to give players the in-game clue. Players tap symbols to build
-        the sequence; order matters.
-      </p>
-    </div>
-  </div>
-
-  <!-- ======= PUZZLE 4: MATRIX REASONING ======= -->
-  <div id="matrix" class="puzzle-section">
-    <div class="puzzle-frame">
-      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
-
-      <p class="flavor-text">
-        "A grid of patterns unfolds before you. Eight cells contain abstract forms arranged in a hidden logic.
-        Study the pattern carefully—identify the missing cell and select the answer that completes the sequence."
-      </p>
-
-      <div class="matrix-grid" id="matrix-grid"></div>
-
-      <div style="text-align:center; color:var(--gold-dim); font-size:0.9rem; margin-bottom:1.5rem;">
-        Select the correct answer:
+        <button class="btn btn-primary" onclick="checkToggle()">Read the Pattern</button>
+        <button class="btn" onclick="initToggle()">Reset Grid</button>
+        <button class="btn" onclick="toggleLightsOut = !toggleLightsOut; initToggle()">Toggle Mode: <span id="toggle-mode-label">Lights Out</span></button>
       </div>
 
-      <div class="matrix-answers" id="matrix-answers"></div>
-
-      <div class="status-msg" id="matrix-status"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkMatrix()">Submit Answer</button>
-        <button class="btn" onclick="initMatrix()">New Puzzle</button>
+      <div class="dm-panel" style="margin-top:1.5rem;">
+        <div class="dm-label">⚙ DM Configuration</div>
+        <p>
+          Two modes: <strong>Pattern Match</strong> (click cells to match the target pattern shown in the legend)
+          and <strong>Lights Out</strong> (clicking a cell also toggles its neighbours — must turn all off).
+          Edit <code>TOGGLE_TARGET</code> to set the goal pattern. A 5×5 grid by default.
+        </p>
       </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        The matrix contains 9 cells in a 3×3 grid. The bottom-right cell is missing, and players must identify
-        the pattern (by row, column, or diagonal rules) and select the correct answer from six options.
-        Each puzzle uses ONLY shapes that appear in the grid, with multiple shapes per cell for greater complexity.
-      </p>
     </div>
   </div>
 
 </main>
 
 <!-- Win Overlay -->
-<div class="win-overlay" id="win-overlay" onclick="this.classList.remove('show')">
-  <div class="win-box">
-    <div class="win-title">✦ Solved ✦</div>
-    <p class="win-msg" id="win-msg"></p>
-    <br>
-    <button class="btn btn-primary" onclick="document.getElementById('win-overlay').classList.remove('show')">Continue</button>
-  </div>
-</div>
-
-<script>
-// ════════════════════════════════════════
+@@ -716,12 +487,6 @@
 //  DM CONFIGURATION — Edit these values
 // ════════════════════════════════════════
+
+// --- LOCK ---
+const LOCK_SOLUTION = [3, 8, 12]; // The correct dial values
+const LOCK_RIDDLE = "The number of moons in a season, the legs of a spider, and the year's final count.";
+const LOCK_MIN = 0;
+const LOCK_MAX = 20;
 
 // --- PIPE ---
 // Auto-generated, no config needed
 
-// --- SLIDER ---
-const SLIDER_GLYPHS = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ']; // 8 glyphs for 3x3 grid
-const SLIDER_COLS = 3;
-
-// --- SEQUENCE ---
-const SEQ_SYMBOLS = ['🔥','💧','🌿','⚡','🌑','🩸','✨','🗡️'];
+@@ -734,17 +499,6 @@
 const SEQ_SOLUTION = [0, 3, 2, 1, 4]; // indices into SEQ_SYMBOLS (Fire, Lightning, Leaf, Water, Moon)
 const SEQ_RIDDLE = "Fire calls the storm, which feeds the earth, which drinks the water, which swallows the moon.";
+
+// --- TOGGLE ---
+// 1 = lit, 0 = dark. 5×5 grid.
+const TOGGLE_TARGET = [
+  [0,1,0,1,0],
+  [1,1,1,1,1],
+  [0,1,1,1,0],
+  [0,0,1,0,0],
+  [0,0,1,0,0],
+];
+let toggleLightsOut = false; // set true for "Lights Out" mode
 
 // ════════════════════════════════════════
 //  TAB SWITCHING
 // ════════════════════════════════════════
-function showPuzzle(id) {
-  document.querySelectorAll('.puzzle-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
-}
-
-function showWin(msg) {
-  document.getElementById('win-msg').textContent = msg;
-  document.getElementById('win-overlay').classList.add('show');
+@@ -761,79 +515,7 @@
 }
 
 // ════════════════════════════════════════
-//  PUZZLE 1: PIPE MAZE
+//  PUZZLE 1: COMBINATION LOCK
 // ════════════════════════════════════════
-// Pipe types: 'L' (corner), 'I' (straight), 'T' (tee), '+' (cross)
-// connections[type][rotation] = [N,E,S,W] booleans
-const PIPE_CONN = {
-  'L': [[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]],
-  'I': [[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]],
-  'T': [[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]],
-  '+': [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],
-};
-// N=0 connects to cell above (row-1), E=1 connects right (col+1), S=2 below (row+1), W=3 left (col-1)
-const DIR_DR = [-1,0,1,0];
-const DIR_DC = [0,1,0,-1];
-const OPP = [2,3,0,1];
+let lockValues = [];
 
-let pipeGrid = [], pipeRows = 5, pipeCols = 5, pipeMoves = 0;
-let pipeSource = [0,0], pipeTarget = [4,4];
+function initLock() {
+  lockValues = LOCK_SOLUTION.map(() => LOCK_MIN);
+  document.getElementById('lock-riddle-display').textContent = LOCK_RIDDLE;
+  renderLock();
+  document.getElementById('lock-shackle').classList.remove('open');
+  document.getElementById('lock-status').textContent = '';
+  document.getElementById('lock-status').className = 'status-msg';
+  document.getElementById('lock-hint-area').innerHTML = '';
+}
 
-function initPipe() {
-  pipeMoves = 0;
-  document.getElementById('pipe-moves').textContent = 'Rotations: 0';
-  document.getElementById('pipe-status').textContent = '';
-  document.getElementById('pipe-status').className = 'status-msg';
+function renderLock() {
+  const body = document.querySelector('.lock-body');
+  body.innerHTML = '';
+  lockValues.forEach((val, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dial-wrap';
 
-  // Build a path from source to target, then fill rest with random pipes
-  pipeGrid = Array.from({length:pipeRows}, () =>
-    Array.from({length:pipeCols}, () => ({type:'I', rot:0, lit:false}))
-  );
+    const up = document.createElement('button');
+    up.className = 'dial-btn';
+    up.textContent = '▲';
+    up.onclick = () => { lockValues[i] = lockValues[i] >= LOCK_MAX ? LOCK_MIN : lockValues[i] + 1; renderLock(); };
 
-  // Generate a random path
-  const path = generatePath(pipeSource, pipeTarget, pipeRows, pipeCols);
-  // Assign pipe types to path cells based on direction changes
-  for (let k=0; k<path.length; k++) {
-    const [r,c] = path[k];
-    let fromDir = -1, toDir = -1;
-    if (k>0) { const [pr,pc]=path[k-1]; fromDir=getDirIndex(pr,pc,r,c); }
-    if (k<path.length-1) { const [nr,nc]=path[k+1]; toDir=getDirIndex(r,c,nr,nc); }
-    pipeGrid[r][c] = assignPipe(fromDir, toDir);
-  }
+    const face = document.createElement('div');
+    face.className = 'dial-face';
+    face.textContent = String(val).padStart(2, '0');
 
-  // Fill non-path cells with random pipes
-  const pathSet = new Set(path.map(([r,c])=>`${r},${c}`));
-  for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) {
-    if (!pathSet.has(`${r},${c}`)) {
-      const types = ['L','I','T','+'];
-      pipeGrid[r][c] = { type: types[Math.floor(Math.random()*3)], rot: Math.floor(Math.random()*4), lit:false };
+    const down = document.createElement('button');
+    down.className = 'dial-btn';
+    down.textContent = '▼';
+    down.onclick = () => { lockValues[i] = lockValues[i] <= LOCK_MIN ? LOCK_MAX : lockValues[i] - 1; renderLock(); };
+
+    wrap.append(up, face, down);
+    body.appendChild(wrap);
+
+    if (i < lockValues.length - 1) {
+      const sep = document.createElement('div');
+      sep.className = 'dial-separator';
+      sep.textContent = '·';
+      body.appendChild(sep);
     }
-  }
-
-  // Scramble path cells rotations (but keep them solvable — randomize by extra rotations)
-  for (const [r,c] of path) {
-    const extra = Math.floor(Math.random()*4);
-    pipeGrid[r][c].rot = (pipeGrid[r][c].rot + extra) % 4;
-  }
-
-  renderPipe();
+  });
 }
 
-function getDirIndex(r1,c1,r2,c2) {
-  if (r2<r1) return 0; // N
-  if (c2>c1) return 1; // E
-  if (r2>r1) return 2; // S
-  return 3; // W
-}
-
-function assignPipe(fromDir, toDir) {
-  // fromDir: direction we came FROM (i.e., which side connects back)
-  // toDir: direction we go TO (which side connects forward)
-  if (fromDir === -1) {
-    // source: only has toDir open
-    return straightOrCorner(toDir);
-  }
-  if (toDir === -1) {
-    // target: only has fromDir open
-    return straightOrCorner(OPP[fromDir]);
-  }
-  const backDir = OPP[fromDir]; // the side that connects back
-  // Find type and rotation with backDir and toDir open
-  for (const type of ['L','I','T','+']) {
-    for (let rot=0;rot<4;rot++) {
-      const conn = PIPE_CONN[type][rot];
-      if (conn[backDir] && conn[toDir]) return {type, rot, lit:false};
-    }
-  }
-  return {type:'L', rot:0, lit:false};
-}
-
-function straightOrCorner(dir) {
-  // Just needs one opening — use I pipe pointing that dir
-  if (dir===0||dir===2) return {type:'I',rot:0,lit:false};
-  return {type:'I',rot:1,lit:false};
-}
-
-function generatePath(src, tgt, rows, cols) {
-  // Simple random walk with backtracking
-  const visited = new Set();
-  const path = [src];
-  visited.add(`${src[0]},${src[1]}`);
-  let safety = 0;
-  while (!(path[path.length-1][0]===tgt[0] && path[path.length-1][1]===tgt[1])) {
-    if (++safety > 2000) break;
-    const [r,c] = path[path.length-1];
-    const dirs = shuffleArray([0,1,2,3]);
-    let moved = false;
-    for (const d of dirs) {
-      const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
-      if (nr<0||nr>=rows||nc<0||nc>=cols||visited.has(`${nr},${nc}`)) continue;
-      path.push([nr,nc]);
-      visited.add(`${nr},${nc}`);
-      moved = true;
-      break;
-    }
-    if (!moved) {
-      // backtrack
-      visited.delete(`${r},${c}`);
-      path.pop();
-      if (path.length===0) { path.push(src); visited.add(`${src[0]},${src[1]}`); }
-    }
-  }
-  return path;
-}
-
-function shuffleArray(arr) {
-  const a = [...arr];
-  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]; }
-  return a;
-}
-
-function rotatePipe(r,c) {
-  const cell = pipeGrid[r][c];
-  const [sr,sc]=pipeSource, [tr,tc]=pipeTarget;
-  if (r===sr&&c===sc||r===tr&&c===tc) return;
-  cell.rot = (cell.rot+1)%4;
-  pipeMoves++;
-  document.getElementById('pipe-moves').textContent = `Rotations: ${pipeMoves}`;
-  renderPipe();
-}
-
-function getConnections(r,c) {
-  const {type,rot} = pipeGrid[r][c];
-  return PIPE_CONN[type][rot];
-}
-
-function checkPipe() {
-  // BFS from source, follow connections
-  const [sr,sc]=pipeSource,[tr,tc]=pipeTarget;
-  const visited = new Set();
-  const queue = [[sr,sc]];
-  visited.add(`${sr},${sc}`);
-  let found = false;
-
-  // Reset lit
-  for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) pipeGrid[r][c].lit=false;
-
-  while (queue.length) {
-    const [r,c] = queue.shift();
-    pipeGrid[r][c].lit = true;
-    if (r===tr&&c===tc) { found=true; break; }
-    const conn = getConnections(r,c);
-    for (let d=0;d<4;d++) {
-      if (!conn[d]) continue;
-      const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
-      if (nr<0||nr>=pipeRows||nc<0||nc>=pipeCols) continue;
-      if (visited.has(`${nr},${nc}`)) continue;
-      const nconn = getConnections(nr,nc);
-      if (!nconn[OPP[d]]) continue;
-      queue.push([nr,nc]);
-      visited.add(`${nr},${nc}`);
-    }
-  }
-
-  renderPipe();
-  const st = document.getElementById('pipe-status');
-  if (found) {
-    st.textContent = '✦ The water flows! The seal glows green. ✦';
+function checkLock() {
+  const correct = lockValues.every((v, i) => v === LOCK_SOLUTION[i]);
+  const st = document.getElementById('lock-status');
+  if (correct) {
+    document.getElementById('lock-shackle').classList.add('open');
+    st.textContent = '✦ The lock clicks open. ✦';
     st.className = 'status-msg success';
-    setTimeout(() => showWin('The mechanism unlocks with a resonant hum.'), 600);
+    setTimeout(() => showWin('The chest springs open, revealing its secrets within.'), 600);
   } else {
-    st.textContent = 'The water stalls. The flow is blocked.';
+    st.textContent = 'The dials grind — nothing happens.';
     st.className = 'status-msg fail';
   }
 }
 
+function resetLock() { initLock(); }
+
+function showLockHint() {
+  const area = document.getElementById('lock-hint-area');
+  area.innerHTML = `<div id="lock-hint-reveal" style="display:block;color:var(--rune);font-style:italic;font-size:0.9rem;">
+    The solution is: ${LOCK_SOLUTION.join(' · ')}
+    <br><small style="color:var(--gold-dim)">[DM Hint Revealed]</small>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+//  PUZZLE 2: PIPE MAZE
+//  PUZZLE 1: PIPE MAZE
+// ════════════════════════════════════════
+// Pipe types: 'L' (corner), 'I' (straight), 'T' (tee), '+' (cross)
+// connections[type][rotation] = [N,E,S,W] booleans
+@@ -998,364 +680,222 @@
+if (nr<0||nr>=pipeRows||nc<0||nc>=pipeCols) continue;
+if (visited.has(`${nr},${nc}`)) continue;
+const nconn = getConnections(nr,nc);
+      if (nconn[OPP[d]]) { visited.add(`${nr},${nc}`); queue.push([nr,nc]); }
+      if (!nconn[OPP[d]]) continue;
+      queue.push([nr,nc]);
+      visited.add(`${nr},${nc}`);
+}
+}
+
+renderPipe();
+const st = document.getElementById('pipe-status');
+if (found) {
+    st.textContent = '✦ The water flows through — the seal is broken! ✦';
+    st.textContent = '✦ The water flows! The seal glows green. ✦';
+st.className = 'status-msg success';
+    showWin('Ancient water flows once more through the stone channels. A hidden door grinds open.');
+    setTimeout(() => showWin('The mechanism unlocks with a resonant hum.'), 600);
+} else {
+    st.textContent = 'The flow is blocked somewhere…';
+    st.textContent = 'The water stalls. The flow is blocked.';
+st.className = 'status-msg fail';
+}
+}
+
 function renderPipe() {
-  const grid = document.getElementById('pipe-grid');
-  grid.innerHTML = '';
+const grid = document.getElementById('pipe-grid');
+  grid.style.gridTemplateColumns = `repeat(${pipeCols}, 56px)`;
+grid.innerHTML = '';
+  const [sr,sc]=pipeSource,[tr,tc]=pipeTarget;
   grid.style.gridTemplateColumns = `repeat(${pipeCols}, 1fr)`;
-  for (let r=0;r<pipeRows;r++) {
-    for (let c=0;c<pipeCols;c++) {
+for (let r=0;r<pipeRows;r++) {
+for (let c=0;c<pipeCols;c++) {
+      const cell = document.createElement('div');
+      cell.className = 'pipe-cell';
+      if (r===sr&&c===sc) cell.classList.add('source');
+      else if (r===tr&&c===tc) cell.classList.add('target');
+      else { const rr=r,cc=c; cell.onclick=()=>rotatePipe(rr,cc); }
+      if (pipeGrid[r][c].lit) cell.classList.add('lit');
+      cell.innerHTML = drawPipeSVG(pipeGrid[r][c]);
+      grid.appendChild(cell);
       const cell = pipeGrid[r][c];
       const div = document.createElement('div');
       div.className = 'pipe-cell';
@@ -834,23 +484,52 @@ function renderPipe() {
       svg.appendChild(g);
       div.appendChild(svg);
       grid.appendChild(div);
-    }
-  }
+}
+}
+}
+
+function drawPipeSVG({type,rot,lit}) {
+  const c = lit ? 'var(--rune)' : 'var(--gold-dim)';
+  const w = 4;
+  const mid = 28;
+  const conn = PIPE_CONN[type][rot];
+  let paths = '';
+  if (conn[0]) paths += `<line x1="${mid}" y1="0" x2="${mid}" y2="${mid}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  if (conn[1]) paths += `<line x1="${mid}" y1="${mid}" x2="56" y2="${mid}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  if (conn[2]) paths += `<line x1="${mid}" y1="${mid}" x2="${mid}" y2="56" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  if (conn[3]) paths += `<line x1="0" y1="${mid}" x2="${mid}" y2="${mid}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  const dot = lit ? `<circle cx="${mid}" cy="${mid}" r="4" fill="${c}" opacity="0.8"/>` : `<circle cx="${mid}" cy="${mid}" r="3" fill="${c}" opacity="0.4"/>`;
+  return `<svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">${paths}${dot}</svg>`;
 }
 
 // ════════════════════════════════════════
+//  PUZZLE 3: RUNE SLIDER
 //  PUZZLE 2: SLIDER
 // ════════════════════════════════════════
+let sliderState = [], sliderEmpty = 8, sliderMoves = 0;
+const SLIDER_SIZE = 9; // 3x3
 let sliderGrid = [], sliderRows = 3, sliderCols = 3, sliderMoves = 0;
 
 function initSlider() {
   sliderRows = SLIDER_COLS;
   sliderCols = SLIDER_COLS;
-  sliderMoves = 0;
-  document.getElementById('slider-moves').textContent = 'Moves: 0';
-  document.getElementById('slider-status').textContent = '';
-  document.getElementById('slider-status').className = 'status-msg';
+sliderMoves = 0;
+document.getElementById('slider-moves').textContent = 'Moves: 0';
+document.getElementById('slider-status').textContent = '';
+document.getElementById('slider-status').className = 'status-msg';
 
+  // Goal: 0-7 in order, 8=empty
+  const goal = [...SLIDER_GLYPHS.slice(0,8).map((_,i)=>i), 8];
+  document.getElementById('slider-goal').textContent = SLIDER_GLYPHS.slice(0,8).join(' ');
+
+  // Scramble (ensure solvable by making even # of swaps)
+  sliderState = [...goal];
+  sliderEmpty = 8;
+  for (let i=0;i<200;i++) {
+    const neighbors = getSliderNeighbors(sliderEmpty);
+    const rn = neighbors[Math.floor(Math.random()*neighbors.length)];
+    [sliderState[sliderEmpty], sliderState[rn]] = [sliderState[rn], sliderState[sliderEmpty]];
+    sliderEmpty = rn;
   // Create solved grid
   sliderGrid = [];
   for (let i=0; i<sliderRows*sliderCols-1; i++) {
@@ -874,11 +553,19 @@ function initSlider() {
     const [r,c] = valid[Math.floor(Math.random()*valid.length)];
     const idx = r*sliderCols+c;
     [sliderGrid[emptyIdx], sliderGrid[idx]] = [sliderGrid[idx], sliderGrid[emptyIdx]];
-  }
-
-  renderSlider();
 }
 
+renderSlider();
+}
+
+function getSliderNeighbors(idx) {
+  const r=Math.floor(idx/SLIDER_COLS), c=idx%SLIDER_COLS;
+  const ns=[];
+  if(r>0) ns.push(idx-SLIDER_COLS);
+  if(r<SLIDER_COLS-1) ns.push(idx+SLIDER_COLS);
+  if(c>0) ns.push(idx-1);
+  if(c<SLIDER_COLS-1) ns.push(idx+1);
+  return ns;
 function slideSlider(r,c) {
   const idx = r*sliderCols+c;
   const emptyIdx = sliderGrid.indexOf(-1);
@@ -891,6 +578,13 @@ function slideSlider(r,c) {
   }
 }
 
+function clickSlider(idx) {
+  if (!getSliderNeighbors(sliderEmpty).includes(idx)) return;
+  [sliderState[sliderEmpty], sliderState[idx]] = [sliderState[idx], sliderState[sliderEmpty]];
+  sliderEmpty = idx;
+  sliderMoves++;
+  document.getElementById('slider-moves').textContent = `Moves: ${sliderMoves}`;
+  renderSlider();
 function renderSlider() {
   const grid = document.getElementById('slider-grid');
   grid.innerHTML = '';
@@ -911,34 +605,61 @@ function renderSlider() {
 }
 
 function checkSlider() {
+  const correct = sliderState.every((v,i) => i<8 ? v===i : v===8);
   let solved = true;
   for (let i=0; i<sliderGrid.length-1; i++) {
     if (sliderGrid[i] !== i) { solved=false; break; }
   }
-  const st = document.getElementById('slider-status');
+const st = document.getElementById('slider-status');
+  if (correct) {
+    st.textContent = '✦ The runes align — power surges through the stone! ✦';
   if (solved) {
     st.textContent = '✦ The tablets align! Ancient magic stirs. ✦';
-    st.className = 'status-msg success';
+st.className = 'status-msg success';
+    showWin('The rune tablets click into their final positions. The chamber fills with ancient light.');
     setTimeout(() => showWin('The runes blaze with power, and the way forward opens.'), 600);
-  } else {
+} else {
+    st.textContent = 'The runes are not yet in order…';
     st.textContent = 'The tablets rattle. They are not yet in harmony.';
-    st.className = 'status-msg fail';
-  }
+st.className = 'status-msg fail';
+}
+}
+
+function renderSlider() {
+  const grid = document.getElementById('slider-grid');
+  grid.style.gridTemplateColumns = `repeat(${SLIDER_COLS}, 70px)`;
+  grid.innerHTML = '';
+  sliderState.forEach((val, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'slider-cell' + (val===8 ? ' empty' : '');
+    if (val!==8) {
+      cell.innerHTML = `<span class="rune-glyph">${SLIDER_GLYPHS[val]}</span>`;
+      cell.onclick = () => clickSlider(idx);
+    }
+    grid.appendChild(cell);
+  });
 }
 
 // ════════════════════════════════════════
+//  PUZZLE 4: SYMBOL SEQUENCE
 //  PUZZLE 3: SYMBOL SEQUENCE
 // ════════════════════════════════════════
 let seqInput = [];
 
 function initSequence() {
-  seqInput = [];
-  document.getElementById('seq-riddle').textContent = SEQ_RIDDLE;
+seqInput = [];
+document.getElementById('seq-riddle').textContent = SEQ_RIDDLE;
   renderSequence();
-  document.getElementById('seq-status').textContent = '';
-  document.getElementById('seq-status').className = 'status-msg';
+document.getElementById('seq-status').textContent = '';
+document.getElementById('seq-status').className = 'status-msg';
+  renderSequence();
 }
 
+function pressSymbol(idx) {
+  if (seqInput.length >= SEQ_SOLUTION.length) return;
+  const btn = document.querySelector(`.sym-btn[data-idx="${idx}"]`);
+  seqInput.push(idx);
+  renderSequence();
 function addToSeq(idx) {
   if (seqInput.length < SEQ_SOLUTION.length) {
     seqInput.push(idx);
@@ -947,275 +668,248 @@ function addToSeq(idx) {
 }
 
 function clearSequence() {
+  if (seqInput.length > 0) seqInput.pop();
+  document.getElementById('seq-status').textContent = '';
+  document.getElementById('seq-status').className = 'status-msg';
   seqInput = [];
-  renderSequence();
+renderSequence();
+}
+
+function checkSequence() {
+  if (seqInput.length < SEQ_SOLUTION.length) {
+    const st = document.getElementById('seq-status');
+    st.textContent = 'More symbols must be invoked…';
+    st.className = 'status-msg hint';
+    return;
+  }
+  const correct = seqInput.every((v,i) => v===SEQ_SOLUTION[i]);
+  const st = document.getElementById('seq-status');
+  const slots = document.querySelectorAll('.seq-slot');
+  slots.forEach(s => s.classList.remove('correct','wrong'));
+  if (correct) {
+    slots.forEach(s => s.classList.add('correct'));
+    st.textContent = '✦ The glyphs blaze with light — the altar accepts your offering! ✦';
+    st.className = 'status-msg success';
+    setTimeout(() => showWin('The altar blazes to life. The ancient mechanism accepts your sequence.'), 400);
+  } else {
+    slots.forEach((s,i) => {
+      if (seqInput[i] !== SEQ_SOLUTION[i]) s.classList.add('wrong');
+      else s.classList.add('correct');
+    });
+    st.textContent = 'The wrong order… the symbols fade. Try again.';
+    st.className = 'status-msg fail';
+    setTimeout(() => { seqInput=[]; renderSequence(); st.textContent=''; }, 1400);
+  }
 }
 
 function renderSequence() {
-  // Slots
-  const slotsDiv = document.getElementById('seq-slots');
-  slotsDiv.innerHTML = '';
+// Slots
+const slotsDiv = document.getElementById('seq-slots');
+slotsDiv.innerHTML = '';
+  for (let i=0;i<SEQ_SOLUTION.length;i++) {
   for (let i=0; i<SEQ_SOLUTION.length; i++) {
-    const slot = document.createElement('div');
+const slot = document.createElement('div');
+    slot.className = 'seq-slot' + (i<seqInput.length?' filled':'');
+    if (i<seqInput.length) slot.textContent = SEQ_SYMBOLS[seqInput[i]];
     slot.className = 'seq-slot';
     if (i < seqInput.length) {
       slot.classList.add('filled');
       slot.textContent = SEQ_SYMBOLS[seqInput[i]];
     }
-    slotsDiv.appendChild(slot);
-  }
+slotsDiv.appendChild(slot);
+}
 
-  // Bank
+// Bank
+  const bank = document.getElementById('sym-bank');
+  bank.innerHTML = '';
+  SEQ_SYMBOLS.forEach((sym, idx) => {
   const bankDiv = document.getElementById('sym-bank');
   bankDiv.innerHTML = '';
   for (let i=0; i<SEQ_SYMBOLS.length; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'sym-btn';
+const btn = document.createElement('button');
+btn.className = 'sym-btn';
+    btn.dataset.idx = idx;
+    btn.textContent = sym;
+    btn.onclick = () => pressSymbol(idx);
+    bank.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════
+//  PUZZLE 5: RUNIC TOGGLE GRID
+// ════════════════════════════════════════
+let toggleState = [], toggleMoves = 0;
+const TOGGLE_ROWS = TOGGLE_TARGET.length;
+const TOGGLE_COLS = TOGGLE_TARGET[0].length;
+
+function initToggle() {
+  toggleMoves = 0;
+  document.getElementById('toggle-moves').textContent = 'Presses: 0';
+  document.getElementById('toggle-status').textContent = '';
+  document.getElementById('toggle-status').className = 'status-msg';
+  document.getElementById('toggle-mode-label').textContent = toggleLightsOut ? 'Lights Out' : 'Pattern Match';
+
+  if (toggleLightsOut) {
+    // Start with all on
+    toggleState = Array.from({length:TOGGLE_ROWS}, () => Array(TOGGLE_COLS).fill(1));
+    // Scramble by random presses
+    for (let i=0;i<15;i++) {
+      const r=Math.floor(Math.random()*TOGGLE_ROWS), c=Math.floor(Math.random()*TOGGLE_COLS);
+      applyTogglePress(r,c,false);
+    }
+  } else {
+    // Start with all off
+    toggleState = Array.from({length:TOGGLE_ROWS}, () => Array(TOGGLE_COLS).fill(0));
     btn.textContent = SEQ_SYMBOLS[i];
     const used = seqInput.filter(idx => idx===i).length > 0;
     if (used) btn.classList.add('used');
     btn.onclick = () => addToSeq(i);
     bankDiv.appendChild(btn);
-  }
+}
+  renderToggle();
 }
 
+function applyTogglePress(r,c,count=true) {
+  if (toggleLightsOut) {
+    // Toggle self + neighbors
+    const cells = [[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+    cells.forEach(([tr,tc]) => {
+      if (tr>=0&&tr<TOGGLE_ROWS&&tc>=0&&tc<TOGGLE_COLS) toggleState[tr][tc] ^= 1;
+    });
+  } else {
+    toggleState[r][c] ^= 1;
+  }
+  if (count) { toggleMoves++; document.getElementById('toggle-moves').textContent = `Presses: ${toggleMoves}`; }
+}
+
+function pressToggle(r,c) {
+  applyTogglePress(r,c,true);
+  renderToggle();
+}
+
+function checkToggle() {
+  let correct;
+  if (toggleLightsOut) {
+    correct = toggleState.every(row => row.every(v => v===0));
+  } else {
+    correct = toggleState.every((row,r) => row.every((v,c) => v===TOGGLE_TARGET[r][c]));
+  }
+  const st = document.getElementById('toggle-status');
 function checkSequence() {
   const correct = seqInput.length === SEQ_SOLUTION.length && seqInput.every((v,i) => v === SEQ_SOLUTION[i]);
   const st = document.getElementById('seq-status');
-  if (correct) {
+if (correct) {
+    st.textContent = '✦ The pattern glows in perfect harmony! ✦';
     st.textContent = '✦ The altar blazes! The sequence is true. ✦';
-    st.className = 'status-msg success';
+st.className = 'status-msg success';
+    showWin(toggleLightsOut ? 'All runes dim simultaneously, and the lock gives way.' : 'The runes match the ancient diagram — the seal breaks with a resonant chime.');
     setTimeout(() => showWin('The ancient magic responds—the way is clear.'), 600);
-  } else {
+} else {
+    st.textContent = toggleLightsOut ? 'Some runes still burn…' : 'The pattern does not match…';
     st.textContent = 'The glyphs pulse but do not resonate.';
-    st.className = 'status-msg fail';
+st.className = 'status-msg fail';
+}
+}
+
+function renderToggle() {
+  const area = document.getElementById('toggle-area');
+  area.innerHTML = '';
+
+  if (!toggleLightsOut) {
+    // Show target legend
+    const legend = document.createElement('div');
+    legend.style.cssText = 'margin-right:1.5rem;';
+    const label = document.createElement('div');
+    label.style.cssText = 'font-family:Cinzel,serif;font-size:0.65rem;color:var(--gold-dim);text-align:center;margin-bottom:6px;letter-spacing:.1em;';
+    label.textContent = 'TARGET';
+    legend.appendChild(label);
+    const legendGrid = document.createElement('div');
+    legendGrid.style.cssText = `display:grid;grid-template-columns:repeat(${TOGGLE_COLS},18px);gap:2px;`;
+    TOGGLE_TARGET.forEach(row => row.forEach(v => {
+      const cell = document.createElement('div');
+      cell.style.cssText = `width:18px;height:18px;background:${v?'var(--rune)':'var(--stone)'};border:1px solid ${v?'var(--rune)':'var(--rune-dim)'};`;
+      legendGrid.appendChild(cell);
+    }));
+    legend.appendChild(legendGrid);
+    area.appendChild(legend);
   }
+
+  const inner = document.createElement('div');
+  inner.className = 'toggle-area-inner';
+
+  // Col hints (top)
+  if (!toggleLightsOut) {
+    const topHints = document.createElement('div');
+    topHints.className = 'toggle-hints';
+    for (let c=0;c<TOGGLE_COLS;c++) {
+      const h = document.createElement('div');
+      h.className = 'hint-cell';
+      const target = TOGGLE_TARGET.map(row=>row[c]).join('');
+      // Run-length encode
+      h.textContent = encodeRuns(TOGGLE_TARGET.map(row=>row[c]));
+      topHints.appendChild(h);
+    }
+    inner.appendChild(topHints);
+  }
+
+  const midRow = document.createElement('div');
+  midRow.style.display = 'flex';
+
+  // Row hints (left)
+  if (!toggleLightsOut) {
+    const sideHints = document.createElement('div');
+    sideHints.className = 'toggle-side-hints';
+    for (let r=0;r<TOGGLE_ROWS;r++) {
+      const h = document.createElement('div');
+      h.className = 'side-hint-cell';
+      h.textContent = encodeRuns(TOGGLE_TARGET[r]);
+      sideHints.appendChild(h);
+    }
+    midRow.appendChild(sideHints);
+  }
+
+  const gridEl = document.createElement('div');
+  gridEl.className = 'toggle-grid';
+  gridEl.style.gridTemplateColumns = `repeat(${TOGGLE_COLS}, 52px)`;
+  for (let r=0;r<TOGGLE_ROWS;r++) for (let c=0;c<TOGGLE_COLS;c++) {
+    const cell = document.createElement('div');
+    cell.className = 'toggle-cell' + (toggleState[r][c] ? ' on' : '');
+    const rr=r,cc=c;
+    cell.onclick = () => { pressToggle(rr,cc); renderToggle(); };
+    gridEl.appendChild(cell);
+  }
+  midRow.appendChild(gridEl);
+  inner.appendChild(midRow);
+  area.appendChild(inner);
+}
+
+function encodeRuns(arr) {
+  // Nonogram-style run lengths
+  const runs = [];
+  let count=0;
+  for (const v of arr) {
+    if (v===1) count++;
+    else if (count>0) { runs.push(count); count=0; }
+  }
+  if (count>0) runs.push(count);
+  return runs.length ? runs.join(',') : '–';
 }
 
 // ════════════════════════════════════════
-//  PUZZLE 4: MATRIX REASONING (IMPROVED)
-// ════════════════════════════════════════
-
-// Shape definitions: simple geometric shapes drawn as SVG
-const SHAPES = {
-  circle: '<circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" stroke-width="3"/>',
-  square: '<rect x="25" y="25" width="50" height="50" fill="none" stroke="currentColor" stroke-width="3"/>',
-  triangle: '<polygon points="50,25 75,70 25,70" fill="none" stroke="currentColor" stroke-width="3"/>',
-  diamond: '<polygon points="50,20 75,50 50,80 25,50" fill="none" stroke="currentColor" stroke-width="3"/>',
-  cross: '<g stroke="currentColor" stroke-width="3"><line x1="35" y1="50" x2="65" y2="50"/><line x1="50" y1="35" y2="65"/></g>',
-  line: '<line x1="25" y1="50" x2="75" y2="50" stroke="currentColor" stroke-width="3"/>'
-};
-
-const COLORS = ['#c9943a', '#7ecfc0', '#5aaa70', '#e8d9b0', '#c04040', '#f0bf5a'];
-
-let matrixPuzzle = null;
-let matrixSelected = null;
-
-// ---- FIXED MATRIX GENERATION ----
-function generateMatrixPuzzle() {
-  const cells = [];
-  const shapesList = Object.keys(SHAPES);
-  const usedShapes = new Set();
-  
-  // Generate 8 cells using ONLY shapes that will be in the puzzle
-  // Multi-shape cells for complexity
-  for (let i = 0; i < 8; i++) {
-    const numShapes = Math.random() > 0.5 ? 2 : 1; // 1 or 2 shapes per cell
-    const cellShapes = [];
-    for (let s = 0; s < numShapes; s++) {
-      const shape = shapesList[Math.floor(Math.random() * shapesList.length)];
-      cellShapes.push(shape);
-      usedShapes.add(shape);
-    }
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    cells.push({ shapes: cellShapes, color, rotation: 0 });
-  }
-  
-  // Generate correct answer using ONLY shapes that appear in the puzzle
-  const correctShapes = [];
-  const maxShapesToUse = Array.from(usedShapes)[Math.floor(Math.random() * usedShapes.size)];
-  correctShapes.push(maxShapesToUse);
-  if (Math.random() > 0.5 && usedShapes.size > 1) {
-    const otherShape = Array.from(usedShapes).filter(s => s !== maxShapesToUse)[0];
-    correctShapes.push(otherShape);
-  }
-  
-  const correctAnswer = {
-    shapes: correctShapes,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    rotation: 0
-  };
-  
-  return { cells, correctAnswer, usedShapes: Array.from(usedShapes) };
-}
-
-function initMatrix() {
-  matrixPuzzle = generateMatrixPuzzle();
-  matrixSelected = null;
-  document.getElementById('matrix-status').textContent = '';
-  document.getElementById('matrix-status').className = 'status-msg';
-  renderMatrix();
-  renderMatrixAnswers();
-}
-
-function renderMatrix() {
-  const grid = document.getElementById('matrix-grid');
-  grid.innerHTML = '';
-  
-  for (let i = 0; i < 9; i++) {
-    const cell = matrixPuzzle.cells[i];
-    const div = document.createElement('div');
-    div.className = 'matrix-cell';
-    
-    if (i === 8) {
-      div.classList.add('missing');
-    } else {
-      const svgContainer = document.createElement('div');
-      svgContainer.style.position = 'relative';
-      svgContainer.style.width = '100%';
-      svgContainer.style.height = '100%';
-      
-      // Render all shapes in this cell (overlapping or stacked)
-      cell.shapes.forEach((shapeKey, idx) => {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 100 100');
-        svg.setAttribute('style', `color: ${cell.color}; position: absolute; width: 100%; height: 100%; opacity: ${0.7 + idx * 0.15};`);
-        svg.innerHTML = SHAPES[shapeKey];
-        svgContainer.appendChild(svg);
-      });
-      
-      div.appendChild(svgContainer);
-    }
-    grid.appendChild(div);
-  }
-}
-
-function renderMatrixAnswers() {
-  const container = document.getElementById('matrix-answers');
-  container.innerHTML = '';
-  
-  // Create 6 answer options: 1 correct + 5 distractors
-  const answers = [matrixPuzzle.correctAnswer];
-  
-  // Generate distractors using ONLY available shapes and colors
-  while (answers.length < 6) {
-    const distractor = {
-      shapes: [matrixPuzzle.usedShapes[Math.floor(Math.random() * matrixPuzzle.usedShapes.length)]],
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      rotation: 0
-    };
-    
-    // Add a second shape sometimes
-    if (Math.random() > 0.6 && matrixPuzzle.usedShapes.length > 1) {
-      const otherShape = matrixPuzzle.usedShapes.filter(s => s !== distractor.shapes[0])[0];
-      distractor.shapes.push(otherShape);
-    }
-    
-    // Check if this distractor is different from all existing answers
-    const isDuplicate = answers.some(a => 
-      JSON.stringify(a.shapes.sort()) === JSON.stringify(distractor.shapes.sort()) && 
-      a.color === distractor.color
-    );
-    if (!isDuplicate) {
-      answers.push(distractor);
-    }
-  }
-  
-  // Shuffle
-  answers.sort(() => Math.random() - 0.5);
-  
-  // Render buttons
-  answers.forEach((answer, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'matrix-answer-btn';
-    
-    const svgContainer = document.createElement('div');
-    svgContainer.style.position = 'relative';
-    svgContainer.style.width = '100%';
-    svgContainer.style.height = '100%';
-    
-    answer.shapes.forEach((shapeKey, shapeIdx) => {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '0 0 100 100');
-      svg.setAttribute('style', `color: ${answer.color}; position: absolute; width: 100%; height: 100%; opacity: ${0.7 + shapeIdx * 0.15};`);
-      svg.innerHTML = SHAPES[shapeKey];
-      svgContainer.appendChild(svg);
-    });
-    
-    btn.appendChild(svgContainer);
-    btn.onclick = () => selectMatrixAnswer(idx, answer);
-    btn.dataset.answer = JSON.stringify(answer);
-    container.appendChild(btn);
-  });
-}
-
-function selectMatrixAnswer(index, answer) {
-  // Remove previous selection
-  document.querySelectorAll('.matrix-answer-btn').forEach(btn => {
-    btn.classList.remove('selected');
-  });
-  
-  // Add selection to current
-  document.querySelectorAll('.matrix-answer-btn')[index].classList.add('selected');
-  matrixSelected = answer;
-}
-
-function checkMatrix() {
-  const st = document.getElementById('matrix-status');
-  
-  if (matrixSelected === null) {
-    st.textContent = 'Select an answer first.';
-    st.className = 'status-msg fail';
-    return;
-  }
-  
-  // FIXED: Check shapes and color separately
-  const correctShapesSet = new Set(matrixPuzzle.correctAnswer.shapes);
-  const selectedShapesSet = new Set(matrixSelected.shapes);
-  
-  const shapesMatch = correctShapesSet.size === selectedShapesSet.size &&
-    Array.from(correctShapesSet).every(s => selectedShapesSet.has(s));
-  
-  const colorMatch = matrixPuzzle.correctAnswer.color === matrixSelected.color;
-  
-  const isCorrect = shapesMatch && colorMatch;
-  
-  // Show feedback
-  const buttons = document.querySelectorAll('.matrix-answer-btn');
-  buttons.forEach(btn => {
-    btn.classList.remove('correct', 'incorrect');
-    const btnAnswer = JSON.parse(btn.dataset.answer);
-    const btnShapesSet = new Set(btnAnswer.shapes);
-    const btnShapesMatch = correctShapesSet.size === btnShapesSet.size &&
-      Array.from(correctShapesSet).every(s => btnShapesSet.has(s));
-    const btnColorMatch = matrixPuzzle.correctAnswer.color === btnAnswer.color;
-    
-    if (btnShapesMatch && btnColorMatch) {
-      btn.classList.add('correct');
-    } else if (btn.classList.contains('selected') && !isCorrect) {
-      btn.classList.add('incorrect');
-    }
-  });
-  
-  if (isCorrect) {
-    st.textContent = '✦ The pattern reveals itself! ✦';
-    st.className = 'status-msg success';
-    setTimeout(() => showWin('You have discerned the hidden logic. The way forward opens.'), 600);
-  } else {
-    st.textContent = 'The pattern eludes you. Study more carefully.';
-    st.className = 'status-msg fail';
-  }
-}
-
-// ════════════════════════════════════════
+//  INIT ALL PUZZLES
 //  INITIALIZATION
 // ════════════════════════════════════════
+initLock();
+initPipe();
+initSlider();
+initSequence();
+initToggle();
 window.onload = function() {
   initPipe();
   initSlider();
   initSequence();
-  initMatrix();
 };
 </script>
 </body>
+</html>
 </html>
