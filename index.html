@@ -265,6 +265,9 @@
   <div class="vault-title">The Puzzle Vault</div>
 <nav class="puzzle-nav">
   <button class="tab-btn active" onclick="showPuzzle('pipe', this)">Pipe Maze</button>
+  <button class="tab-btn" onclick="showPuzzle('knight', this)">Knight's Tour</button>
+  <button class="tab-btn" onclick="showPuzzle('crate', this)">Crate Vault</button>
+  <button class="tab-btn" onclick="showPuzzle('bridges', this)">Rune Bridges</button>
   <a class="tab-btn" href="chess-in-one.html">Chess in One</a>
   <a class="tab-btn" href="dragonchess.html">Dragon Chess</a>
   <a class="tab-btn" href="wyvern.html">Wyvern Chess</a>
@@ -311,6 +314,11 @@
       </p>
     </div>
   </div>
+
+  <!-- Sections below are filled in by puzzles/knight.js, puzzles/crate.js, puzzles/bridges.js -->
+  <div id="knight" class="puzzle-section"></div>
+  <div id="crate" class="puzzle-section"></div>
+  <div id="bridges" class="puzzle-section"></div>
 
 </main>
 
@@ -625,5 +633,8 @@ window.onload = function() {
   initPipe();
 };
 </script>
+<script src="puzzles/knight.js"></script>
+<script src="puzzles/crate.js"></script>
+<script src="puzzles/bridges.js"></script>
 </body>
 </html>
