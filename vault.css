@@ -1,0 +1,279 @@
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+
+  :root {
+    --stone: #1a1610;
+    --stone-mid: #2a2218;
+    --stone-light: #3d3224;
+    --gold: #c9943a;
+    --gold-bright: #f0bf5a;
+    --gold-dim: #7a5920;
+    --rune: #7ecfc0;
+    --rune-dim: #2a5f58;
+    --danger: #c04040;
+    --parchment: #e8d9b0;
+    --parchment-dark: #c4b07a;
+    --success: #5aaa70;
+    --shadow: rgba(0,0,0,0.7);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--stone);
+    color: var(--parchment);
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(201,148,58,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(126,207,192,0.04) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9943a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* === HEADER === */
+  header {
+    text-align: center;
+    padding: 3rem 2rem 2rem;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 80%;
+    max-width: 600px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.5rem auto 0;
+  }
+  .vault-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    color: var(--gold-bright);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 40px rgba(201,148,58,0.4), 0 2px 4px rgba(0,0,0,0.8);
+    line-height: 1.1;
+  }
+
+
+  /* === MAIN AREA === */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  .puzzle-section { display: none; }
+  .puzzle-section.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* === PUZZLE FRAME === */
+  .puzzle-frame {
+    background: var(--stone-mid);
+    border: 1px solid var(--gold-dim);
+    padding: 2rem;
+    margin-top: 1.5rem;
+    position: relative;
+  }
+  .puzzle-frame::before, .puzzle-frame::after {
+    content: '✦';
+    position: absolute;
+    color: var(--gold-dim);
+    font-size: 1.2rem;
+  }
+  .puzzle-frame::before { top: -0.7rem; left: 50%; transform: translateX(-50%); background: var(--stone-mid); padding: 0 0.5rem; }
+  .puzzle-frame::after { display: none; }
+  .corner { position: absolute; width: 16px; height: 16px; border-color: var(--gold); border-style: solid; }
+  .corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  .flavor-text {
+    font-style: italic;
+    color: var(--parchment-dark);
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    padding: 0 1rem;
+  }
+
+  /* === BUTTONS === */
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: var(--stone-light); border-color: var(--gold); color: var(--gold-bright); }
+  .btn-primary { background: var(--stone-light); border-color: var(--gold); }
+  .btn-row { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+
+  /* === STATUS MESSAGE === */
+  .status-msg {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    min-height: 2rem;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    transition: all 0.3s;
+  }
+  .status-msg.success { color: var(--success); text-shadow: 0 0 20px rgba(90,170,112,0.5); }
+  .status-msg.fail { color: var(--danger); }
+  .status-msg.hint { color: var(--rune); }
+
+  /* ========================================
+     PUZZLE 1: PIPE/PATH PUZZLE
+  ======================================== */
+  .pipe-grid {
+    --n: 5;
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 3px;
+    margin: 0 auto;
+    width: min(100%, calc(var(--n) * 64px + (var(--n) - 1) * 3px));
+  }
+  .pipe-cell {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--stone);
+    border: 1px solid var(--stone-light);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  .pipe-cell:hover { background: var(--stone-light); }
+  .pipe-cell.source { background: rgba(201,148,58,0.15); border-color: var(--gold); cursor: default; }
+  .pipe-cell.target { background: rgba(90,170,112,0.15); border-color: var(--success); cursor: default; }
+  .pipe-cell.lit { background: rgba(126,207,192,0.1); }
+  .pipe-cell svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  .diff-row { margin-top: 0; margin-bottom: 1.25rem; }
+  .diff-row .btn.active { background: var(--stone-light); border-color: var(--gold); color: var(--gold-bright); box-shadow: 0 0 12px rgba(201,148,58,0.25); }
+
+  @media (max-width: 480px) {
+    main { padding: 1rem 0.75rem 3rem; }
+    .puzzle-frame { padding: 1.25rem 0.75rem; }
+    .flavor-text { padding: 0; }
+    header { padding: 2rem 1rem 1rem; }
+  }
+
+  /* === DM PANEL === */
+  .dm-panel {
+    background: rgba(201,148,58,0.05);
+    border: 1px solid var(--gold-dim);
+    border-left: 3px solid var(--gold);
+    padding: 1.25rem 1.5rem;
+    margin-top: 2rem;
+  }
+  .dm-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .dm-panel p { color: var(--parchment-dark); font-size: 0.95rem; line-height: 1.6; }
+  .dm-panel code {
+    font-family: monospace;
+    background: var(--stone);
+    color: var(--rune);
+    padding: 0.1rem 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  /* Separator */
+  .sep { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); margin: 1.5rem 0; }
+
+  /* Move counter */
+  .move-counter { text-align: center; font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--gold-dim); letter-spacing: 0.1em; margin-top: 0.75rem; }
+
+  /* Win overlay */
+  .win-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .win-overlay.show { display: flex; animation: fadeIn 0.4s; }
+  .win-box {
+    background: var(--stone-mid);
+    border: 2px solid var(--gold);
+    padding: 3rem;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 0 60px rgba(201,148,58,0.3);
+  }
+  .win-title { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold-bright); margin-bottom: 1rem; }
+  .win-msg { color: var(--parchment-dark); font-style: italic; line-height: 1.6; }
+
+/* === SUB PAGE HEADER AND BACK LINK === */
+header.sub-header { padding: 1.5rem 1rem 0; }
+header.sub-header .vault-title { font-size: clamp(1.5rem, 4.5vw, 2.2rem); }
+header.sub-header::after { margin-top: 1rem; }
+.game-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--parchment-dark);
+  margin-top: 0.75rem;
+  text-align: center;
+}
+a.btn { display: inline-block; text-decoration: none; line-height: normal; }
+.back-row { display: flex; justify-content: center; margin-top: 1.5rem; }
+
+/* === INDEX GAME LIST === */
+.game-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.game-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  min-height: 56px;
+  padding: 1rem 1.5rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  background: var(--stone-mid);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(201,148,58,0.06), 0 2px 10px rgba(0,0,0,0.4);
+  transition: all 0.2s;
+}
+.game-btn:hover,
+.game-btn:focus-visible {
+  background: var(--stone-light);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  box-shadow: 0 0 15px rgba(201,148,58,0.2), 0 2px 10px rgba(0,0,0,0.4);
+}

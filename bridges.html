@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rune Bridges - The Puzzle Vault</title>
+<link rel="stylesheet" href="vault.css">
+</head>
+<body>
+
+<header class="sub-header">
+  <div class="vault-title">The Puzzle Vault</div>
+  <div class="game-name">Rune Bridges</div>
+</header>
+
+<main>
+  <div class="back-row"><a class="btn" href="index.html">Back to the Puzzle Vault</a></div>
+
+  <div id="bridges" class="puzzle-section active"></div>
+</main>
+
+<div class="win-overlay" id="win-overlay" onclick="this.classList.remove('show')">
+  <div class="win-box">
+    <div class="win-title">✦ Solved ✦</div>
+    <p class="win-msg" id="win-msg"></p>
+    <br>
+    <button class="btn btn-primary" onclick="document.getElementById('win-overlay').classList.remove('show')">Continue</button>
+  </div>
+</div>
+
+<script>
+function showWin(msg) {
+  document.getElementById('win-msg').textContent = msg;
+  document.getElementById('win-overlay').classList.add('show');
+}
+</script>
+<script src="puzzles/bridges.js"></script>
+</body>
+</html>

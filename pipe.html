@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipe Maze - The Puzzle Vault</title>
+<link rel="stylesheet" href="vault.css">
+</head>
+<body>
+
+<header class="sub-header">
+  <div class="vault-title">The Puzzle Vault</div>
+  <div class="game-name">Pipe Maze</div>
+</header>
+
+<main>
+  <div class="back-row"><a class="btn" href="index.html">Back to the Puzzle Vault</a></div>
+
+  <div id="pipe" class="puzzle-section active">
+    <div class="puzzle-frame">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+      <p class="flavor-text">
+        "Stone channels carved into the floor of the chamber. Water flows from the glowing
+        <span style="color:var(--gold)">golden source</span>. Rotate the carved tiles until the flow
+        reaches the <span style="color:var(--success)">green seal</span>."
+      </p>
+
+      <div class="btn-row diff-row" id="pipe-diff" role="group" aria-label="Difficulty">
+        <button class="btn active" data-level="easy" aria-pressed="true" onclick="setPipeDifficulty('easy')">Easy 5x5</button>
+        <button class="btn" data-level="medium" aria-pressed="false" onclick="setPipeDifficulty('medium')">Medium 6x6</button>
+        <button class="btn" data-level="hard" aria-pressed="false" onclick="setPipeDifficulty('hard')">Hard 7x7</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; width:100%;">
+        <div class="pipe-grid" id="pipe-grid"></div>
+        <div class="move-counter" id="pipe-moves">Rotations: 0</div>
+      </div>
+
+      <div class="status-msg" id="pipe-status"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkPipe()">Check Flow</button>
+        <button class="btn" onclick="initPipe()">New Puzzle</button>
+      </div>
+    </div>
+
+    <div class="dm-panel">
+      <div class="dm-label">⚙ DM Configuration</div>
+      <p>
+        Click any non-source/target tile to rotate it 90°. Pick Easy (5x5), Medium (6x6) or Hard (7x7); every puzzle is built from a real solution and then only rotated, so it is always solvable.
+        Players click tiles to rotate them and then press <em>Check Flow</em>.
+        The puzzle highlights the connected path in teal when solved.
+      </p>
+    </div>
+  </div>
+</main>
+
+<div class="win-overlay" id="win-overlay" onclick="this.classList.remove('show')">
+  <div class="win-box">
+    <div class="win-title">✦ Solved ✦</div>
+    <p class="win-msg" id="win-msg"></p>
+    <br>
+    <button class="btn btn-primary" onclick="document.getElementById('win-overlay').classList.remove('show')">Continue</button>
+  </div>
+</div>
+
+<script>
+function showWin(msg) {
+  document.getElementById('win-msg').textContent = msg;
+  document.getElementById('win-overlay').classList.add('show');
+}
+</script>
+<script src="puzzles/pipe.js"></script>
+</body>
+</html>
