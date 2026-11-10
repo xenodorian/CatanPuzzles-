@@ -62,14 +62,6 @@
     text-shadow: 0 0 40px rgba(201,148,58,0.4), 0 2px 4px rgba(0,0,0,0.8);
     line-height: 1.1;
   }
-  .vault-subtitle {
-    font-family: 'Crimson Pro', serif;
-    font-style: italic;
-    color: var(--parchment-dark);
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-    letter-spacing: 0.05em;
-  }
 
   /* === NAV TABS === */
   .puzzle-nav {
@@ -173,14 +165,16 @@
      PUZZLE 1: PIPE/PATH PUZZLE
   ======================================== */
   .pipe-grid {
+    --n: 5;
     display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
     gap: 3px;
     margin: 0 auto;
-    width: fit-content;
+    width: min(100%, calc(var(--n) * 64px + (var(--n) - 1) * 3px));
   }
   .pipe-cell {
-    width: 56px;
-    height: 56px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     background: var(--stone);
     border: 1px solid var(--stone-light);
     cursor: pointer;
@@ -197,99 +191,17 @@
   .pipe-cell.lit { background: rgba(126,207,192,0.1); }
   .pipe-cell svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-  /* ========================================
-     PUZZLE 2: SLIDER PUZZLE
-  ======================================== */
-  .slider-grid {
-    display: grid;
-    gap: 4px;
-    margin: 0 auto;
-    width: fit-content;
-    background: var(--stone);
-    padding: 4px;
-    border: 2px solid var(--gold-dim);
-  }
-  .slider-cell {
-    width: 70px;
-    height: 70px;
-    background: var(--stone-light);
-    border: 1px solid var(--gold-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Cinzel', serif;
-    font-size: 1.5rem;
-    color: var(--gold-bright);
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    user-select: none;
-  }
-  .slider-cell:hover:not(.empty) { background: var(--stone-mid); border-color: var(--gold); }
-  .slider-cell.empty {
-    background: var(--stone);
-    border-color: var(--stone-light);
-    cursor: default;
-  }
-  .slider-cell .rune-glyph {
-    font-size: 2rem;
-    text-shadow: 0 0 12px rgba(240,191,90,0.5);
-  }
+  .diff-row { margin-top: 0; margin-bottom: 1.25rem; }
+  .diff-row .btn.active { background: var(--stone-light); border-color: var(--gold); color: var(--gold-bright); box-shadow: 0 0 12px rgba(201,148,58,0.25); }
+  a.tab-btn { display: inline-block; text-decoration: none; line-height: normal; }
 
-  /* ========================================
-     PUZZLE 3: SYMBOL SEQUENCE
-  ======================================== */
-  .sequence-display {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    main { padding: 1rem 0.75rem 3rem; }
+    .puzzle-frame { padding: 1.25rem 0.75rem; }
+    .flavor-text { padding: 0; }
+    .tab-btn { padding: 0.6rem 1rem; }
+    header { padding: 2rem 1rem 1rem; }
   }
-  .seq-slot {
-    width: 56px;
-    height: 56px;
-    background: var(--stone);
-    border: 2px solid var(--gold-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    transition: all 0.3s;
-    position: relative;
-  }
-  .seq-slot.filled { border-color: var(--gold); background: rgba(201,148,58,0.1); }
-  .seq-slot.correct { border-color: var(--success); background: rgba(90,170,112,0.15); }
-  .seq-slot.wrong { border-color: var(--danger); background: rgba(192,64,64,0.15); animation: shake 0.3s; }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-  }
-  .symbol-bank {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .sym-btn {
-    width: 56px;
-    height: 56px;
-    background: var(--stone-light);
-    border: 1px solid var(--gold-dim);
-    font-size: 1.8rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .sym-btn:hover { background: rgba(201,148,58,0.2); border-color: var(--gold); transform: scale(1.05); }
-  .sym-btn:active { transform: scale(0.95); }
-  .sym-btn.used { opacity: 0.3; cursor: not-allowed; }
-
-  .seq-controls { text-align: center; margin: 1rem 0; }
 
   /* === DM PANEL === */
   .dm-panel {
@@ -351,13 +263,11 @@
 
 <header>
   <div class="vault-title">The Puzzle Vault</div>
-  <div class="vault-subtitle">Interactive Mechanisms for Discord-Based TTRPGs</div>
-</header>
-
 <nav class="puzzle-nav">
-  <button class="tab-btn active" onclick="showPuzzle('pipe')">Pipe Maze</button>
-  <button class="tab-btn" onclick="showPuzzle('slider')">Rune Slider</button>
-  <button class="tab-btn" onclick="showPuzzle('sequence')">Symbol Sequence</button>
+  <button class="tab-btn active" onclick="showPuzzle('pipe', this)">Pipe Maze</button>
+  <a class="tab-btn" href="chess-in-one.html">Chess in One</a>
+  <a class="tab-btn" href="dragonchess.html">Dragon Chess</a>
+  <a class="tab-btn" href="wyvern.html">Wyvern Chess</a>
 </nav>
 
 <main>
@@ -374,7 +284,13 @@
         reaches the <span style="color:var(--success)">green seal</span>."
       </p>
 
-      <div style="display:flex; flex-direction:column; align-items:center; gap:1rem;">
+      <div class="btn-row diff-row" id="pipe-diff" role="group" aria-label="Difficulty">
+        <button class="btn active" data-level="easy" aria-pressed="true" onclick="setPipeDifficulty('easy')">Easy 5x5</button>
+        <button class="btn" data-level="medium" aria-pressed="false" onclick="setPipeDifficulty('medium')">Medium 6x6</button>
+        <button class="btn" data-level="hard" aria-pressed="false" onclick="setPipeDifficulty('hard')">Hard 7x7</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; width:100%;">
         <div class="pipe-grid" id="pipe-grid"></div>
         <div class="move-counter" id="pipe-moves">Rotations: 0</div>
       </div>
@@ -389,83 +305,9 @@
     <div class="dm-panel">
       <div class="dm-label">⚙ DM Configuration</div>
       <p>
-        Click any non-source/target tile to rotate it 90°. The puzzle auto-generates a solvable path.
+        Click any non-source/target tile to rotate it 90°. Pick Easy (5x5), Medium (6x6) or Hard (7x7); every puzzle is built from a real solution and then only rotated, so it is always solvable.
         Players click tiles to rotate them and then press <em>Check Flow</em>.
         The puzzle highlights the connected path in teal when solved.
-      </p>
-    </div>
-  </div>
-
-  <!-- ======= PUZZLE 2: RUNE SLIDER ======= -->
-  <div id="slider" class="puzzle-section">
-    <div class="puzzle-frame">
-      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
-
-      <p class="flavor-text">
-        "Eight rune-carved stone tablets rest in a frame, one space empty. The faded inscription
-        on the wall shows the correct order. Slide the tablets into their proper arrangement."
-      </p>
-
-      <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
-        <div style="font-size:1.8rem;letter-spacing:0.3em;color:var(--gold-dim);text-align:center;">
-          Goal: <span id="slider-goal"></span>
-        </div>
-        <div class="slider-grid" id="slider-grid"></div>
-        <div class="move-counter" id="slider-moves">Moves: 0</div>
-      </div>
-
-      <div class="status-msg" id="slider-status"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkSlider()">Examine Tablets</button>
-        <button class="btn" onclick="initSlider()">Scramble</button>
-      </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        Click any tile adjacent to the empty space to slide it. Change <code>SLIDER_GLYPHS</code>
-        in the script to swap symbols (use numbers, letters, or emoji). The goal order is shown above the grid.
-        Works best on desktop; mobile drag coming soon.
-      </p>
-    </div>
-  </div>
-
-  <!-- ======= PUZZLE 3: SYMBOL SEQUENCE ======= -->
-  <div id="sequence" class="puzzle-section">
-    <div class="puzzle-frame">
-      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
-
-      <p class="flavor-text">
-        "Five glyphs must be pressed upon the altar in the correct order. The ancient text reads:
-        <em id="seq-riddle"></em>"
-      </p>
-
-      <div class="sequence-display" id="seq-slots"></div>
-
-      <div class="sep"></div>
-
-      <div class="symbol-bank" id="sym-bank"></div>
-
-      <div class="seq-controls">
-        <button class="btn" onclick="clearSequence()" style="font-size:0.7rem">✕ Clear Last</button>
-      </div>
-
-      <div class="status-msg" id="seq-status"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="checkSequence()">Invoke Sequence</button>
-        <button class="btn" onclick="initSequence()">Reset</button>
-      </div>
-    </div>
-
-    <div class="dm-panel">
-      <div class="dm-label">⚙ DM Configuration</div>
-      <p>
-        Change <code>SEQ_SOLUTION</code> to set the correct order (indices into <code>SEQ_SYMBOLS</code>),
-        and edit <code>SEQ_RIDDLE</code> to give players the in-game clue. Players tap symbols to build
-        the sequence; order matters.
       </p>
     </div>
   </div>
@@ -484,29 +326,13 @@
 
 <script>
 // ════════════════════════════════════════
-//  DM CONFIGURATION — Edit these values
-// ════════════════════════════════════════
-
-// --- PIPE ---
-// Auto-generated, no config needed
-
-// --- SLIDER ---
-const SLIDER_GLYPHS = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ']; // 8 glyphs for 3x3 grid
-const SLIDER_COLS = 3;
-
-// --- SEQUENCE ---
-const SEQ_SYMBOLS = ['🔥','💧','🌿','⚡','🌑','🩸','✨','🗡️'];
-const SEQ_SOLUTION = [0, 3, 2, 1, 4]; // indices into SEQ_SYMBOLS (Fire, Lightning, Leaf, Water, Moon)
-const SEQ_RIDDLE = "Fire calls the storm, which feeds the earth, which drinks the water, which swallows the moon.";
-
-// ════════════════════════════════════════
 //  TAB SWITCHING
 // ════════════════════════════════════════
-function showPuzzle(id) {
+function showPuzzle(id, btn) {
   document.querySelectorAll('.puzzle-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('button.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 function showWin(msg) {
@@ -518,58 +344,131 @@ function showWin(msg) {
 //  PUZZLE 1: PIPE MAZE
 // ════════════════════════════════════════
 // Pipe types: 'L' (corner), 'I' (straight), 'T' (tee), '+' (cross)
-// connections[type][rotation] = [N,E,S,W] booleans
+// PIPE_CONN[type][rotation] = [N,E,S,W] open sides. Each rotation is a 90 degree clockwise turn.
 const PIPE_CONN = {
-  'L': [[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]], // wait what -- N open means connects north (to cell above)
+  'L': [[0,1,1,0],[0,0,1,1],[1,0,0,1],[1,1,0,0]], // ES, SW, WN, NE
   'I': [[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]],
-  'T': [[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]],
+  'T': [[0,1,1,1],[1,0,1,1],[1,1,0,1],[1,1,1,0]], // missing N, E, S, W
   '+': [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],
 };
-// N=0 connects to cell above (row-1), E=1 connects right (col+1), S=2 below (row+1), W=3 left (col-1)
+// N=0 connects to cell above (row-1), E=1 right (col+1), S=2 below (row+1), W=3 left (col-1)
 const DIR_DR = [-1,0,1,0];
 const DIR_DC = [0,1,0,-1];
 const OPP = [2,3,0,1];
 
+const PIPE_LEVELS = { easy: 5, medium: 6, hard: 7 };
+let pipeDifficulty = 'easy';
+
 let pipeGrid = [], pipeRows = 5, pipeCols = 5, pipeMoves = 0;
 let pipeSource = [0,0], pipeTarget = [4,4];
 
-function initPipe() {
-  pipeMoves = 0;
-  document.getElementById('pipe-moves').textContent = 'Rotations: 0';
-  document.getElementById('pipe-status').textContent = '';
-  document.getElementById('pipe-status').className = 'status-msg';
+function isPipeFixed(r, c) {
+  return (r===pipeSource[0] && c===pipeSource[1]) || (r===pipeTarget[0] && c===pipeTarget[1]);
+}
 
-  // Build a path from source to target, then fill rest with random pipes
-  pipeGrid = Array.from({length:pipeRows}, () =>
-    Array.from({length:pipeCols}, () => ({type:'I', rot:0, lit:false}))
+// Water flow from the source. Returns { found, lit } where lit is a Set of "r,c" keys reached.
+// A step between neighbours only counts if BOTH tiles are open toward each other.
+// Any connected route from source to target counts, not only the generated one.
+function computePipeFlow(grid, rows, cols, src, tgt) {
+  const lit = new Set([`${src[0]},${src[1]}`]);
+  const queue = [[src[0], src[1]]];
+  let found = false;
+  while (queue.length) {
+    const [r,c] = queue.shift();
+    if (r===tgt[0] && c===tgt[1]) found = true;
+    const conn = PIPE_CONN[grid[r][c].type][grid[r][c].rot];
+    for (let d=0; d<4; d++) {
+      if (!conn[d]) continue;
+      const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
+      if (nr<0||nr>=rows||nc<0||nc>=cols) continue;
+      const key = `${nr},${nc}`;
+      if (lit.has(key)) continue;
+      const nconn = PIPE_CONN[grid[nr][nc].type][grid[nr][nc].rot];
+      if (!nconn[OPP[d]]) continue;
+      lit.add(key);
+      queue.push([nr,nc]);
+    }
+  }
+  return { found, lit };
+}
+
+// Build a puzzle from a known solution: a connected path first, each path cell given the
+// piece type that path needs, then only rotations are used to scramble.
+// Returns { grid, path }.
+function buildPipePuzzle(rows, cols, src, tgt) {
+  const path = generatePath(src, tgt, rows, cols);
+  const grid = Array.from({length:rows}, () =>
+    Array.from({length:cols}, () => ({type:'I', rot:0, lit:false}))
   );
 
-  // Generate a random path
-  const path = generatePath(pipeSource, pipeTarget, pipeRows, pipeCols);
-  // Assign pipe types to path cells based on direction changes
+  // Path cells get the exact piece the solution needs.
   for (let k=0; k<path.length; k++) {
     const [r,c] = path[k];
     let fromDir = -1, toDir = -1;
     if (k>0) { const [pr,pc]=path[k-1]; fromDir=getDirIndex(pr,pc,r,c); }
     if (k<path.length-1) { const [nr,nc]=path[k+1]; toDir=getDirIndex(r,c,nr,nc); }
-    pipeGrid[r][c] = assignPipe(fromDir, toDir);
+    grid[r][c] = assignPipe(fromDir, toDir);
   }
 
-  // Fill non-path cells with random pipes
+  // Non-path cells get random filler pipes.
   const pathSet = new Set(path.map(([r,c])=>`${r},${c}`));
-  for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) {
+  const fillers = ['L','I','T','+'];
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
     if (!pathSet.has(`${r},${c}`)) {
-      const types = ['L','I','T','+'];
-      pipeGrid[r][c] = { type: types[Math.floor(Math.random()*3)], rot: Math.floor(Math.random()*4), lit:false };
+      grid[r][c] = { type: fillers[Math.floor(Math.random()*fillers.length)], rot: Math.floor(Math.random()*4), lit:false };
     }
   }
 
-  // Scramble path cells rotations (but keep them solvable — randomize by extra rotations)
-  for (const [r,c] of path) {
-    const extra = Math.floor(Math.random()*4);
-    pipeGrid[r][c].rot = (pipeGrid[r][c].rot + extra) % 4;
+  // Scramble by rotation only. Source and target are fixed (the player cannot rotate them),
+  // so they keep their solved orientation. Re-roll until the puzzle is not already solved.
+  const movable = [];
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+    if (!(r===src[0]&&c===src[1]) && !(r===tgt[0]&&c===tgt[1])) movable.push([r,c]);
   }
+  const solvedNow = () => computePipeFlow(grid, rows, cols, src, tgt).found;
+  for (let attempt=0; attempt<1000; attempt++) {
+    for (const [r,c] of movable) grid[r][c].rot = Math.floor(Math.random()*4);
+    if (!solvedNow()) return { grid, path };
+  }
+  // Deterministic fallback: turn path cells away from the solution until flow breaks.
+  for (const [r,c] of path) {
+    if (!movable.some(([mr,mc])=>mr===r&&mc===c)) continue;
+    if (grid[r][c].type === 'I' || grid[r][c].type === 'L') {
+      for (let t=0;t<4;t++) {
+        grid[r][c].rot = t;
+        if (!solvedNow()) return { grid, path };
+      }
+    }
+  }
+  return { grid, path };
+}
 
+function setPipeDifficulty(level) {
+  if (!PIPE_LEVELS[level]) return;
+  pipeDifficulty = level;
+  initPipe();
+}
+
+function updateDifficultyButtons() {
+  document.querySelectorAll('#pipe-diff .btn').forEach(b => {
+    const on = b.dataset.level === pipeDifficulty;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+function initPipe() {
+  const n = PIPE_LEVELS[pipeDifficulty];
+  pipeRows = n; pipeCols = n;
+  pipeSource = [0,0];
+  pipeTarget = [n-1,n-1];
+  pipeMoves = 0;
+  document.getElementById('pipe-moves').textContent = 'Rotations: 0';
+  document.getElementById('pipe-status').textContent = '';
+  document.getElementById('pipe-status').className = 'status-msg';
+
+  pipeGrid = buildPipePuzzle(pipeRows, pipeCols, pipeSource, pipeTarget).grid;
+  updateDifficultyButtons();
   renderPipe();
 }
 
@@ -581,58 +480,66 @@ function getDirIndex(r1,c1,r2,c2) {
 }
 
 function assignPipe(fromDir, toDir) {
-  // fromDir: direction we came FROM (i.e., which side connects back)
-  // toDir: direction we go TO (which side connects forward)
-  if (fromDir === -1) {
-    // source: only has toDir open
-    return straightOrCorner(toDir);
-  }
-  if (toDir === -1) {
-    // target: only has fromDir open
-    return straightOrCorner(OPP[fromDir]);
-  }
-  const backDir = OPP[fromDir]; // the side that connects back
-  // Find type and rotation with backDir and toDir open
-  for (const type of ['L','I','T','+']) {
+  // fromDir: direction we travelled to arrive here (-1 for the source)
+  // toDir: direction we travel to leave here (-1 for the target)
+  if (fromDir === -1) return straightOrCorner(toDir);            // source: open toward the path
+  if (toDir === -1) return straightOrCorner(OPP[fromDir]);       // target: open toward the path
+  const backDir = OPP[fromDir]; // the side that faces the previous cell
+  // Path cells use only L (turn) or I (straight): exactly the two sides the path needs.
+  for (const type of ['L','I']) {
     for (let rot=0;rot<4;rot++) {
       const conn = PIPE_CONN[type][rot];
-      if (conn[backDir] && conn[toDir]) return {type, rot, lit:false};
+      if (conn[backDir] && conn[toDir] && conn[0]+conn[1]+conn[2]+conn[3] === 2) return {type, rot, lit:false};
     }
   }
-  return {type:'L', rot:0, lit:false};
+  throw new Error('no pipe fits path cell');
 }
 
 function straightOrCorner(dir) {
-  // Just needs one opening — use I pipe pointing that dir
+  // Source and target are straight pipes laid along the axis of their single path neighbour.
   if (dir===0||dir===2) return {type:'I',rot:0,lit:false};
   return {type:'I',rot:1,lit:false};
 }
 
 function generatePath(src, tgt, rows, cols) {
-  // Simple random walk with backtracking
-  const visited = new Set();
-  const path = [src];
-  visited.add(`${src[0]},${src[1]}`);
-  let safety = 0;
-  while (!(path[path.length-1][0]===tgt[0] && path[path.length-1][1]===tgt[1])) {
-    if (++safety > 2000) break;
+  // Random self-avoiding walk. A step is only taken if the target stays reachable through
+  // unvisited cells, so the walk can never dead-end and always finishes at the target.
+  const key = (r,c) => `${r},${c}`;
+  const visited = new Set([key(src[0],src[1])]);
+  const path = [[src[0], src[1]]];
+
+  function reachable(fr, fc) {
+    if (fr===tgt[0] && fc===tgt[1]) return true;
+    const seen = new Set([key(fr,fc)]);
+    const stack = [[fr,fc]];
+    while (stack.length) {
+      const [r,c] = stack.pop();
+      for (let d=0; d<4; d++) {
+        const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
+        if (nr<0||nr>=rows||nc<0||nc>=cols) continue;
+        const k = key(nr,nc);
+        if (seen.has(k)) continue;
+        if (nr===tgt[0] && nc===tgt[1]) return true;
+        if (visited.has(k)) continue;
+        seen.add(k);
+        stack.push([nr,nc]);
+      }
+    }
+    return false;
+  }
+
+  while (true) {
     const [r,c] = path[path.length-1];
-    const dirs = shuffleArray([0,1,2,3]);
+    if (r===tgt[0] && c===tgt[1]) break;
     let moved = false;
-    for (const d of dirs) {
+    for (const d of shuffleArray([0,1,2,3])) {
       const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
-      if (nr<0||nr>=rows||nc<0||nc>=cols||visited.has(`${nr},${nc}`)) continue;
-      path.push([nr,nc]);
-      visited.add(`${nr},${nc}`);
-      moved = true;
-      break;
+      if (nr<0||nr>=rows||nc<0||nc>=cols||visited.has(key(nr,nc))) continue;
+      visited.add(key(nr,nc));
+      if (reachable(nr,nc)) { path.push([nr,nc]); moved = true; break; }
+      visited.delete(key(nr,nc));
     }
-    if (!moved) {
-      // backtrack
-      visited.delete(`${r},${c}`);
-      path.pop();
-      if (path.length===0) { path.push(src); visited.add(`${src[0]},${src[1]}`); }
-    }
+    if (!moved) throw new Error('path generation failed'); // cannot happen on an open grid
   }
   return path;
 }
@@ -644,12 +551,13 @@ function shuffleArray(arr) {
 }
 
 function rotatePipe(r,c) {
+  if (isPipeFixed(r,c)) return;
   const cell = pipeGrid[r][c];
-  const [sr,sc]=pipeSource, [tr,tc]=pipeTarget;
-  if (r===sr&&c===sc||r===tr&&c===tc) return;
   cell.rot = (cell.rot+1)%4;
   pipeMoves++;
   document.getElementById('pipe-moves').textContent = `Rotations: ${pipeMoves}`;
+  // The old highlight no longer reflects the new layout
+  for (let rr=0;rr<pipeRows;rr++) for (let cc=0;cc<pipeCols;cc++) pipeGrid[rr][cc].lit=false;
   renderPipe();
 }
 
@@ -659,32 +567,8 @@ function getConnections(r,c) {
 }
 
 function checkPipe() {
-  // BFS from source, follow connections
-  const [sr,sc]=pipeSource,[tr,tc]=pipeTarget;
-  const visited = new Set();
-  const queue = [[sr,sc]];
-  visited.add(`${sr},${sc}`);
-  let found = false;
-
-  // Reset lit
-  for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) pipeGrid[r][c].lit=false;
-
-  while (queue.length) {
-    const [r,c] = queue.shift();
-    pipeGrid[r][c].lit = true;
-    if (r===tr&&c===tc) { found=true; break; }
-    const conn = getConnections(r,c);
-    for (let d=0;d<4;d++) {
-      if (!conn[d]) continue;
-      const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
-      if (nr<0||nr>=pipeRows||nc<0||nc>=pipeCols) continue;
-      if (visited.has(`${nr},${nc}`)) continue;
-      const nconn = getConnections(nr,nc);
-      if (!nconn[OPP[d]]) continue;
-      queue.push([nr,nc]);
-      visited.add(`${nr},${nc}`);
-    }
-  }
+  const { found, lit } = computePipeFlow(pipeGrid, pipeRows, pipeCols, pipeSource, pipeTarget);
+  for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) pipeGrid[r][c].lit = lit.has(`${r},${c}`);
 
   renderPipe();
   const st = document.getElementById('pipe-status');
@@ -701,7 +585,7 @@ function checkPipe() {
 function renderPipe() {
   const grid = document.getElementById('pipe-grid');
   grid.innerHTML = '';
-  grid.style.gridTemplateColumns = `repeat(${pipeCols}, 1fr)`;
+  grid.style.setProperty('--n', pipeCols);
   for (let r=0;r<pipeRows;r++) {
     for (let c=0;c<pipeCols;c++) {
       const cell = pipeGrid[r][c];
@@ -735,166 +619,10 @@ function renderPipe() {
 }
 
 // ════════════════════════════════════════
-//  PUZZLE 2: SLIDER
-// ════════════════════════════════════════
-let sliderGrid = [], sliderRows = 3, sliderCols = 3, sliderMoves = 0;
-
-function initSlider() {
-  sliderRows = SLIDER_COLS;
-  sliderCols = SLIDER_COLS;
-  sliderMoves = 0;
-  document.getElementById('slider-moves').textContent = 'Moves: 0';
-  document.getElementById('slider-status').textContent = '';
-  document.getElementById('slider-status').className = 'status-msg';
-
-  // Create solved grid
-  sliderGrid = [];
-  for (let i=0; i<sliderRows*sliderCols-1; i++) {
-    sliderGrid.push(i);
-  }
-  sliderGrid.push(-1); // -1 = empty
-
-  // Display goal
-  let goalStr = '';
-  for (let i=0;i<sliderRows*sliderCols-1;i++) {
-    goalStr += SLIDER_GLYPHS[sliderGrid[i]] + ' ';
-  }
-  document.getElementById('slider-goal').textContent = goalStr;
-
-  // Shuffle
-  for (let i=0;i<1000;i++) {
-    const emptyIdx = sliderGrid.indexOf(-1);
-    const [er,ec] = [Math.floor(emptyIdx/sliderCols), emptyIdx%sliderCols];
-    const dirs = [[er-1,ec],[er+1,ec],[er,ec-1],[er,ec+1]];
-    const valid = dirs.filter(([r,c]) => r>=0&&r<sliderRows&&c>=0&&c<sliderCols);
-    const [r,c] = valid[Math.floor(Math.random()*valid.length)];
-    const idx = r*sliderCols+c;
-    [sliderGrid[emptyIdx], sliderGrid[idx]] = [sliderGrid[idx], sliderGrid[emptyIdx]];
-  }
-
-  renderSlider();
-}
-
-function slideSlider(r,c) {
-  const idx = r*sliderCols+c;
-  const emptyIdx = sliderGrid.indexOf(-1);
-  const [er,ec] = [Math.floor(emptyIdx/sliderCols), emptyIdx%sliderCols];
-  if (Math.abs(r-er)+Math.abs(c-ec)===1) {
-    [sliderGrid[idx], sliderGrid[emptyIdx]] = [sliderGrid[emptyIdx], sliderGrid[idx]];
-    sliderMoves++;
-    document.getElementById('slider-moves').textContent = `Moves: ${sliderMoves}`;
-    renderSlider();
-  }
-}
-
-function renderSlider() {
-  const grid = document.getElementById('slider-grid');
-  grid.innerHTML = '';
-  grid.style.gridTemplateColumns = `repeat(${sliderCols}, 1fr)`;
-  for (let i=0; i<sliderGrid.length; i++) {
-    const val = sliderGrid[i];
-    const div = document.createElement('div');
-    div.className = 'slider-cell';
-    if (val===-1) {
-      div.classList.add('empty');
-    } else {
-      const [r,c] = [Math.floor(i/sliderCols), i%sliderCols];
-      div.onclick = () => slideSlider(r,c);
-      div.innerHTML = `<div class="rune-glyph">${SLIDER_GLYPHS[val]}</div>`;
-    }
-    grid.appendChild(div);
-  }
-}
-
-function checkSlider() {
-  let solved = true;
-  for (let i=0; i<sliderGrid.length-1; i++) {
-    if (sliderGrid[i] !== i) { solved=false; break; }
-  }
-  const st = document.getElementById('slider-status');
-  if (solved) {
-    st.textContent = '✦ The tablets align! Ancient magic stirs. ✦';
-    st.className = 'status-msg success';
-    setTimeout(() => showWin('The runes blaze with power, and the way forward opens.'), 600);
-  } else {
-    st.textContent = 'The tablets rattle. They are not yet in harmony.';
-    st.className = 'status-msg fail';
-  }
-}
-
-// ════════════════════════════════════════
-//  PUZZLE 3: SYMBOL SEQUENCE
-// ════════════════════════════════════════
-let seqInput = [];
-
-function initSequence() {
-  seqInput = [];
-  document.getElementById('seq-riddle').textContent = SEQ_RIDDLE;
-  renderSequence();
-  document.getElementById('seq-status').textContent = '';
-  document.getElementById('seq-status').className = 'status-msg';
-}
-
-function addToSeq(idx) {
-  if (seqInput.length < SEQ_SOLUTION.length) {
-    seqInput.push(idx);
-    renderSequence();
-  }
-}
-
-function clearSequence() {
-  seqInput = [];
-  renderSequence();
-}
-
-function renderSequence() {
-  // Slots
-  const slotsDiv = document.getElementById('seq-slots');
-  slotsDiv.innerHTML = '';
-  for (let i=0; i<SEQ_SOLUTION.length; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'seq-slot';
-    if (i < seqInput.length) {
-      slot.classList.add('filled');
-      slot.textContent = SEQ_SYMBOLS[seqInput[i]];
-    }
-    slotsDiv.appendChild(slot);
-  }
-
-  // Bank
-  const bankDiv = document.getElementById('sym-bank');
-  bankDiv.innerHTML = '';
-  for (let i=0; i<SEQ_SYMBOLS.length; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'sym-btn';
-    btn.textContent = SEQ_SYMBOLS[i];
-    const used = seqInput.filter(idx => idx===i).length > 0;
-    if (used) btn.classList.add('used');
-    btn.onclick = () => addToSeq(i);
-    bankDiv.appendChild(btn);
-  }
-}
-
-function checkSequence() {
-  const correct = seqInput.length === SEQ_SOLUTION.length && seqInput.every((v,i) => v === SEQ_SOLUTION[i]);
-  const st = document.getElementById('seq-status');
-  if (correct) {
-    st.textContent = '✦ The altar blazes! The sequence is true. ✦';
-    st.className = 'status-msg success';
-    setTimeout(() => showWin('The ancient magic responds—the way is clear.'), 600);
-  } else {
-    st.textContent = 'The glyphs pulse but do not resonate.';
-    st.className = 'status-msg fail';
-  }
-}
-
-// ════════════════════════════════════════
 //  INITIALIZATION
 // ════════════════════════════════════════
 window.onload = function() {
   initPipe();
-  initSlider();
-  initSequence();
 };
 </script>
 </body>
