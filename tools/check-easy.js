@@ -1,9 +1,9 @@
 // Verifies the "every Easy puzzle has at least two solutions" rule for each vault game, and that
 // each game's win check accepts more than one solution, not just a stored answer.
 // Also checks that Medium and harder Crate Vault levels are unchanged and still have one route.
-// Crate Vault Easy levels must also be obvious: 1-2 crates, at most 3 inner walls, every crate in
-// line with a rune, 2 to 5 pushes, and no push from the start or along a shortest solution that
-// makes the vault unsolvable.
+// Crate Vault Easy levels must also be forgiving: 2 crates (1 allowed), 9 to 14 pushes, at least
+// two distinct push routes, and no push from the start that makes the vault unsolvable. Trap
+// pushes (solvable -> unsolvable) anywhere are counted and reported per level.
 // Usage: node tools/check-easy.js [samples=300] [baseRef=b3b8b77]
 // baseRef is the commit the Medium/Hard/Very Hard Crate banks are compared against (they must not change).
 'use strict';
@@ -27,26 +27,24 @@ function load(file, extra) {
   const S = require('./crate-solver.js');
   const bankOf = src => JSON.parse(src.match(/var BANK = (\{.*\});/)[1]);
   const bank = bankOf(read('puzzles/crate.js'));
-  const { inLine } = require('./crate-easy-gen.js');
-  const counts = [], pushes = [], crates = [];
+  const counts = [], pushes = [], traps = [], onShortest = [];
   bank['2'].forEach((e, i) => {
     const L = S.parse(e[0]), a = S.analyze(L, 1000);
-    const g = e[0].split('/').map(r => r.split(''));
-    const inner = g.slice(1, -1).reduce((n, r) => n + r.slice(1, -1).filter(ch => ch === '#').length, 0);
     counts.push(a.routes.length + (a.routes.length >= 1000 ? '+' : ''));
-    pushes.push(a.minPushes); crates.push(L.crates.length);
+    pushes.push(a.minPushes); traps.push(a.deadPushes + '/' + a.pushes); onShortest.push(a.deadOnShortest);
     ok(a.routes.length >= 2, `easy level ${i} has ${a.routes.length} route(s)`);
     ok(new Set(a.routes.map(S.pushKey)).size >= 2, `easy level ${i} routes are only reorderings`);
-    ok(a.minPushes >= 2 && a.minPushes <= 5, `easy level ${i} needs ${a.minPushes} pushes`);
+    ok(a.minPushes >= 9 && a.minPushes <= 14, `easy level ${i} needs ${a.minPushes} pushes`);
     ok(L.crates.length >= 1 && L.crates.length <= 2, `easy level ${i} has ${L.crates.length} crates`);
-    ok(inner <= 3, `easy level ${i} has ${inner} inner walls`);
-    ok(a.deadFromStart === 0 && a.deadOnShortest === 0, `easy level ${i} has a trap push (${a.deadFromStart} from start, ${a.deadOnShortest} on shortest)`);
-    L.crates.forEach(c => ok(inLine(g, Math.floor(c / L.w), c % L.w), `easy level ${i} crate not in line with a rune`));
+    ok(e[0].split('/').length === 6 && e[0].split('/')[0].length === 7, `easy level ${i} is not a 6x7 room`);
+    ok(a.deadFromStart === 0, `easy level ${i} has ${a.deadFromStart} trap push(es) from the start`);
     ok(e.length >= 3 && S.replay(L, e[1]) && S.replay(L, e[2]) && e[1] !== e[2], `easy level ${i} stored solutions`);
   });
-  console.log(`  easy levels: ${bank['2'].length} (${crates.filter(c => c === 1).length} with 1 crate, ${crates.filter(c => c === 2).length} with 2)`);
+  console.log(`  easy levels: ${bank['2'].length}`);
   console.log(`  fewest pushes per level: ${pushes.join(' ')} (range ${Math.min(...pushes)}-${Math.max(...pushes)})`);
   console.log(`  push routes per level: ${counts.join(' ')}`);
+  console.log(`  trap pushes / all pushes from solvable positions: ${traps.join(' ')}`);
+  console.log(`  trap pushes from positions on a shortest solution: ${onShortest.join(' ')}; from the start: 0 for all`);
   let base = null;
   try { base = bankOf(execSync(`git show ${BASE}:puzzles/crate.js`, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })); } catch (e) { /* no git */ }
   for (const k of ['3', '4', '5']) {
