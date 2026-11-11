@@ -6,7 +6,6 @@
   var DIRS = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
   var ORDER = ['U', 'D', 'L', 'R'];
   var OPP = { U: 'D', D: 'U', L: 'R', R: 'L' };
-  var NAMES = { U: 'Up', D: 'Down', L: 'Left', R: 'Right' };
   var KEYS = {
     ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R',
     w: 'U', s: 'D', a: 'L', d: 'R', W: 'U', S: 'D', A: 'L', D: 'R'
@@ -221,7 +220,6 @@
         '</div>' +
         '<div class="btn-row">' +
           '<button class="btn" data-cv-act="undo">Undo</button>' +
-          '<button class="btn" data-cv-act="hint">Hint</button>' +
           '<button class="btn" data-cv-act="restart">Restart</button>' +
           '<button class="btn btn-primary" data-cv-act="new">New Puzzle</button>' +
         '</div>' +
@@ -230,8 +228,7 @@
         '<div class="dm-label">DM Configuration</div>' +
         '<p>Each vault is a tight room found by exhaustive search. It has exactly one sequence of pushes that ' +
         'solves it without going back on itself: every other push either jams a crate for good or must be undone. ' +
-        'Every level is replayed through the game rules before it is shown, so it is always solvable. Hint reveals ' +
-        'the next move of the route while the player is still following it.</p>' +
+        'Every level is replayed through the game rules before it is shown, so it is always solvable.</p>' +
       '</div>';
   }
 
@@ -344,17 +341,6 @@
     newPuzzle();
   }
 
-  function hint() {
-    var lvl = state.level, h = state.history;
-    if (applyMoves(lvl, h).solved) {
-      setStatus('The vault is already open.', 'success');
-    } else if (lvl.solution.indexOf(h) === 0 && h.length < lvl.solution.length) {
-      setStatus('Hint: next move is ' + NAMES[lvl.solution.charAt(h.length)] + '.', 'hint');
-    } else {
-      setStatus('Your route has left the hinted path. Undo or Restart to get hints again.', 'hint');
-    }
-    render();
-  }
 
   function onClick(e) {
     var t = e.target && e.target.closest ? e.target.closest('[data-cv-dir],[data-cv-diff],[data-cv-act]') : null;
@@ -366,7 +352,6 @@
     } else {
       switch (t.getAttribute('data-cv-act')) {
         case 'undo': undo(); break;
-        case 'hint': hint(); break;
         case 'restart': restart(); break;
         case 'new': newPuzzle(); break;
       }
