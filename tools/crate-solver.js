@@ -87,7 +87,36 @@ function analyze(L, cap) {
     on.delete(k);
   }
   if (alive.has(start)) dfs(start);
-  return { routes, states: nodes.size };
+  // fewest pushes to solve (BFS over positions)
+  let minPushes = -1;
+  const dist = new Map([[start, 0]]), bq = [start];
+  while (bq.length) {
+    const k = bq.shift(), N = nodes.get(k);
+    if (N.goal) { minPushes = dist.get(k); break; }
+    for (const s of N.succ) if (!dist.has(s.k)) { dist.set(s.k, dist.get(k) + 1); bq.push(s.k); }
+  }
+  // positions on some shortest solution (distance from start + distance to solved == minPushes)
+  const toGoal = new Map(), rq = [];
+  for (const [k, N] of nodes) if (N.goal) { toGoal.set(k, 0); rq.push(k); }
+  while (rq.length) {
+    const k = rq.shift();
+    for (const p of pred.get(k) || []) if (!toGoal.has(p)) { toGoal.set(p, toGoal.get(k) + 1); rq.push(p); }
+  }
+  // traps: pushes that take a still-solvable position to one that can no longer be solved
+  let pushes = 0, deadPushes = 0, deadFromStart = 0, deadOnShortest = 0;
+  for (const [k, N] of nodes) {
+    if (!alive.has(k) || N.goal) continue;
+    const onShortest = dist.has(k) && toGoal.has(k) && dist.get(k) + toGoal.get(k) === minPushes;
+    for (const s of N.succ) {
+      pushes++;
+      if (!alive.has(s.k)) {
+        deadPushes++;
+        if (k === start) deadFromStart++;
+        if (onShortest) deadOnShortest++;
+      }
+    }
+  }
+  return { routes, states: nodes.size, minPushes, deadPushes, deadFromStart, deadOnShortest, pushes };
 }
 
 // Turns a push route into a U/D/L/R move string (shortest walks between pushes).
