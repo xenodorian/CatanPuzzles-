@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="91a4be381f";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="59bfcfb2c3";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pipe Maze - The Puzzle Vault</title>
-<link rel="stylesheet" href="vault.css?v=91a4be381f">
+<link rel="stylesheet" href="vault.css?v=59bfcfb2c3">
 </head>
 <body>
 
@@ -49,7 +49,7 @@
     <div class="dm-panel">
       <div class="dm-label">⚙ DM Configuration</div>
       <p>
-        Click any non-source/target tile to rotate it 90°. Pick Easy (5x5), Medium (6x6) or Hard (7x7); every puzzle is built from a real solution and then only rotated, so it is always solvable.
+        Click any non-source/target tile to rotate it 90°. Pick Easy (5x5), Medium (6x6) or Hard (7x7); every puzzle is built from a real solution and then only rotated, so it is always solvable. Easy puzzles always have at least two different routes to the seal, and any connected route wins.
         Players click tiles to rotate them and then press <em>Check Flow</em>.
         The puzzle highlights the connected path in teal when solved.
       </p>
@@ -72,6 +72,6 @@ function showWin(msg) {
   document.getElementById('win-overlay').classList.add('show');
 }
 </script>
-<script src="puzzles/pipe.js?v=91a4be381f"></script>
+<script src="puzzles/pipe.js?v=59bfcfb2c3"></script>
 </body>
 </html>

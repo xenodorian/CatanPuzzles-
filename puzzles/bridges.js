@@ -5,6 +5,8 @@
 
   var SIZE_FOR = { 4: 5, 5: 5, 6: 6, 7: 7 };
   var MAX_ATTEMPTS = 200;
+  var EASY_ISLANDS = 4;       // the Easy tier
+  var EASY_MIN_SOLUTIONS = 2; // Easy puzzles need at least this many solutions
   var DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 
   // Board geometry for the SVG (viewBox units).
@@ -252,8 +254,11 @@
   }
 
   // Build a puzzle with exactly `islandCount` islands and (preferably) exactly one solution.
+  // Easy (4 islands) is the exception: it must have at least two solutions, so there is
+  // more than one way to win.
   function generate(islandCount) {
     var k = SIZE_FOR[islandCount] ? islandCount : 4;
+    if (k === EASY_ISLANDS) return generateEasy(k, SIZE_FOR[k]);
     var size = SIZE_FOR[k];
     var best = null, tries = 0, emergency = 0;
     while ((tries < MAX_ATTEMPTS || !best) && emergency < 5000) {
@@ -267,6 +272,13 @@
     }
     if (!best) throw new Error('Rune Bridges: could not build a puzzle');
     return best.p;
+  }
+
+  function generateEasy(k, size) {
+    for (;;) {
+      var p = buildOnce(k, size);
+      if (p && countSolutions(p, EASY_MIN_SOLUTIONS) >= EASY_MIN_SOLUTIONS) return p;
+    }
   }
 
   window.RuneBridges = {
@@ -330,7 +342,8 @@
     '  <div class="dm-label">Rune Bridges</div>',
     '  <p>Tap a stone and then a stone in a straight, clear line to add or cycle a bridge (none, single, double).',
     '  Tap a bridge to cycle it directly. Bridges may not cross. Every stone needs exactly its number of bridges,',
-    '  and all stones must be linked together.</p>',
+    '  and all stones must be linked together. Easy spans have at least two different solutions, and any',
+  '  layout that follows the rules wins.</p>',
     '</div>'
   ].join('\n');
 
