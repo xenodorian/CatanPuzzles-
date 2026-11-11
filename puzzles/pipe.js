@@ -15,6 +15,8 @@ const DIR_DC = [0,1,0,-1];
 const OPP = [2,3,0,1];
 
 const PIPE_LEVELS = { easy: 5, medium: 6, hard: 7 };
+// Easy puzzles must have at least this many distinct routes from source to seal.
+const PIPE_EASY_MIN_ROUTES = 2;
 let pipeDifficulty = 'easy';
 
 let pipeGrid = [], pipeRows = 5, pipeCols = 5, pipeMoves = 0;
@@ -48,6 +50,44 @@ function computePipeFlow(grid, rows, cols, src, tgt) {
     }
   }
   return { found, lit };
+}
+
+// Counts distinct water routes: simple chains of cells from source to target where every
+// cell on the chain can be turned to open toward both of its chain neighbours (L: a corner,
+// I: straight through, T and +: any two sides). Source and target cannot turn, so they must
+// already face the chain. Each route is a different way to solve the puzzle. Stops at `limit`.
+function countPipeRoutes(grid, rows, cols, src, tgt, limit = Infinity) {
+  const fixedOpen = (r,c,d) => PIPE_CONN[grid[r][c].type][grid[r][c].rot][d] === 1;
+  const canJoin = (r,c,a,b) => {
+    const t = grid[r][c].type;
+    if (t === 'T' || t === '+') return true;
+    const straight = OPP[a] === b;
+    return t === 'I' ? straight : !straight;
+  };
+  const seen = new Set([`${src[0]},${src[1]}`]);
+  let count = 0;
+  function walk(r, c, inDir) {
+    if (count >= limit) return;
+    for (let d=0; d<4; d++) {
+      const nr=r+DIR_DR[d], nc=c+DIR_DC[d];
+      if (nr<0||nr>=rows||nc<0||nc>=cols) continue;
+      const key = `${nr},${nc}`;
+      if (seen.has(key)) continue;
+      // leaving (r,c) through side d
+      if (inDir === -1 ? !fixedOpen(r,c,d) : !canJoin(r,c,inDir,d)) continue;
+      if (nr===tgt[0] && nc===tgt[1]) {
+        if (fixedOpen(nr,nc,OPP[d])) count++;
+        if (count >= limit) return;
+        continue;
+      }
+      seen.add(key);
+      walk(nr, nc, OPP[d]);
+      seen.delete(key);
+      if (count >= limit) return;
+    }
+  }
+  walk(src[0], src[1], -1);
+  return count;
 }
 
 // Build a puzzle from a known solution: a connected path first, each path cell given the
@@ -101,6 +141,17 @@ function buildPipePuzzle(rows, cols, src, tgt) {
   return { grid, path };
 }
 
+// Easy puzzles are rebuilt until they have at least two distinct routes, so there is more
+// than one way to win (most builds already qualify, so this takes a try or two). Medium and
+// Hard are built exactly as before.
+function buildPipeLevel(level, rows, cols, src, tgt) {
+  for (;;) {
+    const { grid } = buildPipePuzzle(rows, cols, src, tgt);
+    if (level !== 'easy') return grid;
+    if (countPipeRoutes(grid, rows, cols, src, tgt, PIPE_EASY_MIN_ROUTES) >= PIPE_EASY_MIN_ROUTES) return grid;
+  }
+}
+
 function setPipeDifficulty(level) {
   if (!PIPE_LEVELS[level]) return;
   pipeDifficulty = level;
@@ -125,7 +176,7 @@ function initPipe() {
   document.getElementById('pipe-status').textContent = '';
   document.getElementById('pipe-status').className = 'status-msg';
 
-  pipeGrid = buildPipePuzzle(pipeRows, pipeCols, pipeSource, pipeTarget).grid;
+  pipeGrid = buildPipeLevel(pipeDifficulty, pipeRows, pipeCols, pipeSource, pipeTarget);
   updateDifficultyButtons();
   renderPipe();
 }

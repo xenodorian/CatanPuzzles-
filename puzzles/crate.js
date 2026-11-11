@@ -6,7 +6,6 @@
   var DIRS = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
   var ORDER = ['U', 'D', 'L', 'R'];
   var OPP = { U: 'D', D: 'U', L: 'R', R: 'L' };
-  var NAMES = { U: 'Up', D: 'Down', L: 'Left', R: 'Right' };
   var KEYS = {
     ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R',
     w: 'U', s: 'D', a: 'L', d: 'R', W: 'U', S: 'D', A: 'L', D: 'R'
@@ -104,12 +103,14 @@
 
   /*
    * Levels come from a bank found by an offline exhaustive search. Each one sits on a small
-   * floor, is solvable, and has exactly one push route that never revisits a position: any
-   * other push either leads to a dead end or has to be taken back. A level is shown in one
-   * of eight mirrored or turned forms. Rows use: # wall, . floor, o rune, c crate,
-   * p warden, P warden standing on a rune.
+   * floor and is solvable. Medium and harder levels have exactly one push route that never
+   * revisits a position: any other push either leads to a dead end or has to be taken back.
+   * Easy levels (2 crates) have exactly two such routes, and carry both solutions
+   * ([rows, solution, alternate]); see tools/crate-easy-gen.js and tools/check-easy.js.
+   * A level is shown in one of eight mirrored or turned forms. Rows use: # wall, . floor,
+   * o rune, c crate, p warden, P warden standing on a rune.
    */
-  var BANK = {"2":[["#######/#..#p.#/#..#.o#/#...c.#/##.c.o#/#######","DRDDLULLDRURRUULDRDLLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/#o#..##/#...c##/#.#p..#/#.o.c.#/#######","RRDLLUUURDLDDRRULULLLDDRRURULLRDDLLUURRDRRDLL"],["#######/#o#...#/#...c##/#.#...#/#.o.cp#/#######","LLUUURDLDDRRULULLLDDRRURULLRDDLLUURRDRRDLL"],["#######/#.#p..#/#o.#..#/#.c.c.#/#o...##/#######","RDRDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLURRRDLL"],["#######/#p...##/#.c#.##/#oco..#/#.#...#/#######","DDRRDRULLLUURDLDRRDRRULLLUURRDULLDDRDRRUL"],["#######/#...oo#/#..#.##/#.c.cp#/#...###/#######","LUULLDLDDRUULURRRDDLDLUULURR"],["#######/#....##/##.#c.#/#...cp#/#..o#o#/#######","LLDLLURRRLLUURRDRDLLRUULLDDLDR"],["#######/#.#..o#/#..c..#/#.#.#p#/#.c.o.#/#######","UULLDLLDDRRUDLLUURRURRDDDLLUURLDDRRUULLLLDDRR"],["#######/#oo...#/####..#/#pc.c##/##...##/#######","RDRRUURULLLRRDDDLLURDRUURULL"],["#######/#oo...#/##.#..#/#.c.c.#/#p#...#/#######","URUURRDRDDLUURULLLDDRDRUURULL"],["#######/#..#..#/#o.c..#/#.c...#/##p#o.#/#######","ULUURDRDRRUULDLLLDRURRRDDLURULLLDRURD"],["#######/#oo...#/##.#..#/#.c.c.#/#p.#..#/#######","URUURRDRDDLUURULLLDDRLUURRDRDDLUURULL"],["#######/#...#.#/#.c.cp#/#..#.##/#...oo#/#######","LDDLLULUURDDLDRRRUULULDDLDRR"],["#######/#.##..#/#o.#..#/#.c.cp#/#.o..##/#######","LDLLLUURDRDRULLLDRURRRUULDRDLLLDLURRRDL"],["#######/#..#p##/#...c.#/#..c..#/##o#.o#/#######","DRDDLULULDRRRULLDLLUURDLDRRRURD"],["#######/#oc..##/#pc...#/#o##..#/##....#/#######","RRURDLLLURDRRRDDLURULLLULDRRRULL"],["#######/#.co..#/#.#.#p#/#..c..#/#o#...#/#######","DDLLULLUURRDULLDDRRDRRULLLRUULLDDRRRRUUL"],["#######/#.....#/#.c##.#/#.c..##/#...Po#/#######","LLLURLUURDDLDRRRULDLLUURDLDRR"],["#######/#..#.##/#....##/#o#cc.#/#o#.p.#/#######","LUDRRULULLULDDURRRDDLURULLULD"],["#######/#.o.c.#/#...p.#/##o#c##/#.....#/#######","RULLDLDDRRUDLLUURURRDLDDLLUULURRLDDDRRUULULDRRRULL"]],"3":[["#######/#..#p##/#..#co#/#cc...#/#o...o#/#######","DRDDLLLLURUULDDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/#..o.o#/#..#cc#/##..c.#/#.p.#o#/#######","UUURRRDDLLDLUULURRRDRDLLDLUULUR"],["#######/#..##.#/#..#.o#/#cc.c.#/#op..o#/#######","LURUULDDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/##P#..#/#occ..#/#...c.#/#.#o..#/#######","DRDDRRULRUULDLDULLDRURRRDDLURULLLDRURRDDLURULLDLU"],["#######/#.#...#/#op#..#/#.c.cc#/#o...o#/#######","LDDRRRRULUURDDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLURRRDLL"],["#######/#o.p.o#/#.c.cc#/#o.#..#/###...#/#######","RRDLDDRUULULLLDDRURURDLLLURDRRRDDLURULLLULDRRRULL"],["#######/#o#...#/#.cp.##/#cc#..#/#o.o..#/#######","RDDLLLUURRURDDRDLLLULURRURDDRDL"],["#######/###o..#/#.cc..#/#oc...#/#po#..#/#######","URRURRDDLULLLURDRRRUULDRDLLLURDRRUULDRDLLULD"],["#######/#oo#..#/#o.cc.#/#...cp#/##.#..#/#######","LRUULDLLDLURRRRDDLURULLLDRURRDDLURULLDLU"],["#######/#..#P.#/#..c.o#/#.c.c.#/#..o###/#######","DLDDLLURLUURDRDURRDLULLLDDRULURRRDLULLDDRULURRDRU"],["#######/#..#o.#/#..c.##/#..cco#/#.#p.o#/#######","RUULRDDLULLUURDLDRRRULDLLUURDLDRRURDLDR"],["#######/##.o#o#/##c.co#/#...cp#/#...###/#######","LLURDRUDLLDLLURRUULDRDDLLURDRUURRDLULLDDRULURR"],["#######/#o.o.o#/#...cc#/#.c#..#/##p#..#/#######","ULUURRRRDLDDRUULULLLDDRURURDLLLURDRRRDDLURULLLDLU"],["#######/#o..#p#/#.#cc.#/#...co#/#...o##/#######","DDLLDLLUUURRDDUULLDDDRRURRULDLDLLURRRLLLUURRDRDLLDLUU"],["#######/#o.#..#/#.c.c.#/#oo.cp#/##..#.#/#######","LLULRDDLULURDRRRUULDRDLLLURDRRUULDRDLL"],["#######/#..#oo#/#.cc.o#/#.c...#/#.p#.##/#######","LURLUURDRRDRULLLLDDRULURRRDLULLDDRULURRDRU"],["#######/#.p#.o#/#..#.o#/#.c.cc#/##...o#/#######","DLDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/#...#.#/#...cp#/##c.co#/##.o#o#/#######","LLDRURDULLULLDRRDDLURUULLDRURDDRRULDLLUURDLDRR"],["#######/##p#..#/#oc#..#/#...cc#/#..o.o#/#######","DLDDRRRRULUURDDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLU"],["#######/##...o#/#.c.cc#/#p.#.o#/#...#o#/#######","URURRRDDLULULDRRRULDLLLDDRULURRRURDLLLURR"]],"4":[["#######/#.#..o#/#..c#p#/#occ..#/#oo.c.#/#######","DDLLLURDRRUUULLDDUURRDDDLLULLURDRDRRULLLRRRUULLDLDRRDRUU"],["#######/##..o##/#pc.oo#/#.cc#.#/#oc...#/#######","DDRRUUDDLLUURURDRRDDLLLULURRRLLDDRULUR"],["#######/##o.cP#/#..cc.#/#...#c#/#..o.o#/#######","LLDLDDRRRUULLDURRDDLLULLURDRDRRUULULDLDLDRRRLLUURD"],["#######/#o.o..#/#c#...#/#.cc..#/#Pc.o##/#######","RRURUULLLDDRRUDLLUURRDRRDLULULLDDRDRURURULLLRRDDLU"],["#######/#..##o#/#o.oc.#/#.c.cc#/#o.#.p#/#######","UULLLULDDRURRRDDLURULLLDRURRDDLURUL"],["#######/#P.#.o#/#cc.c.#/#.c..o#/#o#..##/#######","DDRRURLDDRURULDLLLUURDLDRRRULLDLU"],["#######/#o##p.#/#.c.cc#/#o.oc.#/#..#.o#/#######","RDDLLLDLUURDRRRUULDRDLLLURDRRUULDRDL"],["#######/#o..c.#/#occ..#/##p#c.#/#oo..##/#######","DRRURUULLLDDUURRRDDLDLLUUURRDLLDDRRURULLULDD"],["#######/#oc...#/#.cc#.#/#pco.o#/##..o##/#######","UURRDDUULLDDRDRURRUULLLDLDRRRLLUURD"],["#######/#..##o#/#o..c.#/#.c.cc#/#o.#.P#/#######","UULLLULDDRURRRDDLURULLLDRRURD"],["#######/#o..co#/#.ccco#/#...#.#/#o.##p#/#######","UUULLLDLDDRURURLDLLURURRDLULDRDLULD"],["#######/#P#o..#/#ccoc##/#.c...#/#o#...#/#######","DDRRULDLUDRRDRRULLUURDLDDRRULDLUULLDRURRDDLU"],["#######/##..#.#/#o..c.#/#.ccc.#/#o#P.o#/#######","RRUULLDLRUULDLDRURRRDDLURULLLDRRURD"],["#######/#pc.oo#/#.#cc##/##.c.o#/#o....#/#######","RRRDDRDLLLURRUULDRDDLLURDRUU"],["#######/#o..c.#/#cc.#.#/#..coo#/#o..#p#/#######","ULLUULLDDRDRURRUULLLDLDRRRLLUURDLDR"],["#######/#.c.o.#/#pcc#.#/##c...#/##oo#o#/#######","URRDDUULLDRDRRRUULLDLDRRLUURRDDLLULLURR"],["#######/#o..#.#/#pcc..#/##.c.o#/##ooc.#/#######","URDDRLUURDRRDDLURULLULLDRDRRULDLURUL"],["#######/##o..o#/#..cc.#/#oc.p##/#.co.##/#######","URULLDLLDDRULURRURRDLDLLURDRULUR"],["#######/#...#.#/#p#c..#/#.occo#/#.c.oo#/#######","DDRRRULDLLUUURRDDUULLDDDRRURRULDLDLLURRRLLLUURRDRDL"],["#######/#o.#po#/#o#.c.#/#cc.c.#/#o...##/#######","RDDLDLLLUUDDRRRURUULDLDLDLURRURRDLDLLURDRULURDRU"]],"5":[["#######/#..o#o#/#c..co#/#oc.c.#/#o.c#p#/#....##/#######","UULLULLDDUURRDDLRURRDLULULLDRRRDRULLLDRLDDRUUURRDLULLDDRULURR"],["#######/#.o.cp#/#.#.cc#/#.cc.o#/#o#o#o#/#.....#/#######","LLDDRRDDLLLLUURRUURRDDUULLDDRLUURRDLDLLLUURRDRDLLRUULLDDRRURRULL"],["#######/#.#po.#/#.#..c#/#oc.co#/##.cc.#/#o..#o#/#######","DDLDDRURURDLLLURUURRDLULDDLDDRURUULDRDLULDRDL"],["#######/#..##o#/#..oco#/#.#..c#/##.cc.#/#Pc..o#/#######","RRRURUULDLDURRDLDLLURDRULURDRU"],["#######/#.p#.o#/#cc.#o#/#.c.#.#/#ococ.#/#.o#..#/#######","LDDRDRRDRUUUDDLLLULUURDRDULLDRDRRDRUUDLLLUURD"],["#######/#oc...#/#.ococ#/#.#.c.#/#.p#co#/##...o#/#######","LUURRURRDDDUUULLDDRLUURRDDLLULLURRDDRRULLULLDDDRDRRUURUULLL"],["#######/#o.#..#/#.cP#.#/#ccc..#/#....o#/##oco##/#######","DRDDLULLUURDLDRRRULDLLUURDLDRRURD"],["#######/#o.####/#.cco.#/#...cP#/#o.cco#/#.##..#/#######","LRDDLULLULUURDRDRLULLDRDRRULDLURULDLU"],["#######/#o.#.o#/#c#...#/#oocc.#/##..cc#/#.o.#p#/#######","UUULLDLLUDRRURRDLLLDDRULURURRDDLLULDRRRULL"],["#######/#..co.#/##oc.##/#ocpc##/#.c#..#/#oo...#/#######","LUURDRDDRDLLLUURURDDRDLL"],["#######/#pcoo##/##coco#/#o.c.##/#.c.#.#/#.....#/#######","RRDRDLLRUULDRDDDLLURDRUUULDRDDLLURDRUU"],["#######/#.#P..#/#.oo#c#/#..c#.#/##c.c.#/#o.c.o#/#######","RRDDDLDLLUUDDRRULUUDLLURDRDDLUU"],["#######/#o#o..#/#..co##/#.#ccp#/#co.co#/#...#.#/#######","DLLDLLUUURRLLDDDRRUUUDDRRULDLDLLURRRLLLUURRDRDL"],["#######/#..#o##/#..cc.#/#.ccoo#/#.co#o#/#p#...#/#######","URURRURDLLLLUURDLDRRRULDLLUURDLDRR"],["#######/#.p#..#/#cc.#.#/#.c.o.#/#occ.##/##oo.o#/#######","LDDRDRLULUURDRDRDULULLDRDRDRULLUURDD"],["#######/#...o.#/#oo.c.#/#coc.##/#.cc###/#..op##/#######","LLUUULDURRURRDLDLDLULUURRDRDLDLDLUU"],["#######/#.oocp#/##occ.#/##c.o##/#...#.#/#oc...#/#######","LLDLDRDDLUURUURRDLULDDLDDRUUU"],["#######/#.#o..#/#.oc..#/#.oco.#/##cc#.#/#po.c.#/#######","RUURURRDDDLLULULURRLDDRUDDRRUULLRRUULDL"],["#######/#oco.##/#o.co##/#.c.cP#/##.c..#/###...#/#######","DDLLULULUURDRDRDDLULUDRRULULRDDLULUDRRUL"],["#######/##.##.#/#.o..o#/##c.oc#/#pccco#/#...o##/#######","DRRUDLLURURURRDLDLDLLURURLDDRURUDLLURUR"]]};
+  var BANK = {"2":[["#######/#o#...#/#oc...#/#.#c..#/#..p###/#######","LLUURRLLDDRRURRUULDLLRDDLLUURRRRDLULLLDDRRURULL","LLUURRURDLLLDDRRUDLLUURRURRDLLLRDDLLUURRRRDLULLLDDRRURULL"],["#######/#..co.#/#..c..#/#.#.op#/##....#/#######","UULLDLLURRDRDDLURULULLDRRDRRUULDLLUR","UULLDLLURRDRDDLURULULLDRRDRRUULLRDLLLURR"],["#######/###...#/#o.#c.#/#..c..#/#op..##/#######","RRULDLLUURDLDRURRRUULDRDLLLDLURRRDLL","RRULRRUULDRDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLURRRDLL"],["#######/#.c.o.#/#..c..#/###.o.#/#.p...#/#######","RURUULDLLURRDRDDLURULULLDRRDRRUULDLLUR","RURUULDLLURRDRDDLURULULLDRRDRRUULLRDLLLURR"],["#######/#..poo#/#.c...#/#.c##.#/#..##.#/#######","LLDRLDDRUULURRRDLULLDDRULURR","LLDRRLLDDRULUURRRRDLULLLDDRULURRRDLULLDDRULURR"],["#######/#oo...#/#.p.c.#/#.##c.#/#..#..#/#######","URRRDLRDDLUURULLLDRURRDDLURULL","URRRDLLRRDDLURUULLLLDRURRRDDLURULLLDRURRDDLURULL"],["#######/#.c.o.#/#..cp.#/###.o.#/#....##/#######","ULDLLURRDRDDLURULULLDRRDRRUULDLLUR","ULDLLURRDRDDLURULULLDRRDRRUULLRDLLLURR"],["#######/#.o.c.#/#..c..#/#.o.#.#/#.p.###/#######","UUURDRRULLDLDDRULURURRDLLDLLUURDRRUL","UUURDRRULLDLDDRULURURRDLLDLLUURRLDRRRULL"],["#######/#.#..o#/#..c.##/#..c..#/#o.p#.#/#######","LUURLDDRURULURDDLLLURDRRUULDRDLLULD","LUURLDDRURULURDDLLLURDRRUULDRDLULDRDL"],["#######/#..#o##/#..c..#/#..c.##/#.#p.o#/#######","RUULRDDLULLUURDRDRULLLDRRURDLDR","RUULRDDLULLUURDLDRRDRUULDLLUURDLDRRURDLDR"],["#######/#..##.#/#oc##.#/#.c..p#/#....o#/#######","DLLLLURLUURDDLDRRRULLDLU","DLLLLURRLLUURDLDDRRRRULDLLLUURDLDRRRULLDLU"],["#######/#...oo#/#..cp.#/#.c##.#/#...#.#/#######","ULLDLDDRUULURRRDLULLDDRULURR","ULLDRLLDDRULUURRRRDLULLLDDRULURRRDLULLDDRULURR"],["#######/#..o.o#/#.c..p#/#.c#.##/#..#.##/#######","ULLLLDRLDDRUULURRRDLULLDDRULUR","ULLLLDRRLLDDRULUURRRRDLULLLDDRULURRRDLULLDDRULUR"],["#######/##...p#/#o....#/#.cc#.#/#.#..o#/#######","DDDLLUDRRUUULLLDLDRUURRDLLRRRDDLLULURRURDD","DDDLLUDRRUUULLLDRLLDRUURRRDLLLRRRDDLLULURRURDD"],["#######/#o.#..#/#.c...#/#c.p..#/#o..###/#######","DLLUURRDRRUULDRDLLLULD","DLLUURRDRRUULDRDLLULDRDL"],["#######/#..##.#/#...cp#/#oc..o#/#..##.#/#######","DLLULLDDRURRRULDLLLUURDLDRRRULLULD","DLLULLDDRURRRULDLLLUURDLDRRRULDLLUURDRDL"],["#######/#..##o#/#...c.#/#...#c#/#...po#/#######","RUULLDLLUURDDLDRRR","RUULLDLLUURDLDRURDLDRR"],["#######/#p.####/#oc..o#/#...c.#/#..#.##/#######","RDRRRDLULLLDDRULURRRDLLDLU","RDRRRDLULLLDDRULURRRDLULLDDRURUL"],["#######/#...#.#/#.c#..#/#..cp.#/##.o.o#/#######","DLLURDRRUULDRDLULLLUURDLDRRRURD","DLLURLLUURDLDRDRRRUULDLDLURRRDLULLLUURDLDRRRURD"],["#######/##.o..#/#..c..#/#.c#.o#/#.p.#.#/#######","LUURRURRDDLURULDLLLDDRULURRRURD","LUURRLLDDRULURURRRDDLULULDRRRULDLLLDDRULURRRURD"]],"3":[["#######/#..#p##/#..#co#/#cc...#/#o...o#/#######","DRDDLLLLURUULDDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/#..o.o#/#..#cc#/##..c.#/#.p.#o#/#######","UUURRRDDLLDLUULURRRDRDLLDLUULUR"],["#######/#..##.#/#..#.o#/#cc.c.#/#op..o#/#######","LURUULDDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/##P#..#/#occ..#/#...c.#/#.#o..#/#######","DRDDRRULRUULDLDULLDRURRRDDLURULLLDRURRDDLURULLDLU"],["#######/#.#...#/#op#..#/#.c.cc#/#o...o#/#######","LDDRRRRULUURDDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLURRRDLL"],["#######/#o.p.o#/#.c.cc#/#o.#..#/###...#/#######","RRDLDDRUULULLLDDRURURDLLLURDRRRDDLURULLLULDRRRULL"],["#######/#o#...#/#.cp.##/#cc#..#/#o.o..#/#######","RDDLLLUURRURDDRDLLLULURRURDDRDL"],["#######/###o..#/#.cc..#/#oc...#/#po#..#/#######","URRURRDDLULLLURDRRRUULDRDLLLURDRRUULDRDLLULD"],["#######/#oo#..#/#o.cc.#/#...cp#/##.#..#/#######","LRUULDLLDLURRRRDDLURULLLDRURRDDLURULLDLU"],["#######/#..#P.#/#..c.o#/#.c.c.#/#..o###/#######","DLDDLLURLUURDRDURRDLULLLDDRULURRRDLULLDDRULURRDRU"],["#######/#..#o.#/#..c.##/#..cco#/#.#p.o#/#######","RUULRDDLULLUURDLDRRRULDLLUURDLDRRURDLDR"],["#######/##.o#o#/##c.co#/#...cp#/#...###/#######","LLURDRUDLLDLLURRUULDRDDLLURDRUURRDLULLDDRULURR"],["#######/#o.o.o#/#...cc#/#.c#..#/##p#..#/#######","ULUURRRRDLDDRUULULLLDDRURURDLLLURDRRRDDLURULLLDLU"],["#######/#o..#p#/#.#cc.#/#...co#/#...o##/#######","DDLLDLLUUURRDDUULLDDDRRURRULDLDLLURRRLLLUURRDRDLLDLUU"],["#######/#o.#..#/#.c.c.#/#oo.cp#/##..#.#/#######","LLULRDDLULURDRRRUULDRDLLLURDRRUULDRDLL"],["#######/#..#oo#/#.cc.o#/#.c...#/#.p#.##/#######","LURLUURDRRDRULLLLDDRULURRRDLULLDDRULURRDRU"],["#######/#.p#.o#/#..#.o#/#.c.cc#/##...o#/#######","DLDRDRRRUULDLDLURRRDLULLLUURDLDRRRDRULLLDRR"],["#######/#...#.#/#...cp#/##c.co#/##.o#o#/#######","LLDRURDULLULLDRRDDLURUULLDRURDDRRULDLLUURDLDRR"],["#######/##p#..#/#oc#..#/#...cc#/#..o.o#/#######","DLDDRRRRULUURDDLDLLLUURDRDRULLLDRURRRUULDRDLLLDLU"],["#######/##...o#/#.c.cc#/#p.#.o#/#...#o#/#######","URURRRDDLULULDRRRULDLLLDDRULURRRURDLLLURR"]],"4":[["#######/#.#..o#/#..c#p#/#occ..#/#oo.c.#/#######","DDLLLURDRRUUULLDDUURRDDDLLULLURDRDRRULLLRRRUULLDLDRRDRUU"],["#######/##..o##/#pc.oo#/#.cc#.#/#oc...#/#######","DDRRUUDDLLUURURDRRDDLLLULURRRLLDDRULUR"],["#######/##o.cP#/#..cc.#/#...#c#/#..o.o#/#######","LLDLDDRRRUULLDURRDDLLULLURDRDRRUULULDLDLDRRRLLUURD"],["#######/#o.o..#/#c#...#/#.cc..#/#Pc.o##/#######","RRURUULLLDDRRUDLLUURRDRRDLULULLDDRDRURURULLLRRDDLU"],["#######/#..##o#/#o.oc.#/#.c.cc#/#o.#.p#/#######","UULLLULDDRURRRDDLURULLLDRURRDDLURUL"],["#######/#P.#.o#/#cc.c.#/#.c..o#/#o#..##/#######","DDRRURLDDRURULDLLLUURDLDRRRULLDLU"],["#######/#o##p.#/#.c.cc#/#o.oc.#/#..#.o#/#######","RDDLLLDLUURDRRRUULDRDLLLURDRRUULDRDL"],["#######/#o..c.#/#occ..#/##p#c.#/#oo..##/#######","DRRURUULLLDDUURRRDDLDLLUUURRDLLDDRRURULLULDD"],["#######/#oc...#/#.cc#.#/#pco.o#/##..o##/#######","UURRDDUULLDDRDRURRUULLLDLDRRRLLUURD"],["#######/#..##o#/#o..c.#/#.c.cc#/#o.#.P#/#######","UULLLULDDRURRRDDLURULLLDRRURD"],["#######/#o..co#/#.ccco#/#...#.#/#o.##p#/#######","UUULLLDLDDRURURLDLLURURRDLULDRDLULD"],["#######/#P#o..#/#ccoc##/#.c...#/#o#...#/#######","DDRRULDLUDRRDRRULLUURDLDDRRULDLUULLDRURRDDLU"],["#######/##..#.#/#o..c.#/#.ccc.#/#o#P.o#/#######","RRUULLDLRUULDLDRURRRDDLURULLLDRRURD"],["#######/#pc.oo#/#.#cc##/##.c.o#/#o....#/#######","RRRDDRDLLLURRUULDRDDLLURDRUU"],["#######/#o..c.#/#cc.#.#/#..coo#/#o..#p#/#######","ULLUULLDDRDRURRUULLLDLDRRRLLUURDLDR"],["#######/#.c.o.#/#pcc#.#/##c...#/##oo#o#/#######","URRDDUULLDRDRRRUULLDLDRRLUURRDDLLULLURR"],["#######/#o..#.#/#pcc..#/##.c.o#/##ooc.#/#######","URDDRLUURDRRDDLURULLULLDRDRRULDLURUL"],["#######/##o..o#/#..cc.#/#oc.p##/#.co.##/#######","URULLDLLDDRULURRURRDLDLLURDRULUR"],["#######/#...#.#/#p#c..#/#.occo#/#.c.oo#/#######","DDRRRULDLLUUURRDDUULLDDDRRURRULDLDLLURRRLLLUURRDRDL"],["#######/#o.#po#/#o#.c.#/#cc.c.#/#o...##/#######","RDDLDLLLUUDDRRRURUULDLDLDLURRURRDLDLLURDRULURDRU"]],"5":[["#######/#..o#o#/#c..co#/#oc.c.#/#o.c#p#/#....##/#######","UULLULLDDUURRDDLRURRDLULULLDRRRDRULLLDRLDDRUUURRDLULLDDRULURR"],["#######/#.o.cp#/#.#.cc#/#.cc.o#/#o#o#o#/#.....#/#######","LLDDRRDDLLLLUURRUURRDDUULLDDRLUURRDLDLLLUURRDRDLLRUULLDDRRURRULL"],["#######/#.#po.#/#.#..c#/#oc.co#/##.cc.#/#o..#o#/#######","DDLDDRURURDLLLURUURRDLULDDLDDRURUULDRDLULDRDL"],["#######/#..##o#/#..oco#/#.#..c#/##.cc.#/#Pc..o#/#######","RRRURUULDLDURRDLDLLURDRULURDRU"],["#######/#.p#.o#/#cc.#o#/#.c.#.#/#ococ.#/#.o#..#/#######","LDDRDRRDRUUUDDLLLULUURDRDULLDRDRRDRUUDLLLUURD"],["#######/#oc...#/#.ococ#/#.#.c.#/#.p#co#/##...o#/#######","LUURRURRDDDUUULLDDRLUURRDDLLULLURRDDRRULLULLDDDRDRRUURUULLL"],["#######/#o.#..#/#.cP#.#/#ccc..#/#....o#/##oco##/#######","DRDDLULLUURDLDRRRULDLLUURDLDRRURD"],["#######/#o.####/#.cco.#/#...cP#/#o.cco#/#.##..#/#######","LRDDLULLULUURDRDRLULLDRDRRULDLURULDLU"],["#######/#o.#.o#/#c#...#/#oocc.#/##..cc#/#.o.#p#/#######","UUULLDLLUDRRURRDLLLDDRULURURRDDLLULDRRRULL"],["#######/#..co.#/##oc.##/#ocpc##/#.c#..#/#oo...#/#######","LUURDRDDRDLLLUURURDDRDLL"],["#######/#pcoo##/##coco#/#o.c.##/#.c.#.#/#.....#/#######","RRDRDLLRUULDRDDDLLURDRUUULDRDDLLURDRUU"],["#######/#.#P..#/#.oo#c#/#..c#.#/##c.c.#/#o.c.o#/#######","RRDDDLDLLUUDDRRULUUDLLURDRDDLUU"],["#######/#o#o..#/#..co##/#.#ccp#/#co.co#/#...#.#/#######","DLLDLLUUURRLLDDDRRUUUDDRRULDLDLLURRRLLLUURRDRDL"],["#######/#..#o##/#..cc.#/#.ccoo#/#.co#o#/#p#...#/#######","URURRURDLLLLUURDLDRRRULDLLUURDLDRR"],["#######/#.p#..#/#cc.#.#/#.c.o.#/#occ.##/##oo.o#/#######","LDDRDRLULUURDRDRDULULLDRDRDRULLUURDD"],["#######/#...o.#/#oo.c.#/#coc.##/#.cc###/#..op##/#######","LLUUULDURRURRDLDLDLULUURRDRDLDLDLUU"],["#######/#.oocp#/##occ.#/##c.o##/#...#.#/#oc...#/#######","LLDLDRDDLUURUURRDLULDDLDDRUUU"],["#######/#.#o..#/#.oc..#/#.oco.#/##cc#.#/#po.c.#/#######","RUURURRDDDLLULULURRLDDRUDDRRUULLRRUULDL"],["#######/#oco.##/#o.co##/#.c.cP#/##.c..#/###...#/#######","DDLLULULUURDRDRDDLULUDRRULULRDDLULUDRRUL"],["#######/##.##.#/#.o..o#/##c.oc#/#pccco#/#...o##/#######","DRRUDLLURURURRDLDLDLLURURLDDRURUDLLURUR"]]};
   var lastPick = {};
 
   function decode(entry, t, fr, fc) {
@@ -133,13 +134,17 @@
         if (ch === 'p' || ch === 'P') player = p;
       }
     }
-    var solution = entry[1].split('').map(function (m) {
-      if (t) m = { U: 'L', L: 'U', D: 'R', R: 'D' }[m];
-      if (fr && (m === 'U' || m === 'D')) m = OPP[m];
-      if (fc && (m === 'L' || m === 'R')) m = OPP[m];
-      return m;
-    }).join('');
-    return { w: w, h: h, walls: walls, goals: goals, crates: crates, player: player, solution: solution };
+    function moves(str) {
+      return str.split('').map(function (m) {
+        if (t) m = { U: 'L', L: 'U', D: 'R', R: 'D' }[m];
+        if (fr && (m === 'U' || m === 'D')) m = OPP[m];
+        if (fc && (m === 'L' || m === 'R')) m = OPP[m];
+        return m;
+      }).join('');
+    }
+    var level = { w: w, h: h, walls: walls, goals: goals, crates: crates, player: player, solution: moves(entry[1]) };
+    if (entry[2]) level.alternate = moves(entry[2]);
+    return level;
   }
 
   function generate(crateCount) {
@@ -153,6 +158,10 @@
       var level = decode(list[idx], rint(2) === 1, rint(2) === 1, rint(2) === 1);
       var check = applyMoves(level, level.solution);
       if (!check.legal || !check.solved) continue;
+      if (level.alternate) {
+        var alt = applyMoves(level, level.alternate);
+        if (!alt.legal || !alt.solved) continue;
+      }
       lastPick[k] = idx;
       return level;
     }
@@ -221,17 +230,16 @@
         '</div>' +
         '<div class="btn-row">' +
           '<button class="btn" data-cv-act="undo">Undo</button>' +
-          '<button class="btn" data-cv-act="hint">Hint</button>' +
           '<button class="btn" data-cv-act="restart">Restart</button>' +
           '<button class="btn btn-primary" data-cv-act="new">New Puzzle</button>' +
         '</div>' +
       '</div>' +
       '<div class="dm-panel">' +
         '<div class="dm-label">DM Configuration</div>' +
-        '<p>Each vault is a tight room found by exhaustive search. It has exactly one sequence of pushes that ' +
-        'solves it without going back on itself: every other push either jams a crate for good or must be undone. ' +
-        'Every level is replayed through the game rules before it is shown, so it is always solvable. Hint reveals ' +
-        'the next move of the route while the player is still following it.</p>' +
+        '<p>Each vault is a tight room found by exhaustive search. Easy vaults have exactly two sequences of pushes ' +
+        'that solve them without going back on themselves; harder vaults have exactly one, and every other push ' +
+        'either jams a crate for good or must be undone. Any arrangement with every crate on a rune opens the vault. ' +
+        'Every level is replayed through the game rules before it is shown, so it is always solvable.</p>' +
       '</div>';
   }
 
@@ -344,17 +352,6 @@
     newPuzzle();
   }
 
-  function hint() {
-    var lvl = state.level, h = state.history;
-    if (applyMoves(lvl, h).solved) {
-      setStatus('The vault is already open.', 'success');
-    } else if (lvl.solution.indexOf(h) === 0 && h.length < lvl.solution.length) {
-      setStatus('Hint: next move is ' + NAMES[lvl.solution.charAt(h.length)] + '.', 'hint');
-    } else {
-      setStatus('Your route has left the hinted path. Undo or Restart to get hints again.', 'hint');
-    }
-    render();
-  }
 
   function onClick(e) {
     var t = e.target && e.target.closest ? e.target.closest('[data-cv-dir],[data-cv-diff],[data-cv-act]') : null;
@@ -366,7 +363,6 @@
     } else {
       switch (t.getAttribute('data-cv-act')) {
         case 'undo': undo(); break;
-        case 'hint': hint(); break;
         case 'restart': restart(); break;
         case 'new': newPuzzle(); break;
       }
