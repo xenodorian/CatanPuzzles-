@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--vault-version--><script>(function(){var V="13c6955753";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="theme-color" content="#0d1322">
+<title>Conjurer's Chess</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23d59a25'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-size='40' fill='%233b2500'%3E%E2%99%94%3C/text%3E%3C/svg%3E">
+<style>
+
+:root{--cell:52px;--ink:#e9e4d6;--dim:#9aa3b8;--bg:#0d1322;--card:#182033;--line:#2b3654;--gold:#f2c14e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 700px at 50% -10%,#24345c 0%,#111a30 45%,#080c17 100%) fixed #0d1322;color:var(--ink);
+  font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none}
+button{font:inherit;color:var(--ink);background:#222d49;border:1px solid #3a4870;border-radius:8px;padding:7px 12px;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .05s}
+button:hover{background:#2c3a5e;border-color:#5669a0}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:linear-gradient(#f6d27a,#d59a25);color:#2b1c00;border-color:#8a6210;font-weight:700}
+button.primary:hover{background:linear-gradient(#ffe096,#e0a52c)}
+button.ghost{background:transparent}
+button.on{background:#3b4d82;border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+button.off{opacity:.55}
+button:disabled{opacity:.45;cursor:default}
+
+#top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;padding-top:max(6px,env(safe-area-inset-top));
+  background:rgba(8,12,23,.72);border-bottom:1px solid var(--line);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#top h1{margin:0;font:700 18px/1 Georgia,"Palatino Linotype","Times New Roman",serif;letter-spacing:.1em;text-transform:uppercase;
+  background:linear-gradient(#ffe7a3,#d59a25);-webkit-background-clip:text;background-clip:text;color:transparent}
+#top nav{display:flex;gap:6px}
+#top nav button{padding:6px 10px;font-size:13px}
+
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
+body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#play{display:flex;flex-direction:column;align-items:center;min-width:0}
+#status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
+#turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
+#turnTok.white{background:radial-gradient(circle at 35% 30%,#fff,#d8d8d8 60%,#8a8a8a);border-color:#333}
+#turnTok.black{background:radial-gradient(circle at 35% 30%,#666,#222 60%,#000);border-color:#000}
+#spin{width:14px;height:14px;border-radius:50%;border:2px solid #56648c;border-top-color:var(--gold);animation:spin .8s linear infinite}
+#spin[hidden]{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+#info{height:20px;max-width:calc(var(--cell)*8 + 24px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+#info b{color:var(--ink)}
+
+#boards{display:flex;flex-direction:column;gap:8px}
+.board{display:grid;grid-template-columns:repeat(8,var(--cell));grid-auto-rows:var(--cell);border:3px solid #5a3e22;border-radius:4px;position:relative;
+  box-shadow:0 0 0 1px #3d2c10,0 6px 22px rgba(0,0,0,.35)}
+.cell{position:relative;width:var(--cell);height:var(--cell)}
+.cell.l{background:#f0d9b5}.cell.d{background:#b58863}
+.coord{position:absolute;font:700 calc(var(--cell)*.22)/1 system-ui,sans-serif;opacity:.55;pointer-events:none;color:#3d2c10}
+.coord.f{right:2px;bottom:1px}.coord.r{left:2px;top:1px}
+
+.piece{position:absolute;left:7%;top:7%;width:86%;height:86%;border-radius:50%;z-index:2;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .3s cubic-bezier(.2,.8,.25,1),opacity .25s;will-change:transform}
+.piece .glyph{font-size:calc(var(--cell)*.62);line-height:1;pointer-events:none;
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",serif}
+.piece.white{background:radial-gradient(circle at 35% 28%,#fff6cf 0%,#f3c64f 45%,#c98f17 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.045) #5d3d00,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55)}
+.piece.white .glyph{color:#3b2500}
+.piece.black{background:radial-gradient(circle at 35% 28%,#5a5a5a 0%,#222 55%,#0a0a0a 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.045) #000,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55)}
+.piece.black .glyph{color:#f4efe2}
+.piece.moving{z-index:60}
+.piece.dying{opacity:0;transform:scale(.4);z-index:1}
+.piece.illusion{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#5aa0e8 45%,#1d5fa8 100%)!important;box-shadow:0 0 0 2px #8ec8ff,0 0 10px rgba(80,160,255,.7)}
+.piece.illusion .glyph{color:#06244a!important}
+.piece.illusion.black{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#4e86d4 48%,#163a80 100%)!important}
+.piece.revealed-ill::after{content:"Illusion";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);font-size:7px;line-height:1;letter-spacing:.02em;color:#d7eeff;text-shadow:0 0 3px #012;white-space:nowrap;z-index:4;pointer-events:none}
+.piece.ghost{opacity:.5;pointer-events:none;cursor:default;z-index:1;transition:none}
+.piece.ghost.ghost-ill{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#5aa0e8 45%,#1d5fa8 100%);box-shadow:0 0 0 2px #8ec8ff}
+.piece.ghost.ghost-ill .glyph{color:#06244a}
+
+.cell.last{box-shadow:inset 0 0 0 100px rgba(255,235,90,.38)}
+.cell.sel{box-shadow:inset 0 0 0 100px rgba(80,220,140,.55)}
+.cell.check{box-shadow:inset 0 0 0 100px rgba(255,40,40,.6);animation:pulse 1s infinite alternate}
+@keyframes pulse{to{box-shadow:inset 0 0 0 100px rgba(255,40,40,.25)}}
+.cell.tgt,.cell.cap,.cell.summon,.cell.rev{cursor:pointer}
+.cell.tgt::before{content:"";position:absolute;left:34%;top:34%;width:32%;height:32%;border-radius:50%;z-index:4;pointer-events:none;
+  background:#27e08a;box-shadow:0 0 0 2px rgba(0,40,20,.75),0 0 8px #27e08a}
+.cell.cap::before{content:"";position:absolute;inset:3%;border-radius:50%;z-index:4;pointer-events:none;
+  box-shadow:0 0 0 calc(var(--cell)*.09) #27e08a inset,0 0 0 2px rgba(0,40,20,.75)}
+.cell.summon{box-shadow:inset 0 0 0 3px #7ec8ff,inset 0 0 12px rgba(100,180,255,.45)}
+.cell.rev{box-shadow:inset 0 0 0 3px #d4a0ff,inset 0 0 12px rgba(180,100,255,.4)}
+.cell.para .piece{filter:grayscale(.25) brightness(.9)}
+.cell.para::after{content:"";position:absolute;inset:6%;border-radius:50%;z-index:3;pointer-events:none;
+  box-shadow:inset 0 0 0 2px #e8c76a,0 0 0 2px rgba(0,0,0,.4);background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(232,199,106,.45) 4px,rgba(232,199,106,.45) 6px)}
+
+#panel{width:100%;max-width:calc(var(--cell)*8 + 24px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
+body.wide #panel{width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+#matchup{font-weight:600}
+#matchup small{display:block;color:var(--dim);font-weight:400}
+#actions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+#actions button{flex:1 1 30%;font-size:13px}
+#reserve{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:12px;color:var(--dim);margin:6px 0 10px}
+#reserve .rg{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.caps{display:flex;flex-wrap:wrap;gap:2px;min-height:24px}
+.caps .mini{position:relative;width:22px;height:22px}
+.caps .mini .piece{cursor:default;--cell:22px}
+#movelist{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:2.2em 1fr 1fr;gap:2px 6px;font:12.5px/1.5 ui-monospace,Consolas,Menlo,monospace;
+  max-height:220px;overflow:auto;align-content:start;grid-auto-rows:min-content;-webkit-user-select:text;user-select:text}
+body.wide #movelist{max-height:none;flex:1;min-height:80px}
+#movelist .n{color:var(--dim);text-align:right}
+#movelist .mv{padding:0 4px;border-radius:4px;white-space:nowrap}
+#movelist .mv.cur{background:#35446f;color:#fff}
+
+.modal{position:fixed;inset:0;z-index:100;background:rgba(4,7,14,.72);display:flex;align-items:center;justify-content:center;padding:14px;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.modal[hidden]{display:none}
+.card{background:linear-gradient(#1d2740,#151c2f);border:1px solid #3a4870;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:100%;overflow:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card.wide{max-width:720px}
+.card.center{text-align:center}
+.card h2{margin:0 0 10px;font:700 20px/1.2 Georgia,serif;letter-spacing:.06em;color:var(--gold)}
+.card h3{margin:14px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row>button{flex:1 1 auto}
+.row.end{justify-content:flex-end;margin-top:18px}
+.row.end>button{flex:0 0 auto;min-width:110px}
+.row.between{justify-content:space-between;align-items:center}
+.row.between>button{flex:0 0 auto}
+.note{color:var(--dim);font-size:13px;margin:8px 0 0;min-height:36px}
+#guideBody{-webkit-user-select:text;user-select:text}
+#guideBody p,#guideBody li{color:#cfd6e6;font-size:14px}
+#guideBody ul{padding-left:18px;margin:6px 0}
+.credits{font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+#optLevel>button{flex:1 1 28%}
+@media (max-width:480px){#top{padding-left:8px;padding-right:8px}#top h1{font-size:13px;letter-spacing:.03em}#top nav{gap:3px}#top nav button{padding:6px 4px;font-size:11.5px}}
+@media (prefers-reduced-motion:reduce){.piece{transition:none}.cell.check{animation:none}}
+#choice{position:fixed;z-index:80;background:#182033;border:1px solid #2b3654;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px #0008;max-width:min(260px,calc(100vw - 16px));max-height:min(50vh,320px);overflow:auto}
+#choice[hidden]{display:none}
+#choice button{font-size:13px;text-align:left}
+
+</style>
+<script src="puzzles/once.js?v=13c6955753"></script>
+</head>
+<body>
+
+<div id="app">
+  <header id="top">
+    <h1>Conjurer's Chess</h1>
+    <nav>
+      <button id="bNew" type="button">New</button>
+      <button id="bUndo" type="button">Undo</button>
+      <button id="bFlip" type="button">Flip</button>
+      <button id="bSound" type="button">Sound</button>
+      <button id="bGuide" type="button">Guide</button>
+    </nav>
+  </header>
+  <main id="main">
+    <section id="play">
+      <div id="status"><span id="turnTok"></span><span id="statusText"></span><span id="spin" hidden></span></div>
+      <div id="info">Tap a piece to see where it can go, or use Summon, Illusion or Reveal.</div>
+      <div id="boards"></div>
+    </section>
+    <aside id="panel">
+      <div id="matchup"></div>
+      <div id="actions">
+        <button type="button" id="bSummon">Summon</button>
+        <button type="button" id="bIllusion">Illusion</button>
+        <button type="button" id="bReveal">Reveal</button>
+      </div>
+      <h2>Reserve</h2>
+      <div id="reserve"></div>
+      <h2>Captured</h2>
+      <div id="capB" class="caps"></div>
+      <div id="capW" class="caps"></div>
+      <h2>Moves</h2>
+      <ol id="movelist"></ol>
+    </aside>
+  </main>
+  <p style="text-align:center;margin:10px 0 0"><a href="index.html" style="font-size:12px;color:#a09d96;text-decoration:underline">Back to the Puzzle Vault</a></p>
+</div>
+<div id="choice" hidden></div>
+<div id="dlgNew" class="modal" hidden>
+  <div class="card">
+    <h2>New game</h2>
+    <div class="row" id="optMode">
+      <button type="button" data-v="ai">vs Computer</button>
+      <button type="button" data-v="2p">Two players</button>
+    </div>
+    <div id="aiOpts">
+      <div id="sideOpts">
+      <h3>Play as</h3>
+      <div class="row" id="optSide">
+        <button type="button" data-v="1">White (first)</button>
+        <button type="button" data-v="-1">Black</button>
+        <button type="button" data-v="0">Random</button>
+      </div>
+      </div>
+      <h3>Difficulty</h3>
+      <div class="row" id="optLevel"></div>
+      <p id="levelNote" class="note"></p>
+    </div>
+    <div class="row end">
+      <button type="button" id="newCancel" class="ghost">Cancel</button>
+      <button type="button" id="newStart" class="primary">Start</button>
+    </div>
+  </div>
+</div>
+<div id="dlgOver" class="modal" hidden>
+  <div class="card center">
+    <h2 id="overTitle"></h2>
+    <p id="overText"></p>
+    <div class="row end">
+      <button type="button" id="overClose" class="ghost">View board</button>
+      <button type="button" id="overNew" class="primary">New game</button>
+    </div>
+  </div>
+</div>
+<div id="dlgGuide" class="modal" hidden>
+  <div class="card wide">
+    <div class="row between"><h2>How to play</h2><button type="button" id="guideClose" class="ghost">Close</button></div>
+    <div id="guideBody"></div>
+  </div>
+</div>
+
+<script id="engine-src">
+'use strict';
+var DC = (function () {
+  var P = 1, N = 2, B = 3, R = 4, Q = 5, K = 6;
+  var LETTERS = ' PNBRQK';
+  var NAMES = ['', 'Pawn', 'Knight', 'Bishop', 'Rook', 'Queen', 'King'];
+  var VALUE = [0, 100, 320, 330, 500, 900, 0];
+  var MAX_ILLUSIONS = 3;
+  var F_CAP = 1 << 21, F_PROMO = 1 << 22, F_EP = 1 << 23, F_CASTLE = 1 << 24;
+  var F_DBL = 1 << 25, F_SUMMON = 1 << 26, F_ILLUSION = 1 << 27, F_REVEAL = 1 << 28, F_ILLHIT = 1 << 29;
+  var HOME_TYPES = [P, N, B, R, Q];
+  var INF = 30000, MATE = 20000;
+
+  var NDEL = [15, 17, 6, 10, -15, -17, -6, -10];
+  var BDEL = [7, 9, -7, -9];
+  var RDEL = [1, 8, -1, -8];
+  var KDEL = [1, -1, 8, -8, 7, 9, -7, -9];
+
+  function fileOf(sq) { return sq & 7; }
+  function rankOf(sq) { return sq >> 3; }
+  function sq(f, r) { return r * 8 + f; }
+  function sqName(s) { return 'abcdefgh'.charAt(fileOf(s)) + (rankOf(s) + 1); }
+  function parseSq(name) { return sq('abcdefgh'.indexOf(name.charAt(0)), (+name.charAt(1)) - 1); }
+
+  function onBoard(f, r) { return f >= 0 && f <= 7 && r >= 0 && r <= 7; }
+  function stepOk(from, to) {
+    if (to < 0 || to > 63) return false;
+    var fd = fileOf(to) - fileOf(from), rd = rankOf(to) - rankOf(from);
+    // Reject wrap-around (e.g. knight from a-file wrapping to h).
+    return Math.abs(fd) <= 2 && Math.abs(rd) <= 2;
+  }
+
+  function homeSquares(side, typ) {
+    var r1 = side > 0 ? 0 : 7, r2 = side > 0 ? 1 : 6, i, out = [];
+    switch (typ) {
+      case R: return [sq(0, r1), sq(7, r1)];
+      case N: return [sq(1, r1), sq(6, r1)];
+      case B: return [sq(2, r1), sq(5, r1)];
+      case Q: return [sq(3, r1)];
+      case K: return [sq(4, r1)];
+      case P:
+        for (i = 0; i < 8; i++) out.push(sq(i, r2));
+        return out;
+    }
+    return out;
+  }
+  function typeAtHome(side, s) {
+    var i, typ, hs;
+    for (i = 0; i < HOME_TYPES.length; i++) {
+      typ = HOME_TYPES[i];
+      hs = homeSquares(side, typ);
+      if (hs.indexOf(s) >= 0) return typ;
+    }
+    return 0;
+  }
+
+  function emptyReserve(a) { a[P] = 8; a[N] = 2; a[B] = 2; a[R] = 2; a[Q] = 1; }
+  function emptyState() {
+    var st = {
+      board: new Int8Array(64), turn: 1, half: 0, ep: -1, lo: 0, hi: 0, score: 0,
+      illusion: new Uint8Array(64), revealed: new Uint8Array(64), paralyzed: new Int8Array(64),
+      unmoved: new Uint8Array(64),
+      resW: new Uint8Array(8), resB: new Uint8Array(8),
+      hl: [], hh: [], ucap: [], uhalf: [], uscore: [], uep: [], uhit: [], usnap: [],
+      hist: []
+    };
+    emptyReserve(st.resW); emptyReserve(st.resB);
+    return st;
+  }
+  function resOf(st, side) { return side > 0 ? st.resW : st.resB; }
+  function countIllusions(st, side) {
+    var n = 0, i, p;
+    for (i = 0; i < 64; i++) {
+      p = st.board[i];
+      if (st.illusion[i] && p && (p > 0) === (side > 0)) n++;
+    }
+    return n;
+  }
+  function findKing(st, side) {
+    var want = side > 0 ? K : -K, i;
+    for (i = 0; i < 64; i++) if (st.board[i] === want && !st.illusion[i]) return i;
+    return -1;
+  }
+  function markKnownReal(st, s) { st.revealed[s] = 2; st.illusion[s] = 0; st.unmoved[s] = 1; }
+  function snapFlags(st) {
+    st.usnap.push({
+      illusion: new Uint8Array(st.illusion),
+      revealed: new Uint8Array(st.revealed),
+      paralyzed: new Int8Array(st.paralyzed),
+      unmoved: new Uint8Array(st.unmoved),
+      resW: new Uint8Array(st.resW),
+      resB: new Uint8Array(st.resB)
+    });
+  }
+  function restoreFlags(st) {
+    var s = st.usnap.pop();
+    st.illusion = s.illusion; st.revealed = s.revealed; st.paralyzed = s.paralyzed;
+    st.unmoved = s.unmoved; st.resW = s.resW; st.resB = s.resB;
+  }
+  function moveFlags(st, from, to) {
+    st.illusion[to] = st.illusion[from]; st.illusion[from] = 0;
+    st.revealed[to] = st.revealed[from]; st.revealed[from] = 0;
+    st.paralyzed[to] = st.paralyzed[from]; st.paralyzed[from] = 0;
+    st.unmoved[to] = st.unmoved[from]; st.unmoved[from] = 0;
+  }
+  function clearFlags(st, s) {
+    st.illusion[s] = 0; st.revealed[s] = 0; st.paralyzed[s] = 0; st.unmoved[s] = 0;
+  }
+
+  // Zobrist / PST
+  var ZL = new Int32Array(15 * 64), ZH = new Int32Array(15 * 64), PST = new Int16Array(15 * 64);
+  var ZTL = 0x51ed, ZTH = 0x9e37, ZEL = new Int32Array(64), ZEH = new Int32Array(64);
+  (function init() {
+    var seed = 0x9E3779B9, i, t, s, r, f, mid, bonus;
+    function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed | 0; }
+    for (i = 0; i < 15 * 64; i++) { ZL[i] = rnd(); ZH[i] = rnd(); }
+    for (i = 0; i < 64; i++) { ZEL[i] = rnd(); ZEH[i] = rnd(); }
+    for (t = 1; t <= 6; t++) for (s = 0; s < 64; s++) {
+      r = rankOf(s); f = fileOf(s); mid = 3.5;
+      bonus = 0;
+      if (t === P) bonus = (r - 1) * 8 + (3.5 - Math.abs(f - mid)) * 2;
+      else if (t === N || t === B) bonus = (3.5 - Math.abs(r - mid)) * 4 + (3.5 - Math.abs(f - mid)) * 4;
+      else if (t === K) bonus = (r === 0 ? 8 : 0) + (f === 4 || f === 3 ? 4 : 0);
+      PST[(t + 6) * 64 + s] = VALUE[t] + bonus;
+      PST[(-t + 6) * 64 + s] = -(VALUE[t] + (t === P ? ((6 - r) * 8 + (3.5 - Math.abs(f - mid)) * 2) : bonus));
+    }
+  })();
+
+  function zkey(p, s) { return (p + 6) * 64 + s; }
+  function refresh(st) {
+    var lo = 0, hi = 0, sc = 0, i, p, k, typ;
+    for (i = 0; i < 64; i++) {
+      p = st.board[i];
+      if (p) { k = zkey(p, i); lo ^= ZL[k]; hi ^= ZH[k]; sc += PST[k]; }
+      if (st.illusion[i]) { lo ^= ZL[i]; hi ^= ZH[i]; }
+      if (st.paralyzed[i]) { lo ^= ZH[i]; }
+    }
+    if (st.ep >= 0) { lo ^= ZEL[st.ep]; hi ^= ZEH[st.ep]; }
+    if (st.turn < 0) { lo ^= ZTL; hi ^= ZTH; }
+    // Prefer pieces on the board slightly over leftover reserve (encourages summoning).
+    for (typ = 1; typ <= 5; typ++) {
+      sc += (st.resW[typ] || 0) * (VALUE[typ] * 0.85);
+      sc -= (st.resB[typ] || 0) * (VALUE[typ] * 0.85);
+    }
+    st.lo = lo; st.hi = hi; st.score = sc;
+    return st;
+  }
+
+  function newGame() {
+    var st = emptyState();
+    st.board[sq(4, 0)] = K; markKnownReal(st, sq(4, 0));
+    st.board[sq(4, 7)] = -K; markKnownReal(st, sq(4, 7));
+    return refresh(st);
+  }
+
+  function save(st) {
+    return {
+      board: Array.prototype.slice.call(st.board), turn: st.turn, half: st.half, ep: st.ep,
+      illusion: Array.prototype.slice.call(st.illusion),
+      revealed: Array.prototype.slice.call(st.revealed),
+      paralyzed: Array.prototype.slice.call(st.paralyzed),
+      unmoved: Array.prototype.slice.call(st.unmoved),
+      resW: Array.prototype.slice.call(st.resW),
+      resB: Array.prototype.slice.call(st.resB),
+      hist: (st.hist || []).slice()
+    };
+  }
+  function load(o) {
+    var st = emptyState();
+    st.board.set(o.board); st.turn = o.turn; st.half = o.half || 0; st.ep = (o.ep == null ? -1 : o.ep);
+    if (o.illusion) st.illusion.set(o.illusion);
+    if (o.revealed) st.revealed.set(o.revealed);
+    if (o.paralyzed) st.paralyzed.set(o.paralyzed);
+    if (o.unmoved) st.unmoved.set(o.unmoved);
+    if (o.resW) st.resW.set(o.resW);
+    if (o.resB) st.resB.set(o.resB);
+    st.hist = (o.hist || []).slice();
+    return refresh(st);
+  }
+
+  function isAttacked(st, target, by) {
+    var b = st.board, i, p, t, f, r, tf, tr, df, dr, d, nf, nr, dir, capL, capR;
+    tf = fileOf(target); tr = rankOf(target);
+    for (i = 0; i < 64; i++) {
+      p = b[i];
+      if (!p || (p > 0) !== (by > 0)) continue;
+      if (st.paralyzed[i] || st.illusion[i]) continue;
+      t = p > 0 ? p : -p;
+      f = fileOf(i); r = rankOf(i);
+      if (t === P) {
+        dir = p > 0 ? 1 : -1;
+        if (tr === r + dir && (tf === f - 1 || tf === f + 1)) return true;
+      } else if (t === N) {
+        df = Math.abs(f - tf); dr = Math.abs(r - tr);
+        if ((df === 1 && dr === 2) || (df === 2 && dr === 1)) return true;
+      } else if (t === K) {
+        if (Math.abs(f - tf) <= 1 && Math.abs(r - tr) <= 1 && i !== target) return true;
+      } else {
+        var deltas = t === B ? BDEL : t === R ? RDEL : BDEL.concat(RDEL);
+        for (d = 0; d < deltas.length; d++) {
+          nf = f; nr = r;
+          for (;;) {
+            nf += (deltas[d] === 1 || deltas[d] === -7 || deltas[d] === 9) ? 1 :
+                  (deltas[d] === -1 || deltas[d] === 7 || deltas[d] === -9) ? -1 : 0;
+            nr += (deltas[d] === 8 || deltas[d] === 7 || deltas[d] === 9) ? 1 :
+                  (deltas[d] === -8 || deltas[d] === -7 || deltas[d] === -9) ? -1 : 0;
+            // The above is messy. Use file/rank increments properly below — replaced.
+            break;
+          }
+        }
+      }
+    }
+    return isAttacked2(st, target, by);
+  }
+
+  function rayStep(del) {
+    // return [df, dr] for a 0-63 delta that is a one-square king/slide step
+    var map = {};
+    map[1] = [1, 0]; map[-1] = [-1, 0]; map[8] = [0, 1]; map[-8] = [0, -1];
+    map[9] = [1, 1]; map[7] = [-1, 1]; map[-7] = [1, -1]; map[-9] = [-1, -1];
+    return map[del];
+  }
+
+  function isAttacked2(st, target, by) {
+    var b = st.board, i, p, t, f, r, tf = fileOf(target), tr = rankOf(target), d, df, dr, nf, nr, nsq, v, deltas, step;
+    for (i = 0; i < 64; i++) {
+      p = b[i];
+      if (!p || (p > 0) !== (by > 0)) continue;
+      if (st.paralyzed[i] || st.illusion[i]) continue;
+      t = Math.abs(p);
+      f = fileOf(i); r = rankOf(i);
+      if (t === P) {
+        dr = by > 0 ? 1 : -1;
+        if (tr === r + dr && (tf === f - 1 || tf === f + 1)) return true;
+      } else if (t === N) {
+        df = Math.abs(f - tf); dr = Math.abs(r - tr);
+        if ((df === 1 && dr === 2) || (df === 2 && dr === 1)) return true;
+      } else if (t === K) {
+        if (i !== target && Math.abs(f - tf) <= 1 && Math.abs(r - tr) <= 1) return true;
+      } else {
+        deltas = t === B ? BDEL : t === R ? RDEL : [1, -1, 8, -8, 7, 9, -7, -9];
+        for (d = 0; d < deltas.length; d++) {
+          step = rayStep(deltas[d]);
+          if (!step) continue;
+          nf = f + step[0]; nr = r + step[1];
+          while (onBoard(nf, nr)) {
+            nsq = sq(nf, nr);
+            v = b[nsq];
+            if (nsq === target) return true;
+            if (v) break;
+            nf += step[0]; nr += step[1];
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  function inCheckOf(st, side) {
+    var ksq = findKing(st, side);
+    if (ksq < 0) return true;
+    return isAttacked2(st, ksq, -side);
+  }
+  function inCheck(st) { return inCheckOf(st, st.turn); }
+
+  var gout, gn;
+
+  function pushMove(from, to, flags, typ) {
+    gout[gn++] = (from & 255) | ((to & 255) << 8) | ((typ & 31) << 16) | (flags || 0);
+  }
+
+  function genSlider(st, from, deltas, noCap) {
+    var b = st.board, side = st.turn, d, step, f, r, nf, nr, nsq, v;
+    f = fileOf(from); r = rankOf(from);
+    for (d = 0; d < deltas.length; d++) {
+      step = rayStep(deltas[d]);
+      if (!step) continue;
+      nf = f + step[0]; nr = r + step[1];
+      while (onBoard(nf, nr)) {
+        nsq = sq(nf, nr); v = b[nsq];
+        if (!v) pushMove(from, nsq, 0, 0);
+        else {
+          if (!noCap && (v > 0) !== (side > 0)) pushMove(from, nsq, F_CAP, 0);
+          break;
+        }
+        nf += step[0]; nr += step[1];
+      }
+    }
+  }
+
+  function gen(st, out) {
+    var b = st.board, side = st.turn, i, p, t, f, r, dir, to, to2, v, noCap, d, nf, nr, nsq, df, dr, last, cap, epCap;
+    gout = out; gn = 0;
+    dir = side > 0 ? 1 : -1;
+    last = side > 0 ? 7 : 0;
+    for (i = 0; i < 64; i++) {
+      p = b[i];
+      if (!p || (p > 0) !== (side > 0)) continue;
+      if (st.paralyzed[i]) continue;
+      noCap = !!st.illusion[i];
+      t = Math.abs(p);
+      f = fileOf(i); r = rankOf(i);
+      if (t === P) {
+        // push
+        to = sq(f, r + dir);
+        if (onBoard(f, r + dir) && !b[to]) {
+          if (r + dir === last) {
+            [Q, R, B, N].forEach(function (pr) { pushMove(i, to, F_PROMO, pr); });
+          } else pushMove(i, to, 0, 0);
+          if ((side > 0 ? r === 1 : r === 6) && !b[sq(f, r + 2 * dir)]) {
+            pushMove(i, sq(f, r + 2 * dir), F_DBL, 0);
+          }
+        }
+        // captures
+        if (!noCap) {
+          [-1, 1].forEach(function (df) {
+            if (!onBoard(f + df, r + dir)) return;
+            to = sq(f + df, r + dir); v = b[to];
+            if (v && (v > 0) !== (side > 0)) {
+              if (r + dir === last) [Q, R, B, N].forEach(function (pr) { pushMove(i, to, F_CAP | F_PROMO, pr); });
+              else pushMove(i, to, F_CAP, 0);
+            } else if (st.ep === to) {
+              pushMove(i, to, F_CAP | F_EP, 0);
+            }
+          });
+        }
+      } else if (t === N) {
+        for (d = 0; d < 8; d++) {
+          df = (NDEL[d] === 15 || NDEL[d] === 17 || NDEL[d] === -6 || NDEL[d] === 10) ? 1 :
+               (NDEL[d] === -15 || NDEL[d] === -17 || NDEL[d] === 6 || NDEL[d] === -10) ? -1 :
+               (NDEL[d] === 6 || NDEL[d] === -10 || NDEL[d] === 10 || NDEL[d] === -6) ? ((NDEL[d] === 6 || NDEL[d] === -10) ? -2 : 2) : 0;
+        }
+        var nd = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+        for (d = 0; d < 8; d++) {
+          nf = f + nd[d][0]; nr = r + nd[d][1];
+          if (!onBoard(nf, nr)) continue;
+          nsq = sq(nf, nr); v = b[nsq];
+          if (!v) pushMove(i, nsq, 0, 0);
+          else if (!noCap && (v > 0) !== (side > 0)) pushMove(i, nsq, F_CAP, 0);
+        }
+      } else if (t === B) genSlider(st, i, BDEL, noCap);
+      else if (t === R) genSlider(st, i, RDEL, noCap);
+      else if (t === Q) genSlider(st, i, [1, -1, 8, -8, 7, 9, -7, -9], noCap);
+      else if (t === K) {
+        for (d = 0; d < 8; d++) {
+          var ks = rayStep(KDEL[d]);
+          if (!ks) continue;
+          nf = f + ks[0]; nr = r + ks[1];
+          if (!onBoard(nf, nr)) continue;
+          nsq = sq(nf, nr); v = b[nsq];
+          if (!v) pushMove(i, nsq, 0, 0);
+          else if (!noCap && (v > 0) !== (side > 0)) pushMove(i, nsq, F_CAP, 0);
+        }
+        // Castling: king unmoved, real rook unmoved on a/h, path empty, not in/through/into real check.
+        if (!noCap && st.unmoved[i] && !inCheckOf(st, side)) {
+          var homeR = side > 0 ? 0 : 7, rookH, rookA, mid, dest, empty, safe, ri;
+          // kingside
+          rookH = sq(7, homeR);
+          if (b[rookH] === (side > 0 ? R : -R) && !st.illusion[rookH] && st.unmoved[rookH] && !st.paralyzed[rookH]) {
+            empty = !b[sq(5, homeR)] && !b[sq(6, homeR)];
+            safe = !isAttacked2(st, sq(5, homeR), -side) && !isAttacked2(st, sq(6, homeR), -side);
+            if (empty && safe) pushMove(i, sq(6, homeR), F_CASTLE, 0);
+          }
+          // queenside
+          rookA = sq(0, homeR);
+          if (b[rookA] === (side > 0 ? R : -R) && !st.illusion[rookA] && st.unmoved[rookA] && !st.paralyzed[rookA]) {
+            empty = !b[sq(1, homeR)] && !b[sq(2, homeR)] && !b[sq(3, homeR)];
+            safe = !isAttacked2(st, sq(2, homeR), -side) && !isAttacked2(st, sq(3, homeR), -side);
+            if (empty && safe) pushMove(i, sq(2, homeR), F_CASTLE, 0);
+          }
+        }
+      }
+    }
+    genSpecial(st, side);
+    return gn;
+  }
+
+  function genSpecial(st, side) {
+    var typ, hs, h, s, p, typCode;
+    for (var i = 0; i < HOME_TYPES.length; i++) {
+      typ = HOME_TYPES[i];
+      hs = homeSquares(side, typ);
+      for (h = 0; h < hs.length; h++) {
+        s = hs[h];
+        if (st.board[s] !== 0) continue;
+        if (resOf(st, side)[typ]) pushMove(0, s, F_SUMMON, typ);
+        if (countIllusions(st, side) < MAX_ILLUSIONS) pushMove(0, s, F_ILLUSION, typ);
+      }
+    }
+    if (countIllusions(st, side) >= MAX_ILLUSIONS) {
+      // illusion moves already skipped; summons still added above when reserve remains
+    }
+    // If already at max illusions, the loop still tried to add illusions — fix: check inside
+    // Recheck: I added illusions even when at max if some were added in the same gen (count doesn't change until make). Use a single check at start.
+    // I'll clean this in a follow-up if tests fail. Actually the check is countIllusions < MAX at each square, count doesn't change during gen, OK.
+    for (s = 0; s < 64; s++) {
+      p = st.board[s];
+      if (!p || (p > 0) === (side > 0)) continue;
+      if (st.revealed[s]) continue;
+      pushMove(0, s, F_REVEAL, 0);
+    }
+  }
+
+  // Fix: don't generate illusions when at max — already guarded per-square with same count. Good.
+  // Bug: I generate illusions even when count is max? No, `if (countIllusions(st, side) < MAX_ILLUSIONS)` inside the home loop. Good.
+
+  function make(st, m) {
+    snapFlags(st);
+    var from = m & 255, to = (m >> 8) & 255, typ = (m >> 16) & 31;
+    var side = st.turn, b = st.board, cap = 0, epPawn = -1, rookFrom = -1, rookTo = -1;
+    st.uhalf.push(st.half); st.uscore.push(st.score); st.hl.push(st.lo); st.hh.push(st.hi); st.uep.push(st.ep);
+    if (m & F_SUMMON) {
+      st.ucap.push(0); st.uhit.push(1);
+      b[to] = side > 0 ? typ : -typ;
+      st.illusion[to] = 0; st.revealed[to] = 2; st.paralyzed[to] = 0; st.unmoved[to] = 1;
+      resOf(st, side)[typ]--;
+      st.half = typ === P ? 0 : st.half + 1;
+      st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
+    }
+    if (m & F_ILLUSION) {
+      st.ucap.push(0); st.uhit.push(2);
+      b[to] = side > 0 ? typ : -typ;
+      st.illusion[to] = 1; st.revealed[to] = 0; st.paralyzed[to] = 0; st.unmoved[to] = 1;
+      st.half += 1; st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
+    }
+    if (m & F_REVEAL) {
+      st.ucap.push(st.revealed[to] || 0); st.uhit.push(3);
+      st.revealed[to] = st.illusion[to] ? 1 : 2;
+      st.half += 1; st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
+    }
+    cap = (m & F_EP) ? b[to + (side > 0 ? -8 : 8)] : b[to];
+    var capSq = (m & F_EP) ? to + (side > 0 ? -8 : 8) : to;
+    st.ucap.push(cap);
+    var hit = (m & F_CAP) && cap !== 0 && ((m & F_EP) ? st.illusion[capSq] : st.illusion[to]);
+    if (hit) {
+      st.uhit.push(4);
+      var owner = cap > 0 ? 1 : -1;
+      b[capSq] = 0; clearFlags(st, capSq);
+      st.paralyzed[from] = owner; // permanent
+      st.half = 0; st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
+    }
+    st.uhit.push(0);
+    var p = b[from];
+    b[from] = 0;
+    if (m & F_EP) { b[capSq] = 0; clearFlags(st, capSq); }
+    if (m & F_PROMO) {
+      b[to] = side > 0 ? typ : -typ;
+      moveFlags(st, from, to);
+      st.unmoved[to] = 0;
+    } else {
+      b[to] = p;
+      moveFlags(st, from, to);
+      st.unmoved[to] = 0;
+    }
+    if (m & F_CASTLE) {
+      if (fileOf(to) === 6) { rookFrom = sq(7, rankOf(to)); rookTo = sq(5, rankOf(to)); }
+      else { rookFrom = sq(0, rankOf(to)); rookTo = sq(3, rankOf(to)); }
+      b[rookTo] = b[rookFrom]; b[rookFrom] = 0;
+      moveFlags(st, rookFrom, rookTo);
+      st.unmoved[rookTo] = 0;
+    }
+    st.ep = (m & F_DBL) ? from + (side > 0 ? 8 : -8) : -1;
+    st.half = (cap || Math.abs(p) === P) ? 0 : st.half + 1;
+    st.turn = -st.turn;
+    st.hist.push(st.lo); // placeholder, refresh overwrites
+    refresh(st);
+    st.hist[st.hist.length - 1] = st.lo;
+  }
+
+  function unmake(st, m) {
+    var from = m & 255, to = (m >> 8) & 255, typ = (m >> 16) & 31;
+    var kind = st.uhit.pop(), cap, capSq, p, rookFrom, rookTo;
+    st.turn = -st.turn;
+    var side = st.turn;
+    if (kind === 1 || kind === 2) {
+      st.board[to] = 0; st.ucap.pop();
+    } else if (kind === 3) {
+      st.ucap.pop();
+    } else if (kind === 4) {
+      cap = st.ucap.pop();
+      capSq = (m & F_EP) ? to + (side > 0 ? -8 : 8) : to;
+      st.board[capSq] = cap;
+    } else {
+      cap = st.ucap.pop();
+      if (m & F_CASTLE) {
+        if (fileOf(to) === 6) { rookFrom = sq(7, rankOf(to)); rookTo = sq(5, rankOf(to)); }
+        else { rookFrom = sq(0, rankOf(to)); rookTo = sq(3, rankOf(to)); }
+        st.board[rookFrom] = st.board[rookTo]; st.board[rookTo] = 0;
+      }
+      p = st.board[to];
+      st.board[from] = (m & F_PROMO) ? (side > 0 ? P : -P) : p;
+      st.board[to] = 0;
+      capSq = (m & F_EP) ? to + (side > 0 ? -8 : 8) : to;
+      if (cap) st.board[capSq] = cap;
+    }
+    st.half = st.uhalf.pop(); st.score = st.uscore.pop(); st.lo = st.hl.pop(); st.hi = st.hh.pop(); st.ep = st.uep.pop();
+    st.hist.pop();
+    restoreFlags(st);
+  }
+
+  function legalMoves(st) {
+    var buf = [], n = gen(st, buf), out = [], i, m, bad;
+    for (i = 0; i < n; i++) {
+      m = buf[i];
+      make(st, m);
+      bad = inCheckOf(st, -st.turn);
+      unmake(st, m);
+      if (!bad) out.push(m);
+    }
+    return out;
+  }
+
+  function toObj(m) {
+    return {
+      m: m, from: m & 255, to: (m >> 8) & 255, typ: (m >> 16) & 31,
+      capture: !!(m & F_CAP), promo: !!(m & F_PROMO), ep: !!(m & F_EP), castle: !!(m & F_CASTLE),
+      dbl: !!(m & F_DBL), summon: !!(m & F_SUMMON), illusionAct: !!(m & F_ILLUSION), reveal: !!(m & F_REVEAL)
+    };
+  }
+
+  function moveText(st, m) {
+    var o = toObj(m);
+    if (o.summon) return 'Summon ' + NAMES[o.typ] + ' on ' + sqName(o.to);
+    if (o.illusionAct) return 'Weave an illusion of ' + NAMES[o.typ] + ' on ' + sqName(o.to);
+    if (o.reveal) return 'Reveal ' + sqName(o.to);
+    if (o.castle) return fileOf(o.to) === 6 ? 'O-O' : 'O-O-O';
+    var p = st.board[o.from], L = LETTERS.charAt(Math.abs(p));
+    var s = (L === 'P' ? '' : L) + sqName(o.from) + (o.capture || o.ep ? 'x' : '-') + sqName(o.to);
+    if (o.ep) s += ' e.p.';
+    if (o.promo) s += '=' + LETTERS.charAt(o.typ);
+    return s;
+  }
+
+  function onlyKings(st) {
+    var i, p, typ;
+    for (i = 0; i < 64; i++) {
+      p = st.board[i];
+      if (p && Math.abs(p) !== K) return false;
+    }
+    for (typ = 1; typ <= 5; typ++) if ((st.resW[typ] || st.resB[typ])) return false;
+    return true;
+  }
+
+  function repCount(st) {
+    var n = 1, i, lo = st.lo;
+    for (i = 0; i < (st.hist || []).length; i++) if (st.hist[i] === lo) n++;
+    return n;
+  }
+
+  function status(st, legal) {
+    legal = legal || legalMoves(st);
+    var chk = inCheck(st);
+    if (legal.length === 0) return { over: true, check: chk, result: chk ? 'checkmate' : 'stalemate', winner: chk ? -st.turn : 0 };
+    if (onlyKings(st)) return { over: true, check: chk, result: 'material', winner: 0 };
+    if (repCount(st) >= 3) return { over: true, check: chk, result: 'repetition', winner: 0 };
+    if (st.half >= 100) return { over: true, check: chk, result: 'moves', winner: 0 };
+    return { over: false, check: chk, result: null, winner: 0 };
+  }
+
+  // Search
+  var nodes, abort, deadline, MV = [];
+  function capScore(b, m) {
+    var to = (m >> 8) & 255, v = b[to];
+    return VALUE[Math.abs(v)] || 0;
+  }
+  function evalPos(st) {
+    return st.turn > 0 ? st.score : -st.score;
+  }
+  function search(st, depth, alpha, beta) {
+    if (nodes++ & 31 && Date.now() > deadline) { abort = true; return 0; }
+    var legal = legalMoves(st), n = legal.length, i, m, s, best = -INF;
+    if (n === 0) return inCheck(st) ? -MATE + (8 - depth) : 0;
+    if (depth <= 0) return evalPos(st);
+    legal.sort(function (a, c) { return ((c & F_CAP) ? capScore(st.board, c) : 0) - ((a & F_CAP) ? capScore(st.board, a) : 0); });
+    for (i = 0; i < n; i++) {
+      m = legal[i];
+      make(st, m);
+      s = -search(st, depth - 1, -beta, -alpha);
+      unmake(st, m);
+      if (abort) return 0;
+      if (s > best) best = s;
+      if (s > alpha) alpha = s;
+      if (alpha >= beta) break;
+    }
+    return best;
+  }
+  function hideEnemyIllusions(st) {
+    var i, p;
+    for (i = 0; i < 64; i++) {
+      p = st.board[i];
+      if (!st.illusion[i] || !p) continue;
+      if ((p > 0) === (st.turn > 0)) continue;
+      if (st.revealed[i] === 1) continue;
+      st.illusion[i] = 0;
+    }
+  }
+  function think(st, opt) {
+    st = load(save(st));
+    hideEnemyIllusions(st);
+    var legal = legalMoves(st), n = legal.length, i, j, t, m, s;
+    if (!n) return null;
+    for (i = n - 1; i > 0; i--) { j = (Math.random() * (i + 1)) | 0; t = legal[i]; legal[i] = legal[j]; legal[j] = t; }
+    legal.sort(function (a, c) { return ((c & F_CAP) ? capScore(st.board, c) : 0) - ((a & F_CAP) ? capScore(st.board, a) : 0); });
+    var noise = opt.noise || 0, maxDepth = opt.depth || 2;
+    nodes = 0; abort = false; deadline = Date.now() + (opt.time || 600000);
+    var bestMove = legal[0], bestScore = 0, doneDepth = 0, scores = [], d;
+    for (d = 1; d <= maxDepth; d++) {
+      var itBest = -INF, itMove = 0, cur = [];
+      for (i = 0; i < n; i++) {
+        m = legal[i];
+        make(st, m);
+        s = -search(st, d - 1, -INF, noise ? INF : -itBest);
+        unmake(st, m);
+        if (abort) break;
+        cur[i] = s;
+        if (s > itBest) { itBest = s; itMove = m; }
+      }
+      if (itMove) { bestMove = itMove; bestScore = itBest; }
+      if (abort) break;
+      doneDepth = d; scores = cur;
+      var order = legal.map(function (mm, k) { return { m: mm, s: cur[k] }; });
+      order.sort(function (a, c) { return c.s - a.s; });
+      for (i = 0; i < n; i++) { legal[i] = order[i].m; scores[i] = order[i].s; }
+      if (itBest >= MATE - 100 || n === 1) break;
+    }
+    if (noise && scores.length === n && bestScore < MATE - 100) {
+      var pick = -INF;
+      for (i = 0; i < n; i++) {
+        s = scores[i] <= -(MATE - 100) ? scores[i] : scores[i] + (Math.random() * 2 - 1) * noise;
+        if (s > pick) { pick = s; bestMove = legal[i]; bestScore = scores[i]; }
+      }
+    }
+    return { move: bestMove, score: bestScore, depth: doneDepth, nodes: nodes };
+  }
+
+  return {
+    P: P, N: N, B: B, R: R, Q: Q, K: K,
+    LETTERS: LETTERS, NAMES: NAMES, VALUE: VALUE, MAX_ILLUSIONS: MAX_ILLUSIONS, HOME_TYPES: HOME_TYPES,
+    F_CAP: F_CAP, F_PROMO: F_PROMO, F_EP: F_EP, F_CASTLE: F_CASTLE, F_DBL: F_DBL,
+    F_SUMMON: F_SUMMON, F_ILLUSION: F_ILLUSION, F_REVEAL: F_REVEAL,
+    fileOf: fileOf, rankOf: rankOf, sq: sq, sqName: sqName, parseSq: parseSq,
+    homeSquares: homeSquares, typeAtHome: typeAtHome, countIllusions: countIllusions,
+    resOf: resOf, findKing: findKing,
+    emptyState: emptyState, newGame: newGame, save: save, load: load, refresh: refresh,
+    make: make, unmake: unmake, legalMoves: legalMoves, toObj: toObj, moveText: moveText,
+    inCheck: inCheck, inCheckOf: inCheckOf, isAttacked: isAttacked2, status: status, think: think
+  };
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = DC;
+
+</script>
+<script>
+/* SFX: dependency-free, synthesised sound effects using the Web Audio API. */
+var SFX = (function () {
+  var ctx = null, master = null, muted = false;
+  var VOICES = {};
+
+  // Lazily creates the AudioContext (browsers only allow audio after a user gesture).
+  function getCtx() {
+    if (ctx) return ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0.25;
+    master.connect(ctx.destination);
+    return ctx;
+  }
+
+  // Fast attack, exponential decay to silence (never jumps to zero, so no clicks).
+  function envelope(g, t0, peak, attack, dur) {
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  }
+
+  // Oscillator note, optionally gliding from freq to freqEnd.
+  function tone(type, freq, t0, dur, peak, freqEnd) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, t0 + dur);
+    envelope(g, t0, peak, 0.005, dur);
+    o.connect(g);
+    g.connect(master);
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+  }
+
+  // Band-passed white noise, optionally sweeping from freq to freqEnd.
+  function noise(type, freq, freqEnd, Q, t0, dur, peak, attack) {
+    var len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    var data = buf.getChannelData(0), i;
+    for (i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    var src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf;
+    f.type = type;
+    f.Q.value = Q;
+    f.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) f.frequency.exponentialRampToValueAtTime(freqEnd, t0 + dur);
+    envelope(g, t0, peak, attack, dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(master);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
+  // Wooden knock: short filtered noise burst plus a low falling sine thump.
+  function knock(t0, amp, len) {
+    noise('bandpass', 1000, null, 1.2, t0, 0.025, amp * 0.7, 0.002);
+    tone('sine', 160, t0, len, amp * 0.6, 70);
+  }
+
+  // Sequence of notes spaced by `step`; the last note uses `lastDur`.
+  function seq(type, freqs, step, dur, lastDur, peak) {
+    return function (t) {
+      for (var i = 0; i < freqs.length; i++) {
+        tone(type, freqs[i], t + i * step, i === freqs.length - 1 ? lastDur : dur, peak);
+      }
+    };
+  }
+
+  VOICES.select = function (t) { tone('sine', 2000, t, 0.02, 0.03); };
+  VOICES.move = function (t) { knock(t, 0.5, 0.09); };
+  VOICES.capture = function (t) { knock(t, 0.7, 0.14); knock(t + 0.05, 0.9, 0.13); };
+  VOICES.remote = function (t) { noise('bandpass', 2500, 400, 2, t, 0.35, 0.8, 0.02); };
+  VOICES.freeze = function (t) {
+    tone('sine', 2400, t, 0.3, 0.15, 2600);
+    tone('sine', 2430, t, 0.3, 0.15, 2650);
+  };
+  VOICES.promote = seq('triangle', [523.25, 659.25, 783.99], 0.09, 0.12, 0.2, 0.4);
+  VOICES.check = seq('triangle', [880, 932.33], 0.13, 0.12, 0.12, 0.45);
+  VOICES.win = seq('triangle', [523.25, 659.25, 783.99, 1046.5], 0.15, 0.2, 0.45, 0.45);
+  VOICES.lose = seq('triangle', [440, 349.23, 293.66], 0.22, 0.2, 0.4, 0.4);
+  VOICES.draw = seq('sine', [440, 440], 0.2, 0.16, 0.16, 0.35);
+
+  return {
+    play: function (name) {
+      if (muted || !VOICES.hasOwnProperty(name)) return;
+      try {
+        if (!getCtx()) return;
+        if (ctx.state === 'suspended') {
+          var p = ctx.resume();
+          if (p && p.then) p.then(null, function () {});
+        }
+        VOICES[name](ctx.currentTime + 0.01);
+      } catch (e) {
+        /* Audio is optional: fail silently. */
+      }
+    },
+    setMuted: function (m) { muted = !!m; },
+    isMuted: function () { return muted; }
+  };
+})();
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var LEVELS = [
+    { name: 'Easy', depth: 1, noise: 1000, note: 'Makes mostly random moves. Good for learning the idea.' },
+    { name: 'Medium', depth: 1, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
+    { name: 'Hard', depth: 2, noise: 120, note: 'Sees short tactics but still gives pieces away now and then.' },
+    { name: 'Very Hard', depth: 3, noise: 40, time: 1500, note: 'Searches three moves deep. Thinks for up to 1.5 seconds.' },
+    { name: 'Expert', depth: 4, noise: 0, time: 3000, note: 'Searches four moves deep. Thinks for up to 3 seconds per move.' }
+  ];
+  var KEY = 'conjurerchess.v1';
+  var GLYPH = { 1: { w: '\u2659', b: '\u265F' }, 2: { w: '\u2658', b: '\u265E' }, 3: { w: '\u2657', b: '\u265D' },
+                4: { w: '\u2656', b: '\u265C' }, 5: { w: '\u2655', b: '\u265B' }, 6: { w: '\u2654', b: '\u265A' } };
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
+  var st, moves = [], texts = [], caps = [], legal = [], stat = null;
+  var sel = -1, targets = {}, flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
+  var mode = null; // 'summon' | 'illusion' | 'reveal'
+  var cells = new Array(64);
+
+  function store() {
+    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped })); } catch (e) { }
+  }
+  function restore() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY));
+      if (!o || !o.cfg) return null;
+      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p' || o.cfg.mode === 'sim') cfg.mode = o.cfg.mode;
+      ['simG', 'simS'].forEach(function (k) { if (o.cfg[k] >= 0 && o.cfg[k] < LEVELS.length) cfg[k] = o.cfg[k] | 0; });
+      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
+      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
+      cfg.sound = o.cfg.sound !== false;
+      flipped = !!o.flipped;
+      return Array.isArray(o.moves) ? o.moves : null;
+    } catch (e) { return null; }
+  }
+
+  function push(m) {
+    var o = DC.toObj(m), dest = o.to, wasIll = !!(st.illusion && (o.ep ? st.illusion[dest + (st.turn > 0 ? -8 : 8)] : st.illusion[dest]));
+    var t = DC.moveText(st, m), c = (wasIll || o.summon || o.illusionAct || o.reveal) ? 0 : (o.ep ? st.board[dest + (st.turn > 0 ? -8 : 8)] : st.board[dest]);
+    DC.make(st, m);
+    legal = DC.legalMoves(st); stat = DC.status(st, legal);
+    if (wasIll) t += ' (illusion vanishes; attacker paralyzed)';
+    else if (o.reveal) t += st.illusion[dest] || st.revealed[dest] === 1 ? ' — an illusion' : ' — real';
+    t += stat.result === 'checkmate' ? '#' : (stat.check ? '+' : '');
+    moves.push(m); texts.push(t); caps.push(c);
+  }
+  function replay(list) {
+    st = DC.newGame(); moves = []; texts = []; caps = [];
+    legal = DC.legalMoves(st); stat = DC.status(st, legal);
+    for (var i = 0; i < list.length; i++) {
+      if (stat.over || legal.indexOf(list[i]) < 0) break;
+      push(list[i]);
+    }
+  }
+  function humanTurn() { return cfg.mode === '2p' || (cfg.mode === 'ai' && st.turn === cfg.side); }
+  function botLevel(side) {
+    if (cfg.mode === 'sim') return side > 0 ? cfg.simG : cfg.simS;
+    return cfg.mode === 'ai' && side !== cfg.side ? cfg.level : -1;
+  }
+  function sideName(side, cap) {
+    var l = botLevel(side), n;
+    if (l >= 0) n = LEVELS[l].name + ' bot';
+    else n = cfg.mode === '2p' ? (side > 0 ? 'White player' : 'Black player') : 'Player';
+    return cap ? n : n.charAt(0).toLowerCase() + n.slice(1);
+  }
+  function viewSide() {
+    if (cfg.mode === 'sim') return 0;
+    if (cfg.mode === 'ai') return cfg.side;
+    return st.turn;
+  }
+  function pieceClass(p, s) {
+    var vis = viewSide(), own = vis === 0 || (p > 0) === (vis > 0);
+    var cls = 'piece ' + (p > 0 ? 'white' : 'black');
+    if (st.illusion && st.illusion[s] && (own || st.revealed[s] === 1)) cls += ' illusion';
+    if (st.revealed && st.revealed[s] === 1) cls += ' revealed-ill';
+    return cls;
+  }
+  function pieceEl(p, s) {
+    var d = document.createElement('div');
+    var typ = Math.abs(p);
+    d.className = s == null ? ('piece ' + (p > 0 ? 'white' : 'black')) : pieceClass(p, s);
+    d.innerHTML = '<span class="glyph">' + GLYPH[typ][p > 0 ? 'w' : 'b'] + '</span>';
+    return d;
+  }
+  function pieceIn(s) { return cells[s] && cells[s].querySelector('.piece:not(.dying):not(.ghost)'); }
+
+  function buildBoards() {
+    var root = $('boards'); root.innerHTML = '';
+    var bd = document.createElement('div'); bd.className = 'board';
+    var row, col, r, f, s, c;
+    for (row = 0; row < 8; row++) for (col = 0; col < 8; col++) {
+      r = flipped ? row : 7 - row;
+      f = flipped ? 7 - col : col;
+      s = DC.sq(f, r);
+      c = document.createElement('div');
+      c.className = 'cell ' + ((f + r) % 2 === 1 ? 'l' : 'd');
+      c.setAttribute('data-sq', s);
+      if (col === 0) c.innerHTML += '<span class="coord r">' + (r + 1) + '</span>';
+      if (row === 7) c.innerHTML += '<span class="coord f">' + 'abcdefgh'.charAt(f) + '</span>';
+      cells[s] = c; bd.appendChild(c);
+    }
+    root.appendChild(bd);
+    for (s = 0; s < 64; s++) if (st.board[s]) cells[s].appendChild(pieceEl(st.board[s], s));
+  }
+
+  function clearGhosts() {
+    var gs = document.querySelectorAll('#boards .piece.ghost'), i;
+    for (i = 0; i < gs.length; i++) if (gs[i].parentNode) gs[i].parentNode.removeChild(gs[i]);
+  }
+  function showGhosts() {
+    clearGhosts();
+    if (!humanTurn() || busy || (stat && stat.over)) return;
+    if (mode !== 'summon' && mode !== 'illusion') return;
+    var wantSummon = mode === 'summon', i, o, typ, el, s;
+    for (i = 0; i < legal.length; i++) {
+      o = DC.toObj(legal[i]);
+      if (wantSummon && o.summon) typ = o.typ;
+      else if (!wantSummon && o.illusionAct) typ = o.typ;
+      else continue;
+      s = o.to;
+      if (!cells[s] || st.board[s] !== 0 || cells[s].querySelector('.piece.ghost')) continue;
+      el = pieceEl(st.turn > 0 ? typ : -typ, null);
+      el.className = 'piece ghost ' + (st.turn > 0 ? 'white' : 'black') + (wantSummon ? '' : ' ghost-ill');
+      el.setAttribute('aria-hidden', 'true');
+      cells[s].appendChild(el);
+    }
+  }
+
+  function refreshMarks() {
+    var i, k;
+    for (i = 0; i < 64; i++) if (cells[i]) cells[i].classList.remove('sel', 'tgt', 'cap', 'last', 'check', 'para', 'summon', 'rev');
+    if (moves.length) {
+      var lm = DC.toObj(moves[moves.length - 1]);
+      if (!lm.summon && !lm.illusionAct && !lm.reveal) {
+        if (cells[lm.from]) cells[lm.from].classList.add('last');
+        if (cells[lm.to]) cells[lm.to].classList.add('last');
+      } else if (cells[lm.to]) cells[lm.to].classList.add('last');
+    }
+    for (i = 0; i < 64; i++) {
+      if (!cells[i]) continue;
+      if (st.paralyzed && st.paralyzed[i]) cells[i].classList.add('para');
+      var el = pieceIn(i);
+      if (el && st.board[i]) el.className = pieceClass(st.board[i], i);
+    }
+    if (stat && stat.check) {
+      var ksq = DC.findKing(st, st.turn);
+      if (ksq >= 0) cells[ksq].classList.add('check');
+    }
+    if (sel >= 0 && cells[sel]) {
+      cells[sel].classList.add('sel');
+      for (k in targets) {
+        var list = targets[k].map(DC.toObj);
+        var kind = list.some(function (o) { return o.capture || o.ep; }) ? 'cap' : 'tgt';
+        cells[k].classList.add(kind);
+      }
+    }
+    if (mode === 'summon' || mode === 'illusion') {
+      for (i = 0; i < legal.length; i++) {
+        var o = DC.toObj(legal[i]);
+        if ((mode === 'summon' && o.summon) || (mode === 'illusion' && o.illusionAct)) {
+          if (cells[o.to]) cells[o.to].classList.add('summon');
+        }
+      }
+    }
+    if (mode === 'reveal') {
+      for (i = 0; i < legal.length; i++) {
+        var o2 = DC.toObj(legal[i]);
+        if (o2.reveal && cells[o2.to]) cells[o2.to].classList.add('rev');
+      }
+    }
+    showGhosts();
+    ['bSummon', 'bIllusion', 'bReveal'].forEach(function (id) {
+      var b = $(id);
+      if (!b) return;
+      b.classList.toggle('on', (id === 'bSummon' && mode === 'summon') || (id === 'bIllusion' && mode === 'illusion') || (id === 'bReveal' && mode === 'reveal'));
+      b.disabled = !humanTurn() || busy || !!(stat && stat.over);
+    });
+  }
+
+  function renderReserve() {
+    var box = $('reserve'); if (!box) return;
+    var h = '', side, res, typ, i, n, lab;
+    for (side = 1; side >= -1; side -= 2) {
+      res = DC.resOf(st, side);
+      lab = side > 0 ? 'White' : 'Black';
+      h += '<div class="rg"><b>' + lab + '</b> ';
+      for (i = 0; i < DC.HOME_TYPES.length; i++) {
+        typ = DC.HOME_TYPES[i]; n = res[typ] || 0;
+        if (n) h += DC.NAMES[typ] + '×' + n + ' ';
+      }
+      h += 'illusions ' + DC.countIllusions(st, side) + '/' + DC.MAX_ILLUSIONS;
+      h += '</div>';
+    }
+    box.innerHTML = h;
+  }
+  function mini(p) {
+    var w = document.createElement('span'); w.className = 'mini'; w.appendChild(pieceEl(p));
+    w.title = DC.NAMES[Math.abs(p)]; return w;
+  }
+  function refreshPanel() {
+    var tok = $('turnTok'), txt;
+    tok.className = st.turn > 0 ? 'white' : 'black';
+    var who = st.turn > 0 ? 'White' : 'Black';
+    if (stat.over) txt = overTitle();
+    else if (cfg.mode === 'ai') txt = humanTurn() ? 'Your move (' + who + ')' : 'Computer is thinking';
+    else txt = who + ' to move';
+    if (!stat.over && stat.check) txt += '. Check!';
+    $('statusText').textContent = txt;
+    $('spin').hidden = !busy;
+    $('matchup').innerHTML = cfg.mode === 'ai'
+      ? 'You: ' + (cfg.side > 0 ? 'White' : 'Black') + '<small>Computer: ' + LEVELS[cfg.level].name + '</small>'
+      : 'Two players<small>White moves first</small>';
+    var cw = $('capW'), cb = $('capB'), i, list = caps.filter(function (c) { return c !== 0; });
+    list.sort(function (a, b) { return DC.VALUE[Math.abs(b)] - DC.VALUE[Math.abs(a)]; });
+    cw.innerHTML = ''; cb.innerHTML = '';
+    for (i = 0; i < list.length; i++) (list[i] > 0 ? cw : cb).appendChild(mini(list[i]));
+    renderReserve();
+    var ml = $('movelist'), h = '';
+    for (i = 0; i < texts.length; i += 2) {
+      h += '<li class="n">' + (i / 2 + 1) + '.</li><li class="mv' + (i === texts.length - 1 ? ' cur' : '') + '">' + texts[i] + '</li>' +
+        '<li class="mv' + (i + 1 === texts.length - 1 ? ' cur' : '') + '">' + (texts[i + 1] || '') + '</li>';
+    }
+    ml.innerHTML = h; ml.scrollTop = ml.scrollHeight;
+    $('bUndo').disabled = moves.length === 0 || cfg.mode === 'sim';
+    $('bSound').className = cfg.sound ? '' : 'off';
+  }
+  function showInfo(p, s) {
+    var typ = Math.abs(p);
+    var vis = viewSide(), own = vis === 0 || (p > 0) === (vis > 0);
+    var msg = '<b>' + (p > 0 ? 'White ' : 'Black ') + DC.NAMES[typ] + '</b> ' + DC.sqName(s);
+    if (st.paralyzed && st.paralyzed[s]) msg += ' (paralyzed)';
+    if (st.illusion && st.illusion[s] && (own || st.revealed[s] === 1)) msg += ' (illusion)';
+    else if (st.revealed && st.revealed[s] === 2 && own) msg += ' (real)';
+    $('info').innerHTML = msg;
+  }
+  function layout() {
+    var W = window.innerWidth, H = window.innerHeight;
+    var wide = W >= 880 && W > H;
+    document.body.classList.toggle('wide', wide);
+    var top = $('top').offsetHeight + 6 + 30 + 24;
+    var cw = ((wide ? W - 340 : W) - 16) / 8;
+    var ch = (H - top - 16) / 8;
+    var c = Math.floor(Math.min(cw, ch, 72));
+    if (c < 28) c = 28;
+    document.documentElement.style.setProperty('--cell', c + 'px');
+  }
+
+  function hideChoice() { var ch = $('choice'); if (ch) { ch.hidden = true; ch.innerHTML = ''; ch.style.visibility = ''; } }
+  function deselect() { sel = -1; targets = {}; hideChoice(); }
+  function clearMode() { mode = null; }
+  function setMode(next) {
+    if (!humanTurn() || busy || (stat && stat.over)) return;
+    mode = (mode === next) ? null : next;
+    deselect();
+    if (mode === 'summon') $('info').textContent = 'Summon: tap a highlighted starting square to place a reserved piece.';
+    else if (mode === 'illusion') $('info').textContent = 'Illusion: tap a highlighted starting square to weave an illusion.';
+    else if (mode === 'reveal') $('info').textContent = 'Reveal: tap an unrevealed enemy piece.';
+    else $('info').textContent = 'Tap a piece to see where it can go, or use Summon, Illusion or Reveal.';
+    refreshMarks();
+  }
+  function positionChoice(ch, cell) {
+    if (!ch || !cell) return;
+    ch.style.visibility = 'hidden';
+    ch.hidden = false;
+    var r = cell.getBoundingClientRect(), wr = ch.getBoundingClientRect();
+    var w = wr.width, h = wr.height, pad = 8, vw = window.innerWidth, vh = window.innerHeight;
+    var top = r.top - h - 6;
+    if (top < pad) {
+      var below = r.bottom + 6;
+      if (below + h <= vh - pad) top = below;
+      else top = Math.max(pad, Math.min(vh - h - pad, r.top - h - 6));
+    }
+    var left = r.left + (r.width - w) / 2;
+    left = Math.max(pad, Math.min(left, vw - w - pad));
+    if (!isFinite(left)) left = pad;
+    if (!isFinite(top)) top = pad;
+    ch.style.left = left + 'px';
+    ch.style.top = top + 'px';
+    ch.style.visibility = '';
+  }
+  function showChoice(s, ms, labels) {
+    var ch = $('choice'); if (!ch) { doMove(ms[0]); return; }
+    ch.innerHTML = '';
+    var i, b;
+    for (i = 0; i < ms.length; i++) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = labels ? labels[i] : DC.moveText(st, ms[i]);
+      b.setAttribute('data-m', String(ms[i]));
+      ch.appendChild(b);
+    }
+    positionChoice(ch, cells[s]);
+    ch.onclick = function (e) {
+      var btn = e.target.closest ? e.target.closest('button') : e.target;
+      if (!btn || !btn.getAttribute('data-m')) return;
+      var mm = +btn.getAttribute('data-m');
+      hideChoice(); deselect(); clearMode(); doMove(mm);
+    };
+  }
+
+  function onCell(s) {
+    if (busy || (stat && stat.over) || !humanTurn()) {
+      if (st.board[s]) showInfo(st.board[s], s);
+      return;
+    }
+    if (mode === 'summon' || mode === 'illusion' || mode === 'reveal') {
+      var want = mode === 'summon' ? 'summon' : (mode === 'illusion' ? 'illusionAct' : 'reveal');
+      var hits = legal.filter(function (m) { var o = DC.toObj(m); return o[want] && o.to === s; });
+      if (hits.length === 1) { clearMode(); deselect(); doMove(hits[0]); return; }
+      if (hits.length > 1) { showChoice(s, hits); return; }
+      clearMode(); deselect(); refreshMarks(); return;
+    }
+    if (sel >= 0 && targets[s] && targets[s].length) {
+      var ms = targets[s];
+      // Promotion: several moves to the same square
+      if (ms.length > 1 && ms.every(function (m) { return DC.toObj(m).promo; })) {
+        showChoice(s, ms, ms.map(function (m) { return 'Promote to ' + DC.NAMES[DC.toObj(m).typ]; }));
+        return;
+      }
+      if (ms.length > 1) { showChoice(s, ms); return; }
+      deselect(); doMove(ms[0]); return;
+    }
+    var p = st.board[s];
+    deselect();
+    if (p !== 0) {
+      showInfo(p, s);
+      if ((p > 0) === (st.turn > 0)) {
+        sel = s;
+        for (var i = 0; i < legal.length; i++) {
+          var o = DC.toObj(legal[i]);
+          if (o.summon || o.illusionAct || o.reveal) continue;
+          if (o.from !== s) continue;
+          (targets[o.to] = targets[o.to] || []).push(legal[i]);
+        }
+        SFX.play('select');
+      }
+    }
+    refreshMarks();
+  }
+
+  function animate(m) {
+    var o = DC.toObj(m);
+    if (o.summon || o.illusionAct) {
+      if (cells[o.to] && st.board[o.to]) cells[o.to].appendChild(pieceEl(st.board[o.to], o.to));
+      return;
+    }
+    if (o.reveal) return;
+    if (o.capture && st.board[o.from] !== 0) {
+      // illusion hit: vanish victim, stay
+      var vic = pieceIn(o.ep ? o.to + (st.turn < 0 ? -8 : 8) : o.to); // turn already flipped
+      // After make, turn has flipped, so side that moved is -st.turn. EP cap sq: for white (mover now -turn if turn is black): dest-8
+      var capSq = o.ep ? (o.to + ((-st.turn) > 0 ? -8 : 8)) : o.to;
+      vic = pieceIn(capSq);
+      if (vic) { vic.classList.add('dying'); setTimeout(function () { vic.remove(); }, 300); }
+      return;
+    }
+    if (o.castle) { buildBoards(); return; }
+    var from = o.from, to = o.to, victim = pieceIn(to);
+    if (o.ep) {
+      var epSq = to + ((-st.turn) > 0 ? -8 : 8);
+      var ev = pieceIn(epSq);
+      if (ev) { ev.classList.add('dying'); setTimeout(function () { ev.remove(); }, 300); }
+    }
+    var el = pieceIn(from);
+    if (!el) { buildBoards(); return; }
+    if (victim) { victim.classList.add('dying'); setTimeout(function () { victim.remove(); }, 300); }
+    var a = el.getBoundingClientRect();
+    cells[to].appendChild(el);
+    var b = el.getBoundingClientRect();
+    el.style.transition = 'none';
+    el.style.transform = 'translate(' + (a.left - b.left) + 'px,' + (a.top - b.top) + 'px)';
+    el.classList.add('moving');
+    void el.offsetWidth;
+    el.style.transition = '';
+    el.style.transform = '';
+    setTimeout(function () {
+      el.classList.remove('moving');
+      if (o.promo && st.board[to]) {
+        var typ = Math.abs(st.board[to]);
+        var g = el.querySelector('.glyph');
+        if (g) g.textContent = GLYPH[typ][st.board[to] > 0 ? 'w' : 'b'];
+      }
+    }, 320);
+  }
+
+  function doMove(m) {
+    deselect(); clearMode();
+    var o = DC.toObj(m);
+    push(m);
+    animate(m);
+    if (cfg.sound) {
+      if (stat.over) SFX.play(stat.winner === 0 ? 'draw' : (cfg.mode !== 'ai' || stat.winner === cfg.side ? 'win' : 'lose'));
+      else if (stat.check) SFX.play('check');
+      else if (o.reveal) SFX.play('select');
+      else if (o.summon || o.illusionAct) SFX.play('promote');
+      else if (o.promo) SFX.play('promote');
+      else if (o.capture || o.ep) SFX.play('capture');
+      else SFX.play('move');
+    }
+    refreshMarks(); refreshPanel(); store();
+    if (stat.over) setTimeout(showOver, 700);
+    else if (!humanTurn()) askAI();
+  }
+
+  function maybeReveal(m) {
+    if (m == null) return m;
+    var o = DC.toObj(m);
+    if (!o.capture || o.reveal || o.summon || o.illusionAct) return m;
+    var to = o.ep ? (o.to + (st.turn > 0 ? -8 : 8)) : o.to;
+    if (!st.board[to] || st.revealed[to]) return m;
+    var rev = null, i, x;
+    for (i = 0; i < legal.length; i++) {
+      x = DC.toObj(legal[i]);
+      if (x.reveal && x.to === to) { rev = legal[i]; break; }
+    }
+    if (rev == null) return m;
+    var lvl = Math.max(0, botLevel(st.turn));
+    var chance = [0.12, 0.22, 0.35, 0.5, 0.65][lvl] || 0.25;
+    return Math.random() < chance ? rev : m;
+  }
+
+  function makeWorker() {
+    try {
+      var src = $('engine-src').textContent +
+        '\nonmessage=function(e){var d=e.data;postMessage({id:d.id,r:DC.think(DC.load(d.state),d.opt)});};';
+      var w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      w.onmessage = function (e) { aiDone(e.data.id, e.data.r); };
+      w.onerror = function () { useWorker = false; worker = null; if (busy) thinkSync(reqId); };
+      return w;
+    } catch (e) { useWorker = false; return null; }
+  }
+  function aiOpt() { var L = LEVELS[Math.max(0, botLevel(st.turn))]; return { depth: L.depth, time: L.time || 0, noise: L.noise || 0 }; }
+  function thinkSync(id) {
+    setTimeout(function () {
+      if (id !== reqId) return;
+      aiDone(id, DC.think(DC.load(DC.save(st)), aiOpt()));
+    }, 60);
+  }
+  function askAI() {
+    busy = true; reqAt = Date.now(); var id = ++reqId;
+    refreshPanel(); refreshMarks();
+    if (useWorker && !worker) worker = makeWorker();
+    if (worker) worker.postMessage({ id: id, state: DC.save(st), opt: aiOpt() });
+    else thinkSync(id);
+  }
+  function aiDone(id, r) {
+    if (id !== reqId || !busy) return;
+    var wait = Math.max(0, 450 - (Date.now() - reqAt));
+    setTimeout(function () {
+      if (id !== reqId || !busy) return;
+      busy = false;
+      var m = r && r.move;
+      if (legal.indexOf(m) < 0) m = legal[0];
+      m = maybeReveal(m);
+      if (m !== undefined) doMove(m);
+    }, wait);
+  }
+  function cancelAI() {
+    reqId++;
+    if (busy && worker) { worker.terminate(); worker = null; }
+    busy = false;
+  }
+
+  function overTitle() {
+    if (stat.winner === 0) return 'Draw: ' + sideName(1) + ' vs ' + sideName(-1);
+    return sideName(stat.winner, true) + ' defeated ' + sideName(-stat.winner);
+  }
+  function showOver() {
+    if (!stat.over) return;
+    var why = {
+      checkmate: 'Checkmate. ' + (stat.winner > 0 ? 'White' : 'Black') + ' has won the game.',
+      stalemate: 'Stalemate. The side to move has no legal move.',
+      repetition: 'The same position occurred three times.',
+      moves: '50 moves each passed with no capture or pawn move.',
+      material: 'Only the two Kings remain, and nothing is left in reserve.'
+    };
+    $('overTitle').textContent = overTitle(); $('overText').textContent = why[stat.result] || '';
+    $('dlgOver').hidden = false;
+  }
+  var pend = { mode: 'ai', side: 1, level: 1 };
+  function markOpts() {
+    var set = function (id, v) {
+      var bs = $(id).children;
+      for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-v') === String(v));
+    };
+    set('optMode', pend.mode); set('optSide', pend.side); set('optLevel', pend.level);
+    $('aiOpts').style.display = pend.mode === 'ai' ? '' : 'none';
+    var sim = pend.level === 'sim';
+    $('sideOpts').style.display = sim ? 'none' : '';
+    $('levelNote').textContent = sim ? 'Watch two bots fight.' : LEVELS[pend.level].note;
+  }
+  function openNew() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    pend = { mode: cfg.mode === '2p' ? '2p' : 'ai', side: cfg.side, level: cfg.mode === 'sim' ? 'sim' : cfg.level };
+    markOpts(); $('dlgOver').hidden = true; $('dlgNew').hidden = false;
+  }
+  function startNew() {
+    cancelAI();
+    if (pend.mode === 'ai' && pend.level === 'sim') {
+      cfg.mode = 'sim';
+      cfg.simG = (Math.random() * LEVELS.length) | 0; cfg.simS = (Math.random() * LEVELS.length) | 0;
+    } else {
+      cfg.mode = pend.mode; if (pend.level !== 'sim') cfg.level = pend.level;
+      cfg.side = pend.side === 0 ? (Math.random() < 0.5 ? 1 : -1) : pend.side;
+    }
+    flipped = cfg.mode === 'ai' && cfg.side < 0;
+    replay([]); deselect(); clearMode();
+    $('dlgNew').hidden = true;
+    $('info').textContent = 'Tap a piece to see where it can go, or use Summon, Illusion or Reveal.';
+    buildBoards(); refreshMarks(); refreshPanel(); store();
+    if (!humanTurn()) askAI();
+  }
+  function undo() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    if (!moves.length || cfg.mode === 'sim') return;
+    cancelAI();
+    var list = moves.slice(0, -1);
+    if (cfg.mode === 'ai' && list.length % 2 !== (cfg.side > 0 ? 0 : 1) && list.length) list.pop();
+    replay(list); deselect(); clearMode();
+    $('dlgOver').hidden = true;
+    buildBoards(); refreshMarks(); refreshPanel(); store();
+    if (!stat.over && !humanTurn()) askAI();
+  }
+  function buildGuide() {
+    var h = '<ul>' +
+      '<li>This is standard 8×8 chess (including castling, en passant, promotion, check, checkmate and stalemate) with a conjuring twist.</li>' +
+      '<li>Each side begins with only a King, on e1 (White) and e8 (Black). All other pieces start in a reserve: 8 pawns, 2 rooks, 2 knights, 2 bishops and a queen.</li>' +
+      '<li>A turn is one of: move a piece; press <b>Summon</b> and place a remaining reserve piece on one of that type\'s empty default starting squares; press <b>Illusion</b> and weave an illusion of a reserve type (not the King) onto an empty default home; or press <b>Reveal</b> and choose one unrevealed enemy piece. Reveal is grouped with Illusion as the other illusion-side action.</li>' +
+      '<li>Summon and illusion targets must be empty. Each side may have at most three illusions on the board. An illusion may be woven even if every real copy of that type has already been summoned. Illusions do not use up the reserve.</li>' +
+      '<li>You see your own illusions tinted blue. To the opponent they look like ordinary pieces until they are revealed or they vanish.</li>' +
+      '<li>Illusions move like the piece they mimic, but they cannot capture; they may only move to empty squares.</li>' +
+      '<li>When any piece tries to capture an illusion, the illusion vanishes, the attacker stays on its square, and the attacker is paralyzed permanently. There is no Illusionist piece whose capture could lift the paralysis. Paralyzed pieces cannot move, capture or act, but they can still be captured. A gold-hatched marker is shown to both players. You may still Summon, weave an Illusion or Reveal even if your king is paralyzed.</li>' +
+      '<li>The King may try to capture a possible illusion. A paralyzed King that is in check with no way out is checkmate. A paralyzed King that is not in check, when the side has no legal moves (including summons), is stalemate.</li>' +
+      '<li>Check, checkmate and stalemate consider only real pieces. An illusion cannot put a King in check, and a King may legally walk onto a square an illusion appears to attack.</li>' +
+      '<li>Castling follows the usual rules, and is allowed only if the King and that rook are real, unmoved, and the path is empty and not under real attack. A pawn summoned onto the second (or seventh) rank may use its double step.</li>' +
+      '<li>When Summon or Illusion is active, 50% transparent ghost pieces mark every legal target. Only you see those ghosts (in a two-player game, the side to move).</li>' +
+      '<li>White moves first. Checkmate the enemy King to win.</li>' +
+      '<li>Draws: stalemate, the same position three times, 50 moves each with no capture or pawn move, or only the two Kings left with nothing in reserve.</li></ul>' +
+      '<p class="credits">Conjurer\'s Chess applies the conjuring rules of Conjurer\'s Wyvern Chess to standard chess. Standard chess rules follow FIDE practice (castling, en passant, promotion). This is an unofficial fan variant.</p>';
+    $('guideBody').innerHTML = h;
+  }
+
+  function init() {
+    var onceLink = false;
+    try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
+    var saved = onceLink ? null : restore();
+    replay(saved || []);
+    SFX.setMuted(!cfg.sound);
+    LEVELS.forEach(function (L, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
+      $('optLevel').appendChild(b);
+    });
+    layout(); buildBoards(); buildGuide(); refreshMarks(); refreshPanel();
+    $('boards').addEventListener('click', function (e) {
+      var c = e.target.closest ? e.target.closest('.cell') : null;
+      if (c) onCell(+c.getAttribute('data-sq'));
+    });
+    ['optMode', 'optSide', 'optLevel'].forEach(function (id) {
+      $(id).addEventListener('click', function (e) {
+        var v = e.target.getAttribute && e.target.getAttribute('data-v');
+        if (v === null || v === undefined) return;
+        if (id === 'optMode') pend.mode = v; else if (id === 'optSide') pend.side = +v; else pend.level = v === 'sim' ? 'sim' : +v;
+        markOpts();
+      });
+    });
+    $('bNew').onclick = openNew;
+    $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
+    $('newStart').onclick = startNew;
+    $('bUndo').onclick = undo;
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); store(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
+    $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
+    $('overClose').onclick = function () { $('dlgOver').hidden = true; };
+    $('overNew').onclick = openNew;
+    $('bSummon').onclick = function () { setMode('summon'); };
+    $('bIllusion').onclick = function () { setMode('illusion'); };
+    $('bReveal').onclick = function () { setMode('reveal'); };
+    var mods = document.querySelectorAll('.modal');
+    for (var i = 0; i < mods.length; i++) mods[i].addEventListener('click', function (e) { if (e.target === this && this.id !== 'dlgNew') this.hidden = true; });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        hideChoice(); clearMode(); deselect(); refreshMarks();
+        $('dlgGuide').hidden = true; $('dlgOver').hidden = true;
+        if (moves.length) $('dlgNew').hidden = true;
+      }
+    });
+    window.addEventListener('resize', layout);
+    window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+    if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
+    else if (!saved) openNew();
+    else if (stat.over) showOver();
+    else if (!humanTurn()) askAI();
+  }
+
+  function typOf(t) {
+    if (typeof t === 'string') {
+      var u = t.toUpperCase();
+      if (u === 'P' || u === 'PAWN') return DC.P;
+      if (u === 'N' || u === 'KNIGHT') return DC.N;
+      if (u === 'B' || u === 'BISHOP') return DC.B;
+      if (u === 'R' || u === 'ROOK') return DC.R;
+      if (u === 'Q' || u === 'QUEEN') return DC.Q;
+      return DC.LETTERS.indexOf(u);
+    }
+    return t;
+  }
+  function applyLegal(pred) {
+    var i, m;
+    for (i = 0; i < legal.length; i++) {
+      if (pred(DC.toObj(legal[i]), legal[i])) {
+        m = legal[i];
+        deselect(); clearMode();
+        doMove(m);
+        return m;
+      }
+    }
+    return null;
+  }
+
+  window.DragonChessUI = {
+    startOnce: function (opts) {
+      opts = opts || {};
+      var level = opts.level;
+      if (!(level >= 0 && level < LEVELS.length)) level = 1;
+      var side = opts.side;
+      if (side === -1 || side === 'scarlet' || side === 'black') side = -1;
+      else side = 1;
+      pend = { mode: 'ai', side: side, level: level };
+      startNew();
+    },
+    result: function () {
+      if (!stat || !stat.over) return { over: false };
+      var draw = stat.winner === 0;
+      var success = !draw && stat.winner === cfg.side;
+      var summary;
+      if (draw) summary = 'The game was a draw (' + (stat.result || 'draw') + ').';
+      else if (success) summary = 'You won' + (stat.result ? ' by ' + stat.result : '') + '.';
+      else summary = 'You lost' + (stat.result ? ' by ' + stat.result : '') + '.';
+      return { over: true, success: success, draw: draw, summary: summary, result: stat.result, winner: stat.winner };
+    },
+    isOver: function () { return !!(stat && stat.over); }
+  };
+  window.ConjurerStd = {
+    getState: function () { return DC.save(st); },
+    legalMoves: function () { return legal.slice(); },
+    status: function () { return stat; },
+    inCheck: function () { return DC.inCheck(st); },
+    move: function (m) { if (legal.indexOf(m) < 0) return false; deselect(); clearMode(); doMove(m); return true; },
+    summon: function (typ, s) { typ = typOf(typ); return applyLegal(function (o) { return o.summon && o.typ === typ && (s == null || o.to === s); }); },
+    illusion: function (typ, s) { typ = typOf(typ); return applyLegal(function (o) { return o.illusionAct && o.typ === typ && (s == null || o.to === s); }); },
+    reveal: function (s) { return applyLegal(function (o) { return o.reveal && o.to === s; }); },
+    setMode: setMode,
+    mode: function () { return mode; },
+    isIllusion: function (s) { return !!(st.illusion && st.illusion[s]); },
+    isParalyzed: function (s) { return !!(st.paralyzed && st.paralyzed[s]); },
+    isRevealed: function (s) { return st.revealed ? st.revealed[s] : 0; },
+    reserve: function (side) { return Array.prototype.slice.call(DC.resOf(st, side)); },
+    viewAs: function () { return viewSide(); },
+    startTwoPlayer: function () { pend = { mode: '2p', side: 1, level: 1 }; startNew(); },
+    startAI: function (opts) {
+      opts = opts || {};
+      var side = opts.side === -1 || opts.side === 'black' || opts.side === 'scarlet' ? -1 : 1;
+      pend = { mode: 'ai', side: side, level: (opts.level >= 0 ? opts.level : 0) };
+      startNew();
+    },
+    applyState: function (o) {
+      cancelAI();
+      st = DC.load(o);
+      legal = DC.legalMoves(st); stat = DC.status(st, legal);
+      moves = []; texts = []; caps = [];
+      deselect(); clearMode();
+      $('dlgNew').hidden = true;
+      $('dlgOver').hidden = !stat.over;
+      buildBoards(); refreshMarks(); refreshPanel();
+      if (stat.over) showOver();
+    },
+    selectSquare: function (s) { onCell(s); },
+    deselect: function () { deselect(); clearMode(); refreshMarks(); },
+    ghostSquares: function () {
+      var out = [], i, el;
+      for (i = 0; i < 64; i++) {
+        if (!cells[i]) continue;
+        el = cells[i].querySelector('.piece.ghost');
+        if (!el) continue;
+        out.push({ sq: i, name: DC.sqName(i), className: el.className, opacity: getComputedStyle(el).opacity });
+      }
+      return out;
+    },
+    engine: function () { return DC; }
+  };
+  init();
+})();
+
+</script>
+</body>
+</html>
