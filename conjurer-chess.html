@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="13c6955753";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="8cf8bc1629";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -68,7 +68,17 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
   box-shadow:0 0 0 calc(var(--cell)*.045) #000,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55)}
 .piece.black .glyph{color:#f4efe2}
 .piece.moving{z-index:60}
-.piece.dying{opacity:0;transform:scale(.4);z-index:1}
+.piece.dying{opacity:0;transform:scale(.15);filter:blur(2px);z-index:1;pointer-events:none;
+  transition:transform .45s ease-in,opacity .45s ease-in,filter .45s}
+.piece.arrive{animation:piece-arrive .55s ease-out}
+@keyframes piece-arrive{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
+.fx-poof{position:absolute;inset:-10%;pointer-events:none;z-index:8;border-radius:50%;
+  background:radial-gradient(circle,rgba(230,245,255,.95) 0%,rgba(90,170,255,.7) 32%,rgba(40,100,200,.15) 58%,transparent 72%);
+  animation:poof .7s ease-out forwards}
+@keyframes poof{0%{opacity:1;transform:scale(.25)}60%{opacity:.85;transform:scale(1.2)}100%{opacity:0;transform:scale(1.45)}}
+.cell.placed{animation:placed-glow .9s ease-out}
+@keyframes placed-glow{0%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.55),0 0 0 4px #c7ecff,0 0 22px rgba(140,200,255,1)}
+  100%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.38),0 0 0 3px #7ec8ff,0 0 0 transparent}}
 .piece.illusion{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#5aa0e8 45%,#1d5fa8 100%)!important;box-shadow:0 0 0 2px #8ec8ff,0 0 10px rgba(80,160,255,.7)}
 .piece.illusion .glyph{color:#06244a!important}
 .piece.illusion.black{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#4e86d4 48%,#163a80 100%)!important}
@@ -139,7 +149,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 #choice button{font-size:13px;text-align:left}
 
 </style>
-<script src="puzzles/once.js?v=13c6955753"></script>
+<script src="puzzles/once.js?v=8cf8bc1629"></script>
 </head>
 <body>
 
@@ -995,7 +1005,8 @@ var SFX = (function () {
                 4: { w: '\u2656', b: '\u265C' }, 5: { w: '\u2655', b: '\u265B' }, 6: { w: '\u2654', b: '\u265A' } };
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
-  var st, moves = [], texts = [], caps = [], legal = [], stat = null;
+  var st, moves = [], texts = [], pubTexts = [], caps = [], legal = [], stat = null;
+  var animGen = 0;
   var sel = -1, targets = {}, flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var mode = null; // 'summon' | 'illusion' | 'reveal'
   var cells = new Array(64);
@@ -1017,18 +1028,75 @@ var SFX = (function () {
     } catch (e) { return null; }
   }
 
+  function colorName(side) { return side > 0 ? 'White' : 'Black'; }
+  function unitName(st, s) {
+    var p = st.board[s], L = DC.LETTERS.charAt(Math.abs(p) || 0);
+    if (!p) return DC.sqName(s);
+    return (L === 'P' ? '' : L) + DC.sqName(s);
+  }
+  function placeText(o, side, asOwner) {
+    var who = colorName(side);
+    if (asOwner && o.illusionAct) return who + ' weaves an illusion of ' + DC.NAMES[o.typ] + ' on ' + DC.sqName(o.to);
+    return who + ' summons ' + DC.NAMES[o.typ] + ' on ' + DC.sqName(o.to);
+  }
+  function shownText(i) {
+    var vis = viewSide(), side = i % 2 === 0 ? 1 : -1;
+    var own = vis === 0 || vis === side;
+    return own ? texts[i] : (pubTexts[i] || texts[i]);
+  }
+  function poofAt(s) {
+    if (!cells[s]) return;
+    var fx = document.createElement('div');
+    fx.className = 'fx-poof';
+    cells[s].appendChild(fx);
+    setTimeout(function () { if (fx.parentNode) fx.parentNode.removeChild(fx); }, 750);
+  }
+  function vanishEl(el, s) {
+    poofAt(s);
+    if (!el) return;
+    el.classList.add('dying');
+    var gone = el;
+    setTimeout(function () {
+      if (gone && gone.parentNode && gone.classList.contains('dying')) gone.parentNode.removeChild(gone);
+    }, 520);
+  }
+  function markPlaced(s) {
+    if (!cells[s]) return;
+    cells[s].classList.add('placed');
+    var cell = cells[s];
+    setTimeout(function () { if (cell) cell.classList.remove('placed'); }, 950);
+  }
+  function afterAnim(ms, fn) {
+    var id = ++animGen;
+    setTimeout(function () { if (id === animGen) fn(); }, ms);
+  }
   function push(m) {
-    var o = DC.toObj(m), dest = o.to, wasIll = !!(st.illusion && (o.ep ? st.illusion[dest + (st.turn > 0 ? -8 : 8)] : st.illusion[dest]));
-    var t = DC.moveText(st, m), c = (wasIll || o.summon || o.illusionAct || o.reveal) ? 0 : (o.ep ? st.board[dest + (st.turn > 0 ? -8 : 8)] : st.board[dest]);
+    var o = DC.toObj(m), dest = o.to, side = st.turn;
+    var capSq = o.ep ? dest + (side > 0 ? -8 : 8) : dest;
+    var wasIll = !!(st.illusion && (o.capture || o.ep) && st.illusion[capSq]);
+    var attacker = wasIll ? unitName(st, o.from) : '';
+    var t = DC.moveText(st, m), pub = t;
+    var c = (wasIll || o.summon || o.illusionAct || o.reveal) ? 0 : (o.ep ? st.board[capSq] : st.board[dest]);
+    if (o.summon || o.illusionAct) {
+      t = placeText(o, side, true);
+      pub = placeText(o, side, false);
+    }
     DC.make(st, m);
     legal = DC.legalMoves(st); stat = DC.status(st, legal);
-    if (wasIll) t += ' (illusion vanishes; attacker paralyzed)';
-    else if (o.reveal) t += st.illusion[dest] || st.revealed[dest] === 1 ? ' — an illusion' : ' — real';
-    t += stat.result === 'checkmate' ? '#' : (stat.check ? '+' : '');
-    moves.push(m); texts.push(t); caps.push(c);
+    if (wasIll) {
+      var note = 'Illusion vanished — ' + attacker + ' is paralyzed';
+      t += '. ' + note;
+      pub += '. ' + note;
+    } else if (o.reveal) {
+      var tag = st.illusion[dest] || st.revealed[dest] === 1 ? ' — an illusion' : ' — real';
+      t += tag; pub += tag;
+    }
+    var end = stat.result === 'checkmate' ? '#' : (stat.check ? '+' : '');
+    t += end; pub += end;
+    moves.push(m); texts.push(t); pubTexts.push(pub); caps.push(c);
   }
   function replay(list) {
-    st = DC.newGame(); moves = []; texts = []; caps = [];
+    st = DC.newGame(); moves = []; texts = []; pubTexts = []; caps = [];
     legal = DC.legalMoves(st); stat = DC.status(st, legal);
     for (var i = 0; i < list.length; i++) {
       if (stat.over || legal.indexOf(list[i]) < 0) break;
@@ -1123,7 +1191,11 @@ var SFX = (function () {
       if (!cells[i]) continue;
       if (st.paralyzed && st.paralyzed[i]) cells[i].classList.add('para');
       var el = pieceIn(i);
-      if (el && st.board[i]) el.className = pieceClass(st.board[i], i);
+      if (el && st.board[i]) {
+        var keepArrive = el.classList.contains('arrive');
+        el.className = pieceClass(st.board[i], i);
+        if (keepArrive) el.classList.add('arrive');
+      }
     }
     if (stat && stat.check) {
       var ksq = DC.findKing(st, st.turn);
@@ -1200,8 +1272,8 @@ var SFX = (function () {
     renderReserve();
     var ml = $('movelist'), h = '';
     for (i = 0; i < texts.length; i += 2) {
-      h += '<li class="n">' + (i / 2 + 1) + '.</li><li class="mv' + (i === texts.length - 1 ? ' cur' : '') + '">' + texts[i] + '</li>' +
-        '<li class="mv' + (i + 1 === texts.length - 1 ? ' cur' : '') + '">' + (texts[i + 1] || '') + '</li>';
+      h += '<li class="n">' + (i / 2 + 1) + '.</li><li class="mv' + (i === texts.length - 1 ? ' cur' : '') + '">' + shownText(i) + '</li>' +
+        '<li class="mv' + (i + 1 === texts.length - 1 ? ' cur' : '') + '">' + (i + 1 < texts.length ? shownText(i + 1) : '') + '</li>';
     }
     ml.innerHTML = h; ml.scrollTop = ml.scrollHeight;
     $('bUndo').disabled = moves.length === 0 || cfg.mode === 'sim';
@@ -1324,17 +1396,20 @@ var SFX = (function () {
   function animate(m) {
     var o = DC.toObj(m);
     if (o.summon || o.illusionAct) {
-      if (cells[o.to] && st.board[o.to]) cells[o.to].appendChild(pieceEl(st.board[o.to], o.to));
+      if (cells[o.to] && st.board[o.to]) {
+        var born = pieceEl(st.board[o.to], o.to);
+        born.classList.add('arrive');
+        cells[o.to].appendChild(born);
+      }
+      markPlaced(o.to);
       return;
     }
     if (o.reveal) return;
     if (o.capture && st.board[o.from] !== 0) {
-      // illusion hit: vanish victim, stay
-      var vic = pieceIn(o.ep ? o.to + (st.turn < 0 ? -8 : 8) : o.to); // turn already flipped
-      // After make, turn has flipped, so side that moved is -st.turn. EP cap sq: for white (mover now -turn if turn is black): dest-8
+      // illusion hit: vanish victim, stay. After make, turn has flipped.
       var capSq = o.ep ? (o.to + ((-st.turn) > 0 ? -8 : 8)) : o.to;
-      vic = pieceIn(capSq);
-      if (vic) { vic.classList.add('dying'); setTimeout(function () { vic.remove(); }, 300); }
+      vanishEl(pieceIn(capSq), capSq);
+      if (cells[o.from]) cells[o.from].classList.add('para');
       return;
     }
     if (o.castle) { buildBoards(); return; }
@@ -1368,9 +1443,16 @@ var SFX = (function () {
 
   function doMove(m) {
     deselect(); clearMode();
+    animGen++;
     var o = DC.toObj(m);
+    var capSq = o.ep ? (o.to + (st.turn > 0 ? -8 : 8)) : o.to;
+    var wasIll = !!(st.illusion && (o.capture || o.ep) && st.illusion[capSq]);
+    var attacker = wasIll ? unitName(st, o.from) : '';
+    var placer = (o.summon || o.illusionAct) ? colorName(st.turn) : '';
     push(m);
     animate(m);
+    if (wasIll) $('info').textContent = 'Illusion vanished — ' + attacker + ' is paralyzed';
+    else if (placer) $('info').textContent = placer + ' placed a piece on ' + DC.sqName(o.to) + '.';
     if (cfg.sound) {
       if (stat.over) SFX.play(stat.winner === 0 ? 'draw' : (cfg.mode !== 'ai' || stat.winner === cfg.side ? 'win' : 'lose'));
       else if (stat.check) SFX.play('check');
@@ -1381,8 +1463,9 @@ var SFX = (function () {
       else SFX.play('move');
     }
     refreshMarks(); refreshPanel(); store();
-    if (stat.over) setTimeout(showOver, 700);
-    else if (!humanTurn()) askAI();
+    var delay = wasIll ? 950 : ((o.summon || o.illusionAct) ? 600 : 400);
+    if (stat.over) afterAnim(700, showOver);
+    else if (!humanTurn()) afterAnim(delay, function () { if (!stat.over) askAI(); });
   }
 
   function maybeReveal(m) {
@@ -1440,6 +1523,7 @@ var SFX = (function () {
   }
   function cancelAI() {
     reqId++;
+    animGen++;
     if (busy && worker) { worker.terminate(); worker = null; }
     busy = false;
   }
@@ -1651,7 +1735,7 @@ var SFX = (function () {
       cancelAI();
       st = DC.load(o);
       legal = DC.legalMoves(st); stat = DC.status(st, legal);
-      moves = []; texts = []; caps = [];
+      moves = []; texts = []; pubTexts = []; caps = [];
       deselect(); clearMode();
       $('dlgNew').hidden = true;
       $('dlgOver').hidden = !stat.over;

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="13c6955753";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=13c6955753"></script>
+<!--vault-version--><script>(function(){var V="8cf8bc1629";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=8cf8bc1629"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -78,7 +78,17 @@ body.side #info{max-width:calc(100vw - 32px)}
   box-shadow:0 0 0 calc(var(--cell)*.045) #2e0303,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55),inset 0 -2px 3px rgba(60,0,0,.5)}
 .piece.scarlet svg{fill:#fff4e2}
 .piece.moving{z-index:60}
-.piece.dying{opacity:0;transform:scale(.4);z-index:1}
+.piece.dying{opacity:0;transform:scale(.15);filter:blur(2px);z-index:1;pointer-events:none;
+  transition:transform .45s ease-in,opacity .45s ease-in,filter .45s}
+.piece.arrive{animation:piece-arrive .55s ease-out}
+@keyframes piece-arrive{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
+.fx-poof{position:absolute;inset:-10%;pointer-events:none;z-index:8;border-radius:50%;
+  background:radial-gradient(circle,rgba(230,245,255,.95) 0%,rgba(90,170,255,.7) 32%,rgba(40,100,200,.15) 58%,transparent 72%);
+  animation:poof .7s ease-out forwards}
+@keyframes poof{0%{opacity:1;transform:scale(.25)}60%{opacity:.85;transform:scale(1.2)}100%{opacity:0;transform:scale(1.45)}}
+.cell.placed{animation:placed-glow .9s ease-out}
+@keyframes placed-glow{0%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.55),0 0 0 4px #c7ecff,0 0 22px rgba(140,200,255,1)}
+  100%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.38),0 0 0 3px #7ec8ff,0 0 0 transparent}}
 .piece.burn{animation:burn .45s forwards}
 @keyframes burn{30%{filter:brightness(2.4) saturate(2);transform:scale(1.15)}100%{opacity:0;transform:scale(.3);filter:brightness(3)}}
 .cell.frozen .piece{filter:saturate(.35) brightness(1.1)}
@@ -1133,7 +1143,8 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   var KEY = CJ ? 'conjurer.v2' : (WY ? 'wyvern.v4' : 'dragonchess.v1');
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
-  var st, moves = [], texts = [], caps = [], legal = [], stat = null;
+  var st, moves = [], texts = [], pubTexts = [], caps = [], legal = [], stat = null;
+  var animGen = 0;
   var sel = -1, choiceSq = -1, targets = {}, pendRem = -1, flipped = false, side = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var cells = new Array(288), guideByLetter = {};
   GUIDE.forEach(function (g) { guideByLetter[g.letter] = g; });
@@ -1158,19 +1169,74 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   }
 
   /* ---------- game state ---------- */
+  function colorName(side) { return side > 0 ? 'Gold' : 'Scarlet'; }
+  function unitName(st, s) {
+    var p = st.board[s], typ = p > 0 ? p : -p, L = typ ? DC.LETTERS.charAt(typ) : '';
+    if (!p) return DC.sqName(s);
+    return (nameOf(typ)[0] ? L : L) + DC.sqName(s);
+  }
+  function placeText(o, side, asOwner) {
+    var who = colorName(side);
+    var typName = nameOf(o.typ);
+    if (asOwner && o.illusionAct) return who + ' weaves an illusion of ' + typName + ' on ' + DC.sqName(o.to);
+    return who + ' summons ' + typName + ' on ' + DC.sqName(o.to);
+  }
+  function shownText(i) {
+    var vis = viewSide(), side = i % 2 === 0 ? 1 : -1;
+    var own = vis === 0 || vis === side;
+    return own ? texts[i] : (pubTexts[i] || texts[i]);
+  }
+  function poofAt(s) {
+    if (!cells[s]) return;
+    var fx = document.createElement('div');
+    fx.className = 'fx-poof';
+    cells[s].appendChild(fx);
+    setTimeout(function () { if (fx.parentNode) fx.parentNode.removeChild(fx); }, 750);
+  }
+  function vanishEl(el, s) {
+    poofAt(s);
+    if (!el) return;
+    el.classList.add('dying');
+    var gone = el;
+    setTimeout(function () { if (gone && gone.parentNode && gone.classList.contains('dying')) gone.parentNode.removeChild(gone); }, 520);
+  }
+  function markPlaced(s) {
+    if (!cells[s]) return;
+    cells[s].classList.add('placed');
+    var cell = cells[s];
+    setTimeout(function () { if (cell) cell.classList.remove('placed'); }, 950);
+  }
+  function afterAnim(ms, fn) {
+    var id = ++animGen;
+    setTimeout(function () { if (id === animGen) fn(); }, ms);
+  }
   function push(m) {
-    var o = DC.toObj(m), dest = (m >> 9) & 511, wasIll = !!(st.illusion && st.illusion[dest]);
+    var o = DC.toObj(m), dest = (m >> 9) & 511, side = st.turn;
+    var wasIll = !!(st.illusion && st.illusion[dest]);
     var wasIll2 = !!(o.double && st.illusion && st.illusion[o.to2]);
-    var t = DC.moveText(st, m), c = (wasIll || o.summon || o.illusionAct || o.reveal) ? 0 : st.board[dest];
+    var attacker = (wasIll || wasIll2) ? unitName(st, m & 511) : '';
+    var t = DC.moveText(st, m), pub = t;
+    var c = (wasIll || o.summon || o.illusionAct || o.reveal) ? 0 : st.board[dest];
+    if (o.summon || o.illusionAct) {
+      t = placeText(o, side, true);
+      pub = placeText(o, side, false);
+    }
     DC.make(st, m);
     legal = DC.legalMoves(st); stat = DC.status(st, legal);
-    if (wasIll || wasIll2) t += ' (illusion vanishes; attacker paralyzed)';
-    else if (o.reveal) t += st.illusion[dest] || st.revealed[dest] === 1 ? ' — an illusion' : ' — real';
-    t += stat.result === 'checkmate' ? '#' : (stat.check ? '+' : '');
-    moves.push(m); texts.push(t); caps.push(c);
+    if (wasIll || wasIll2) {
+      var note = 'Illusion vanished — ' + attacker + ' is paralyzed';
+      t += '. ' + note;
+      pub += '. ' + note;
+    } else if (o.reveal) {
+      var tag = st.illusion[dest] || st.revealed[dest] === 1 ? ' — an illusion' : ' — real';
+      t += tag; pub += tag;
+    }
+    var end = stat.result === 'checkmate' ? '#' : (stat.check ? '+' : '');
+    t += end; pub += end;
+    moves.push(m); texts.push(t); pubTexts.push(pub); caps.push(c);
   }
   function replay(list) {
-    st = DC.newGame(); moves = []; texts = []; caps = [];
+    st = DC.newGame(); moves = []; texts = []; pubTexts = []; caps = [];
     legal = DC.legalMoves(st); stat = DC.status(st, legal);
     for (var i = 0; i < list.length; i++) {
       if (stat.over || legal.indexOf(list[i]) < 0) break;
@@ -1249,7 +1315,11 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       if (!cells[i]) continue;
       if (st.paralyzed && st.paralyzed[i]) cells[i].classList.add('para');
       var el = pieceIn(i);
-      if (el && st.board[i]) el.className = pieceClass(st.board[i], i);
+      if (el && st.board[i]) {
+        var keepArrive = el.classList.contains('arrive');
+        el.className = pieceClass(st.board[i], i);
+        if (keepArrive) el.classList.add('arrive');
+      }
     }
     if (stat && stat.check) for (i = 0; i < 288; i++) if (st.board[i] === st.turn * DC.K) cells[i].classList.add('check');
     if (sel >= 0) {
@@ -1339,8 +1409,8 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     if (CJ) renderReserve();
     var ml = $('movelist'), h = '';
     for (i = 0; i < texts.length; i += 2) {
-      h += '<li class="n">' + (i / 2 + 1) + '.</li><li class="mv' + (i === texts.length - 1 ? ' cur' : '') + '">' + texts[i] + '</li>' +
-        '<li class="mv' + (i + 1 === texts.length - 1 ? ' cur' : '') + '">' + (texts[i + 1] || '') + '</li>';
+      h += '<li class="n">' + (i / 2 + 1) + '.</li><li class="mv' + (i === texts.length - 1 ? ' cur' : '') + '">' + shownText(i) + '</li>' +
+        '<li class="mv' + (i + 1 === texts.length - 1 ? ' cur' : '') + '">' + (i + 1 < texts.length ? shownText(i + 1) : '') + '</li>';
     }
     ml.innerHTML = h; ml.scrollTop = ml.scrollHeight;
     $('bUndo').disabled = moves.length === 0 || cfg.mode === 'sim';
@@ -1487,14 +1557,20 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   function animate(m, moverBefore) {
     var from = m & 511, to = (m >> 9) & 511, o = DC.toObj(m), victim = pieceIn(to);
     if (o.summon || o.illusionAct) {
-      if (cells[to] && st.board[to]) cells[to].appendChild(pieceEl(st.board[to], to));
+      if (cells[to] && st.board[to]) {
+        var born = pieceEl(st.board[to], to);
+        born.classList.add('arrive');
+        cells[to].appendChild(born);
+      }
+      markPlaced(to);
       return;
     }
     if (o.reveal) return;
     // Illusion hit: the attacker stays put; the illusion vanishes.
     if (o.capture && st.board[from] !== 0) {
-      if (victim) { victim.classList.add('dying'); setTimeout(function () { victim.remove(); }, 300); }
-      if (o.double) { var vHit = pieceIn(o.to2); if (vHit) { vHit.classList.add('dying'); setTimeout(function () { vHit.remove(); }, 300); } }
+      vanishEl(victim, to);
+      if (o.double) vanishEl(pieceIn(o.to2), o.to2);
+      if (cells[from]) cells[from].classList.add('para');
       return;
     }
     if (o.remote) {
@@ -1521,9 +1597,17 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   }
   function doMove(m) {
     deselect();
+    animGen++;
     var o = DC.toObj(m), wasFrozen = frozenCount();
+    var dest = (m >> 9) & 511;
+    var wasIll = !!(st.illusion && st.illusion[dest]);
+    var wasIll2 = !!(o.double && st.illusion && st.illusion[o.to2]);
+    var attacker = (wasIll || wasIll2) ? unitName(st, m & 511) : '';
+    var placer = (o.summon || o.illusionAct) ? colorName(st.turn) : '';
     push(m);
     animate(m);
+    if (wasIll || wasIll2) $('info').textContent = 'Illusion vanished — ' + attacker + ' is paralyzed';
+    else if (placer) $('info').textContent = placer + ' placed a piece on ' + DC.sqName(o.to) + '.';
     if (cfg.sound) {
       if (stat.over) SFX.play(stat.winner === 0 ? 'draw' : (cfg.mode !== 'ai' || stat.winner === cfg.side ? 'win' : 'lose'));
       else if (stat.check) SFX.play('check');
@@ -1536,8 +1620,9 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       else SFX.play('move');
     }
     refreshMarks(); refreshPanel(); store();
-    if (stat.over) setTimeout(showOver, 700);
-    else if (!humanTurn()) askAI();
+    var delay = (wasIll || wasIll2) ? 950 : ((o.summon || o.illusionAct) ? 600 : 400);
+    if (stat.over) afterAnim(700, showOver);
+    else if (!humanTurn()) afterAnim(delay, function () { if (!stat.over) askAI(); });
   }
   function frozenCount() { var n = 0; for (var i = 96; i < 192; i++) if (DC.isFrozen(st, i)) n++; return n; }
 
@@ -1612,6 +1697,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   }
   function cancelAI() {
     reqId++;
+    animGen++;
     if (busy && worker) { worker.terminate(); worker = null; }
     busy = false;
   }
@@ -1805,7 +1891,15 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   }
   function applyLegal(pred) {
     var i;
-    for (i = 0; i < legal.length; i++) if (pred(DC.toObj(legal[i]), legal[i])) { deselect(); doMove(legal[i]); return legal[i]; }
+    var i, m;
+    for (i = 0; i < legal.length; i++) {
+      if (pred(DC.toObj(legal[i]), legal[i])) {
+        m = legal[i];
+        deselect();
+        doMove(m);
+        return m;
+      }
+    }
     return null;
   }
   window.ConjurerChess = {
@@ -1836,10 +1930,13 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     },
     engine: function () { return DC; },
     applyState: function (o) {
+      cancelAI();
       st = DC.load(o);
       legal = DC.legalMoves(st); stat = DC.status(st, legal);
-      moves = []; texts = []; caps = [];
+      moves = []; texts = []; pubTexts = []; caps = [];
       deselect();
+      $('dlgNew').hidden = true;
+      if ($('dlgOver')) $('dlgOver').hidden = !stat.over;
       buildBoards(); refreshMarks(); refreshPanel();
       if (stat.over) showOver();
     },
