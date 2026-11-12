@@ -18,10 +18,10 @@
   } catch (e) { /* ignore */ }
 
   var DIFFS = [
-    { key: 'easy',     label: 'Easy',      sweetWidth: 14 * DEG, falloff: 40 * DEG, pinDrain: 0.55, pins: 7, tumblers: 3 },
-    { key: 'medium',   label: 'Medium',    sweetWidth:  8 * DEG, falloff: 26 * DEG, pinDrain: 0.85, pins: 6, tumblers: 4 },
-    { key: 'hard',     label: 'Hard',      sweetWidth: 4.5 * DEG, falloff: 16 * DEG, pinDrain: 1.30, pins: 5, tumblers: 5 },
-    { key: 'veryhard', label: 'Very Hard', sweetWidth:  2 * DEG, falloff: 10 * DEG, pinDrain: 2.00, pins: 4, tumblers: 6 }
+    { key: 'easy',     label: 'Easy',      sweetWidth: 14 * DEG, falloff: 40 * DEG, pinDrain: 0.5, pins: 5, tumblers: 3 },
+    { key: 'medium',   label: 'Medium',    sweetWidth:  8 * DEG, falloff: 26 * DEG, pinDrain: 0.5, pins: 5, tumblers: 4 },
+    { key: 'hard',     label: 'Hard',      sweetWidth: 4.5 * DEG, falloff: 16 * DEG, pinDrain: 0.5, pins: 5, tumblers: 5 },
+    { key: 'veryhard', label: 'Very Hard', sweetWidth:  2 * DEG, falloff: 10 * DEG, pinDrain: 0.5, pins: 5, tumblers: 6 }
   ];
   var TUMBLER_FALL = 2.4;
 
@@ -323,8 +323,8 @@
         'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, Hard 5, and ' +
         'Very Hard 6. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
         'pin rises as you turn. If the pick snaps, every set tumbler falls and you start that lock over, keeping ' +
-        'any picks you have left. The lock keeps the same sweet spots until you start a new lock. Difficulty also narrows the sweet spot, shortens the forgiving range, and makes ' +
-        'picks more brittle. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
+        'any picks you have left. The lock keeps the same sweet spots until you start a new lock. Difficulty also narrows the sweet spot and shortens the forgiving range. Every ' +
+        'level gives you 5 picks, and each one snaps after 2 seconds of forcing. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
       '</div>';
   }
 
