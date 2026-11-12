@@ -310,7 +310,6 @@
         '<div class="status-msg lp-status" aria-live="polite"></div>' +
         '<div class="btn-row">' +
           '<button type="button" class="btn btn-primary lp-turn" data-lp-act="turn">Hold to Turn</button>' +
-          '<button type="button" class="btn btn-primary lp-retry" data-lp-act="retry" hidden>Try Again</button>' +
           '<button type="button" class="btn" data-lp-act="new">New Lock</button>' +
           '<button type="button" class="btn lp-mute" data-lp-act="mute">Sound</button>' +
         '</div>' +
@@ -325,8 +324,7 @@
         'sets one tumbler: you will hear a click, and the cylinder springs back. Every tumbler has its own sweet spot, and all the unset ones are live at once, so you can set them in any order. ' +
         'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, and Hard 5. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
         'pin rises as you turn. You get one pick: it snaps after 3 seconds of forcing, every set tumbler ' +
-        'falls, and the attempt is over. Try Again gives you a fresh pick on the same lock, with the same sweet spots; ' +
-        'New Lock rolls new ones. Difficulty also narrows the sweet spot and shortens the forgiving range. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
+        'falls, and that lock is lost. Press New Lock to try another. Difficulty also narrows the sweet spot and shortens the forgiving range. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
       '</div>';
   }
 
@@ -921,8 +919,6 @@
     boards.classList.toggle('lp-failed', state.status === 'failed');
     root.querySelector('.lp-set').textContent = 'Tumblers: ' + state.tumblersSet + '/' + d.tumblers;
     root.querySelector('.lp-pins').textContent = 'Picks broken: ' + state.pinsBroken;
-    var retryBtn = root.querySelector('.lp-retry');
-    if (retryBtn) retryBtn.hidden = state.status !== 'failed';
     root.querySelector('.lp-opened').textContent = 'Locks opened: ' + state.locksOpened;
     var bar = root.querySelector('.lp-health');
     var fill = bar.querySelector('span');
@@ -944,7 +940,7 @@
     if (state.status === 'unlocked') {
       setStatus('The lock yields. The vault opens.', 'success');
     } else if (state.status === 'failed') {
-      setStatus('The pick snapped and the tumblers fell. Try Again keeps this lock; New Lock starts fresh.', 'fail');
+      setStatus('The pick snapped and the tumblers fell. Press New Lock to try another.', 'fail');
     } else if (bindHeld) {
       setStatus('The pick catches. Ease off before it snaps.', 'fail');
     } else if (state.tumblersSet > 0) {
@@ -962,7 +958,6 @@
     var prev = state.sweet;
     state.status = 'picking';
     // The lock's pattern: one sweet spot per tumbler, fixed for the life of this lock.
-    // A broken pick drops the tumblers but keeps the pattern; only a new lock rerolls it.
     state.pattern = [];
     var nT = d.tumblers, last = prev;
     for (var pi = 0; pi < nT; pi++) {
@@ -996,27 +991,6 @@
     syncUi();
   }
 
-  // Fresh pick on the same lock: same sweet spots, tumblers start down.
-  function retryLock() {
-    if (state.status !== 'failed') return;
-    state.status = 'picking';
-    state.cylinder = 0;
-    state.pinHealth = 1;
-    state.pinsLeft = currentDiff().pins;
-    state.wiggle = 0;
-    state.tumblersSet = 0;
-    state.setFlags = [];
-    awaitReturn = false;
-    statusHold = { text: '', cls: '', until: 0 };
-    bindHeld = false;
-    bindTime = 0;
-    needRelease = true;
-    breakFlash = 0;
-    stopScrape();
-    refreshActive();
-    syncUi();
-  }
-
   function breakPin() {
     if (state.status !== 'picking') return;
     stopScrape();
@@ -1043,8 +1017,7 @@
     awaitReturn = false;
     refreshActive();
     saveStore();
-    // One pick per attempt: a snap ends the attempt. The lock and its pattern stay
-    // until the player starts a new lock.
+    // One pick per lock: a snap fails the lock.
     state.status = 'failed';
     state.cylinder = Math.min(state.cylinder, maxAllowed());
     syncUi();
@@ -1322,7 +1295,6 @@
     }
     var act = t.getAttribute('data-lp-act');
     if (act === 'new') newLock();
-    else if (act === 'retry') retryLock();
     else if (act === 'mute') toggleMute();
   }
 
@@ -1416,7 +1388,6 @@
       if (on) ensureAudio();
       return getState();
     },
-    retryLock: function () { retryLock(); return getState(); },
     newLock: function (opts) {
       opts = opts || {};
       var o = {};
