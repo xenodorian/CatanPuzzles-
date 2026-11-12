@@ -564,6 +564,8 @@
       newPuzzle();
     }
 
+    window.RuneBridges.setDifficulty = setDifficulty;
+
     board.addEventListener('click', function (ev) {
       var t = ev.target;
       if (!t || !t.closest) return;

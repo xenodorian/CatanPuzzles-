@@ -157,7 +157,8 @@
     for (var attempt = 0; attempt < 50; attempt++) {
       var idx = rint(list.length);
       if (list.length > 1 && idx === lastPick[k]) continue;
-      var level = decode(list[idx], rint(2) === 1, rint(2) === 1, rint(2) === 1);
+      var tform = rint(2) === 1, fr = rint(2) === 1, fc = rint(2) === 1;
+      var level = decode(list[idx], tform, fr, fc);
       var check = applyMoves(level, level.solution);
       if (!check.legal || !check.solved) continue;
       if (level.alternate) {
@@ -165,9 +166,111 @@
         if (!alt.legal || !alt.solved) continue;
       }
       lastPick[k] = idx;
+      level.bankK = k;
+      level.bankIdx = idx;
+      level.orient = (tform ? 1 : 0) | (fr ? 2 : 0) | (fc ? 4 : 0);
       return level;
     }
     throw new Error('Crate Vault: could not load a verified level');
+  }
+
+  function loadLevel(k, idx, orient) {
+    k = Math.round(Number(k));
+    if (!isFinite(k)) k = 2;
+    k = Math.min(5, Math.max(2, k));
+    var list = BANK[k];
+    if (!list || !list.length) return null;
+    idx = Math.round(Number(idx));
+    if (!isFinite(idx)) idx = 0;
+    idx = ((idx % list.length) + list.length) % list.length;
+    orient = (Number(orient) || 0) & 7;
+    var level = decode(list[idx], !!(orient & 1), !!(orient & 2), !!(orient & 4));
+    level.bankK = k;
+    level.bankIdx = idx;
+    level.orient = orient;
+    return level;
+  }
+
+  function isCornerDead(level, crates) {
+    for (var i = 0; i < crates.length; i++) {
+      var r = crates[i][0], c = crates[i][1];
+      if (indexAt(level.goals, r, c) >= 0) continue;
+      var N = isWall(level, r - 1, c), S = isWall(level, r + 1, c);
+      var W = isWall(level, r, c - 1), E = isWall(level, r, c + 1);
+      if ((N && W) || (N && E) || (S && W) || (S && E)) return true;
+    }
+    return false;
+  }
+
+  function playerReach(level, crates, player) {
+    var w = level.w, blocked = {}, i, j;
+    for (i = 0; i < crates.length; i++) blocked[crates[i][0] * w + crates[i][1]] = true;
+    var seen = {}, queue = [cell(player)];
+    var min = player[0] * w + player[1];
+    seen[min] = true;
+    while (queue.length) {
+      var p = queue.pop();
+      var k = p[0] * w + p[1];
+      if (k < min) min = k;
+      for (j = 0; j < 4; j++) {
+        var d = DIRS[ORDER[j]];
+        var nr = p[0] + d[0], nc = p[1] + d[1], key = nr * w + nc;
+        if (isWall(level, nr, nc) || blocked[key] || seen[key]) continue;
+        seen[key] = true;
+        queue.push([nr, nc]);
+      }
+    }
+    return { seen: seen, min: min };
+  }
+
+  /* Cheap dead-position check, then a capped BFS of crate configurations.
+     If the search hits the node cap we treat the position as still open —
+     we never fail a player on an uncertain solver abort. */
+  function isSolvable(level, crates, player, cap) {
+    cap = cap || 80000;
+    if (isSolvedCrates(level, crates)) return { solvable: true, aborted: false };
+    if (isCornerDead(level, crates)) return { solvable: false, reason: 'corner', aborted: false };
+    var w = level.w;
+    var startCrates = cloneCells(crates);
+    var startPlayer = cell(player);
+    var reach0 = playerReach(level, startCrates, startPlayer);
+    function keyOf(cs, min) {
+      var parts = [];
+      for (var i = 0; i < cs.length; i++) parts.push(cs[i][0] * w + cs[i][1]);
+      parts.sort(function (a, b) { return a - b; });
+      return parts.join(',') + '|' + min;
+    }
+    var seen = {};
+    seen[keyOf(startCrates, reach0.min)] = true;
+    var queue = [{ crates: startCrates, player: startPlayer }];
+    var head = 0, nodes = 0;
+    while (head < queue.length) {
+      var st = queue[head++];
+      nodes++;
+      if (nodes > cap) return { solvable: true, aborted: true };
+      if (isSolvedCrates(level, st.crates)) return { solvable: true, aborted: false };
+      var reach = playerReach(level, st.crates, st.player);
+      for (var i = 0; i < st.crates.length; i++) {
+        for (var j = 0; j < 4; j++) {
+          var d = DIRS[ORDER[j]];
+          var cr = st.crates[i][0], cc = st.crates[i][1];
+          var pr = cr - d[0], pc = cc - d[1];
+          var nr = cr + d[0], nc = cc + d[1];
+          if (isWall(level, nr, nc) || indexAt(st.crates, nr, nc) >= 0) continue;
+          if (!reach.seen[pr * w + pc]) continue;
+          var ncrates = cloneCells(st.crates);
+          ncrates[i] = [nr, nc];
+          if (isCornerDead(level, ncrates) && !isSolvedCrates(level, ncrates)) continue;
+          var nplayer = [cr, cc];
+          var nreach = playerReach(level, ncrates, nplayer);
+          var key = keyOf(ncrates, nreach.min);
+          if (seen[key]) continue;
+          seen[key] = true;
+          queue.push({ crates: ncrates, player: nplayer });
+        }
+      }
+    }
+    return { solvable: false, reason: 'no-path', aborted: false };
   }
 
   /* ---------- UI ---------- */
@@ -322,10 +425,26 @@
     render();
     if (next.solved && typeof window.showWin === 'function') {
       window.showWin('Every crate rests on a rune. The vault door grinds open.');
+    } else if (window.VaultOnce && window.VaultOnce.active() && !window.VaultOnce.frozen()) {
+      var dead = isSolvable(lvl, next.crates, next.player);
+      if (!dead.solvable && !dead.aborted) {
+        if (typeof window.VaultOnce.fail === 'function') {
+          window.VaultOnce.fail({
+            summary: 'The crates can no longer be solved.',
+            reason: 'unsolvable'
+          });
+        }
+      }
     }
   }
 
+  function onceLocked() {
+    return window.VaultOnce && window.VaultOnce.active() &&
+      (window.VaultOnce.started() || window.VaultOnce.frozen());
+  }
+
   function undo() {
+    if (onceLocked()) return;
     if (!state.history.length) return;
     state.history = state.history.slice(0, -1);
     setStatus('');
@@ -333,12 +452,14 @@
   }
 
   function restart() {
+    if (onceLocked()) return;
     state.history = '';
     setStatus('');
     render();
   }
 
   function newPuzzle() {
+    if (onceLocked()) return;
     state.level = generate(state.k);
     state.history = '';
     setStatus('');
@@ -346,6 +467,7 @@
   }
 
   function setDifficulty(k) {
+    if (onceLocked()) return;
     state.k = k;
     var btns = root.querySelectorAll('[data-cv-diff]');
     for (var i = 0; i < btns.length; i++) {
@@ -412,7 +534,51 @@
     render();
   }
 
-  window.CrateVault = { generate: generate, applyMoves: applyMoves };
+  function load(k, idx, orient) {
+    var level = loadLevel(k, idx, orient);
+    if (!level) return null;
+    state.k = level.bankK;
+    state.level = level;
+    state.history = '';
+    setStatus('');
+    if (root) {
+      var btns = root.querySelectorAll('[data-cv-diff]');
+      for (var i = 0; i < btns.length; i++) {
+        var on = Number(btns[i].getAttribute('data-cv-diff')) === state.k;
+        btns[i].classList.toggle('active', on);
+        btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      render();
+    }
+    return getState();
+  }
+
+  function getState() {
+    var cur = state.level ? applyMoves(state.level, state.history) : null;
+    return {
+      k: state.k,
+      history: state.history,
+      bankIdx: state.level && state.level.bankIdx,
+      orient: state.level && state.level.orient,
+      solution: state.level && state.level.solution,
+      solved: !!(cur && cur.solved),
+      crates: cur && cur.crates,
+      player: cur && cur.player
+    };
+  }
+
+  window.CrateVault = {
+    generate: generate,
+    applyMoves: applyMoves,
+    load: load,
+    loadLevel: loadLevel,
+    setDifficulty: setDifficulty,
+    catalog: function (k) { return (BANK[k] || []).length; },
+    getState: getState,
+    move: move,
+    isSolvable: isSolvable,
+    isCornerDead: isCornerDead
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

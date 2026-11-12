@@ -197,6 +197,7 @@
   }
 
   window.KnightTour = { generate: generate, isValidTour: isValidTour };
+  /* setLevel / getState / moveTo are attached after the UI functions exist. */
 
   // ---------- Game state and UI ----------
   var game = { n: 5, level: 'easy', start: 0, tourIdx: [], path: [], hint: null };
@@ -263,6 +264,7 @@
   }
 
   function newPuzzle() {
+    if (onceLocked()) return;
     var g = generate(game.n);
     game.tourIdx = g.tour.map(function (rc) { return rc[0] * game.n + rc[1]; });
     game.start = g.start[0] * game.n + g.start[1];
@@ -301,12 +303,25 @@
     }
     vis[id] = 1;
     var free = neighbors(n, id).some(function (x) { return !vis[x]; });
-    if (!free) setStatus('The ghost knight is stuck. Use Undo or Restart.', 'fail');
-    else setStatus('', '');
+    if (!free) {
+      setStatus('The ghost knight is stuck. Use Undo or Restart.', 'fail');
+      if (window.VaultOnce && window.VaultOnce.active()) {
+        window.VaultOnce.fail({
+          summary: 'The knight had no legal moves left.',
+          reason: 'stuck'
+        });
+      }
+    } else setStatus('', '');
     render();
   }
 
+  function onceLocked() {
+    return window.VaultOnce && window.VaultOnce.active() &&
+      (window.VaultOnce.started() || window.VaultOnce.frozen());
+  }
+
   function undo() {
+    if (onceLocked()) return;
     if (game.path.length > 1) {
       game.path.pop();
       game.hint = null;
@@ -318,6 +333,7 @@
   }
 
   function restart() {
+    if (onceLocked()) return;
     game.path = [game.start];
     game.hint = null;
     setStatus('', '');
@@ -325,6 +341,7 @@
   }
 
   function hint() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
     var n = game.n, total = n * n, path = game.path;
     if (path.length === total) {
       setStatus('Every flagstone is already trodden.', 'hint');
@@ -379,6 +396,19 @@
     root.addEventListener('click', onClick);
     newPuzzle();
   }
+
+  window.KnightTour.setLevel = setLevel;
+  window.KnightTour.newPuzzle = newPuzzle;
+  window.KnightTour.moveTo = moveTo;
+  window.KnightTour.getState = function () {
+    return {
+      level: game.level,
+      n: game.n,
+      path: game.path.slice(),
+      tourIdx: game.tourIdx ? game.tourIdx.slice() : [],
+      start: game.start
+    };
+  };
 
   init();
 })();

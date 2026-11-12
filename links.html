@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--vault-version--><script>(function(){var V="55ae6f196e";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One-time links - The Puzzle Vault</title>
+<link rel="stylesheet" href="vault.css?v=55ae6f196e">
+<script src="puzzles/once.js?v=55ae6f196e"></script>
+<script src="puzzles/cio-catalog.js?v=55ae6f196e"></script>
+<style>
+  .links-wrap{max-width:720px;margin:0 auto;padding:0 1rem 3rem}
+  .links-note{
+    font-style:italic;color:var(--parchment-dark);text-align:center;
+    margin:0 auto 1.5rem;max-width:560px;line-height:1.55
+  }
+  .links-form .row{margin:0.85rem 0}
+  .links-form label.field{
+    display:block;font-family:Cinzel,serif;font-size:0.75rem;letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:0.35rem
+  }
+  .links-form select,.links-form input[type="text"],.links-form input[type="number"]{
+    width:100%;max-width:420px;background:var(--stone-dark, #1a1610);
+    color:var(--parchment);border:1px solid var(--gold-dim);padding:0.5rem 0.7rem;
+    font:inherit;font-size:1rem
+  }
+  .links-form .hint{font-size:0.9rem;color:var(--parchment-dark);margin-top:0.3rem}
+  .links-form .check{display:flex;align-items:center;gap:0.5rem;color:var(--parchment)}
+  .batch{margin-top:1.5rem}
+  .link-row{
+    display:flex;gap:0.5rem;align-items:center;margin:0.45rem 0;
+    background:rgba(0,0,0,0.25);border:1px solid var(--gold-dim);padding:0.45rem 0.6rem
+  }
+  .link-row input{
+    flex:1;background:transparent;border:0;color:var(--parchment);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.85rem;
+    min-width:0
+  }
+  .link-row .btn{flex-shrink:0}
+  .history{margin-top:2.5rem}
+  .history h2{font-family:Cinzel,serif;font-size:1.1rem;color:var(--gold-bright);margin-bottom:0.75rem}
+  .hist-item{border-top:1px solid var(--gold-dim);padding:0.85rem 0}
+  .hist-meta{font-family:Cinzel,serif;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:0.4rem}
+  .copied{color:var(--rune,#7ec8a3)!important}
+</style>
+</head>
+<body>
+<header class="sub-header">
+  <div class="vault-title">The Puzzle Vault</div>
+  <div class="game-name">One-time challenge links</div>
+</header>
+
+<main class="links-wrap">
+  <p class="links-note">Results are stored only in the player's browser. A private window, another device, or cleared site data can bypass a used link.</p>
+
+  <form class="links-form puzzle-frame" id="form" autocomplete="off">
+    <div class="row">
+      <label class="field" for="game">Game</label>
+      <select id="game"></select>
+    </div>
+    <div class="row">
+      <label class="field" for="diff">Difficulty / bot level</label>
+      <select id="diff"></select>
+    </div>
+    <div class="row" id="row-puzzle" hidden>
+      <label class="field" for="puzzle">Puzzle number</label>
+      <select id="puzzle"></select>
+      <p class="hint" id="puzzle-hint"></p>
+    </div>
+    <div class="row" id="row-orient" hidden>
+      <label class="field" for="orient">Orientation</label>
+      <select id="orient">
+        <option value="0">Original</option>
+        <option value="1">Turned</option>
+        <option value="2">Flipped vertically</option>
+        <option value="3">Turned and flipped vertically</option>
+        <option value="4">Flipped horizontally</option>
+        <option value="5">Turned and flipped horizontally</option>
+        <option value="6">Flipped both ways</option>
+        <option value="7">Turned and flipped both ways</option>
+      </select>
+    </div>
+    <div class="row" id="row-cio" hidden>
+      <label class="field" for="cio-id">Chess in One puzzle id</label>
+      <input id="cio-id" type="text" placeholder="Leave blank to pick one at random from this level" spellcheck="false">
+      <p class="hint">Leave blank and a random puzzle from the chosen level is pinned on every link in the batch.</p>
+    </div>
+    <div class="row" id="row-seed" hidden>
+      <label class="field" for="seed">Seed</label>
+      <input id="seed" type="text" placeholder="Leave blank to generate one" spellcheck="false">
+      <p class="hint">A seed pins the same generated puzzle for every player.</p>
+    </div>
+    <div class="row" id="row-side" hidden>
+      <label class="field" for="side">Player side</label>
+      <select id="side">
+        <option value="gold">Gold (moves first)</option>
+        <option value="scarlet">Scarlet</option>
+      </select>
+    </div>
+    <div class="row">
+      <label class="field" for="count">How many links</label>
+      <input id="count" type="number" min="1" max="50" value="5">
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">Generate links</button>
+    </div>
+  </form>
+
+  <div class="batch" id="batch" hidden>
+    <div class="btn-row" style="margin-bottom:0.75rem">
+      <button type="button" class="btn btn-primary" id="copy-all">Copy all</button>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <section class="history" id="history-wrap" hidden>
+    <h2>Generated in this browser</h2>
+    <div id="history"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var HIST = 'vault-once-links';
+  var gameSel = document.getElementById('game');
+  var diffSel = document.getElementById('diff');
+  var puzzleSel = document.getElementById('puzzle');
+  var orientSel = document.getElementById('orient');
+  var seedInp = document.getElementById('seed');
+  var cioInp = document.getElementById('cio-id');
+  var sideSel = document.getElementById('side');
+  var countInp = document.getElementById('count');
+  var GAMES = window.VaultOnce.GAMES;
+
+  function currentGame() {
+    return window.VaultOnce.gameById(gameSel.value);
+  }
+
+  function fillGames() {
+    gameSel.innerHTML = GAMES.map(function (g) {
+      return '<option value="' + g.id + '">' + g.name + '</option>';
+    }).join('');
+  }
+
+  function fillDiffs() {
+    var g = currentGame();
+    diffSel.innerHTML = g.diffs.map(function (d) {
+      return '<option value="' + d.key + '">' + d.label + '</option>';
+    }).join('');
+  }
+
+  function fillPuzzles() {
+    var g = currentGame();
+    var n = g.puzzleCount || 0;
+    var html = '<option value="">Random (pinned by a seed)</option>';
+    for (var i = 1; i <= n; i++) html += '<option value="' + i + '">Puzzle ' + i + '</option>';
+    puzzleSel.innerHTML = html;
+    document.getElementById('puzzle-hint').textContent =
+      '1–' + n + ' in this bank. Leave as random to pin a seed instead.';
+  }
+
+  function updateFields() {
+    var g = currentGame();
+    document.getElementById('row-puzzle').hidden = !g.hasPuzzle;
+    document.getElementById('row-orient').hidden = !g.hasOrient || !puzzleSel.value;
+    document.getElementById('row-seed').hidden = !g.hasSeed && !(g.hasPuzzle && !puzzleSel.value);
+    document.getElementById('row-cio').hidden = !g.hasCio;
+    document.getElementById('row-side').hidden = !g.hasSide;
+    if (g.hasPuzzle) fillPuzzles();
+  }
+
+  gameSel.addEventListener('change', function () { fillDiffs(); updateFields(); });
+  puzzleSel.addEventListener('change', function () {
+    var g = currentGame();
+    document.getElementById('row-orient').hidden = !g.hasOrient || !puzzleSel.value;
+    document.getElementById('row-seed').hidden = !g.hasSeed && !(g.hasPuzzle && !puzzleSel.value);
+  });
+
+  fillGames();
+  fillDiffs();
+  updateFields();
+
+  function randomSeed() {
+    return window.VaultOnce.makeCode().slice(0, 8);
+  }
+
+  function pickCioId(tier) {
+    var cat = window.CIO_CATALOG || [];
+    var t = String(tier);
+    var pool = cat.filter(function (p) { return String(p.tier) === t; });
+    if (!pool.length) pool = cat;
+    if (!pool.length) return '';
+    return pool[Math.floor(Math.random() * pool.length)].id;
+  }
+
+  function absUrl(rel) {
+    try { return new URL(rel, location.href).href; }
+    catch (e) { return rel; }
+  }
+
+  function loadHist() {
+    try { return JSON.parse(localStorage.getItem(HIST) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveHist(list) {
+    try { localStorage.setItem(HIST, JSON.stringify(list.slice(0, 40))); } catch (e) { /* ignore */ }
+  }
+
+  function renderHistory() {
+    var list = loadHist();
+    var wrap = document.getElementById('history-wrap');
+    var host = document.getElementById('history');
+    if (!list.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    host.innerHTML = list.map(function (b, i) {
+      var when = '';
+      try { when = new Date(b.at).toLocaleString(); } catch (e) { when = b.at; }
+      var urls = (b.urls || []).map(function (u) {
+        return '<div class="link-row"><input readonly value="' + escapeAttr(u) + '">' +
+          '<button type="button" class="btn" data-copy="' + escapeAttr(u) + '">Copy</button></div>';
+      }).join('');
+      return '<div class="hist-item"><div class="hist-meta">' + escapeHtml(when) +
+        ' · ' + escapeHtml(b.gameName) + ' · ' + escapeHtml(b.diffLabel) +
+        ' · ' + (b.urls || []).length + ' link' + ((b.urls || []).length === 1 ? '' : 's') +
+        '</div>' + urls + '</div>';
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  function copyText(text, btn) {
+    function done() {
+      if (!btn) return;
+      var prev = btn.textContent;
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = prev; btn.classList.remove('copied'); }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () { fallback(text); done(); });
+    } else { fallback(text); done(); }
+  }
+  function fallback(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  document.body.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('[data-copy]') : null;
+    if (!t) return;
+    copyText(t.getAttribute('data-copy'), t);
+  });
+
+  document.getElementById('copy-all').addEventListener('click', function () {
+    var inputs = document.querySelectorAll('#rows .link-row input');
+    var all = Array.prototype.map.call(inputs, function (i) { return i.value; }).join('\n');
+    copyText(all, this);
+  });
+
+  document.getElementById('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var g = currentGame();
+    var n = Math.max(1, Math.min(50, parseInt(countInp.value, 10) || 1));
+    var optsBase = { d: diffSel.value };
+    if (g.hasPuzzle && puzzleSel.value) {
+      optsBase.p = puzzleSel.value;
+      if (g.hasOrient) optsBase.orient = orientSel.value || '0';
+    } else if (g.hasCio) {
+      var id = (cioInp.value || '').trim();
+      optsBase.p = id || pickCioId(diffSel.value);
+    } else if (g.hasSeed || g.hasPuzzle) {
+      optsBase.seed = (seedInp.value || '').trim() || randomSeed();
+      seedInp.value = optsBase.seed;
+    }
+    if (g.hasSide) optsBase.side = sideSel.value;
+
+    var urls = [];
+    for (var i = 0; i < n; i++) {
+      var made = window.VaultOnce.makeUrl(g.file, optsBase);
+      urls.push({ code: made.code, url: absUrl(made.url) });
+    }
+
+    var host = document.getElementById('rows');
+    host.innerHTML = urls.map(function (u) {
+      return '<div class="link-row"><input readonly value="' + escapeAttr(u.url) + '">' +
+        '<button type="button" class="btn" data-copy="' + escapeAttr(u.url) + '">Copy</button></div>';
+    }).join('');
+    document.getElementById('batch').hidden = false;
+
+    var list = loadHist();
+    list.unshift({
+      at: new Date().toISOString(),
+      game: g.id,
+      gameName: g.name,
+      diff: optsBase.d,
+      diffLabel: window.VaultOnce.diffLabel(g.id, optsBase.d),
+      urls: urls.map(function (u) { return u.url; })
+    });
+    saveHist(list);
+    renderHistory();
+  });
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>

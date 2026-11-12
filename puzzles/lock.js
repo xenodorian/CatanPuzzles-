@@ -1022,6 +1022,12 @@
     state.cylinder = Math.min(state.cylinder, maxAllowed());
     syncUi();
     flashStatus('The pick snaps. All tumblers fall.', 'fail', 1800);
+    if (window.VaultOnce && window.VaultOnce.active()) {
+      window.VaultOnce.fail({
+        summary: 'The pick snapped' + (state.tumblersSet ? ' after ' + state.tumblersSet + ' tumbler' + (state.tumblersSet === 1 ? '' : 's') + '.' : '.'),
+        reason: 'snap'
+      });
+    }
   }
 
   function onFullTurn() {

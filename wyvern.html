@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="04a98b7a70";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="55ae6f196e";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=55ae6f196e"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -1209,6 +1210,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     $('levelNote').textContent = sim ? 'Watch two bots fight. Each bot gets its own randomly chosen difficulty.' : LEVELS[pend.level].note;
   }
   function openNew() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
     pend = { mode: cfg.mode === '2p' ? '2p' : 'ai', side: cfg.side, level: cfg.mode === 'sim' ? 'sim' : cfg.level };
     markOpts(); $('dlgOver').hidden = true; $('dlgNew').hidden = false;
   }
@@ -1229,6 +1231,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     if (!humanTurn()) askAI();
   }
   function undo() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
     if (!moves.length || cfg.mode === 'sim') return;
     cancelAI();
     var list = moves.slice(0, -1);
@@ -1274,7 +1277,9 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   /* ---------- wiring ---------- */
   function init() {
     DC.setVariant(WY ? 'wyvern' : 'dragonchess');
-    var saved = restore();
+    var onceLink = false;
+    try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
+    var saved = onceLink ? null : restore();
     replay(saved || []);
     SFX.setMuted(!cfg.sound);
     LEVELS.forEach(function (L, i) {
@@ -1314,10 +1319,32 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     });
     window.addEventListener('resize', layout);
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
-    if (!saved) openNew();
+    if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
+    else if (!saved) openNew();
     else if (stat.over) showOver();
     else if (!humanTurn()) askAI();
   }
+  window.DragonChessUI = {
+    startOnce: function (opts) {
+      opts = opts || {};
+      var level = opts.level;
+      if (!(level >= 0 && level < LEVELS.length)) level = 1;
+      var side = opts.side === -1 || opts.side === 'scarlet' ? -1 : 1;
+      pend = { mode: 'ai', side: side, level: level };
+      startNew();
+    },
+    result: function () {
+      if (!stat || !stat.over) return { over: false };
+      var draw = stat.winner === 0;
+      var success = !draw && stat.winner === cfg.side;
+      var summary;
+      if (draw) summary = 'The game was a draw (' + (stat.result || 'draw') + ').';
+      else if (success) summary = 'You won' + (stat.result ? ' by ' + stat.result : '') + '.';
+      else summary = 'You lost' + (stat.result ? ' by ' + stat.result : '') + '.';
+      return { over: true, success: success, draw: draw, summary: summary, result: stat.result, winner: stat.winner };
+    },
+    isOver: function () { return !!(stat && stat.over); }
+  };
   init();
 })();
 
