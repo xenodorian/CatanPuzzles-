@@ -83,6 +83,15 @@
         { key: '3', label: 'Very Hard' },
         { key: '4', label: 'Expert' }
       ],
+      hasSide: true },
+    { id: 'conjurer', file: 'conjurer.html', name: "Conjurer's Chess",
+      diffs: [
+        { key: '0', label: 'Easy' },
+        { key: '1', label: 'Medium' },
+        { key: '2', label: 'Hard' },
+        { key: '3', label: 'Very Hard' },
+        { key: '4', label: 'Expert' }
+      ],
       hasSide: true }
   ];
 
@@ -678,7 +687,7 @@
       else if (gameId === 'bridges') bootBridges();
       else if (gameId === 'knight') bootKnight();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 
