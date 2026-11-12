@@ -495,6 +495,55 @@
     document.addEventListener('keydown', onFirst, true);
   }
 
+  /* Undo / reveal must not work on a one-time link, including before the first move
+     and including keyboard shortcuts a game might bind (Ctrl/Cmd+Z, Ctrl+U, Backspace).
+     Bare letter keys such as crate's U-for-up are left alone. */
+  function isTypingTarget(el) {
+    if (!el || !el.closest) return false;
+    var tag = (el.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+    if (el.isContentEditable) return true;
+    return !!el.closest('[contenteditable="true"]');
+  }
+
+  function isUndoShortcut(e) {
+    var key = e.key;
+    var mod = e.ctrlKey || e.metaKey;
+    if (mod && (key === 'z' || key === 'Z' || key === 'u' || key === 'U' || key === 'Backspace')) return true;
+    if (!mod && (key === 'Backspace')) return true;
+    return false;
+  }
+
+  function swallowUndoKeys() {
+    document.addEventListener('keydown', function (e) {
+      if (!active || !valid) return;
+      if (!isUndoShortcut(e)) return;
+      if (isTypingTarget(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+  }
+
+  function disableUndoAndReveal() {
+    var sels = [
+      '[data-cv-act="undo"]',
+      '[data-kt="undo"]',
+      '#bUndo',
+      '#reveal',
+      'button#reveal'
+    ];
+    for (var i = 0; i < sels.length; i++) {
+      var nodes = document.querySelectorAll(sels[i]);
+      for (var j = 0; j < nodes.length; j++) {
+        var el = nodes[j];
+        el.hidden = true;
+        el.setAttribute('disabled', 'disabled');
+        el.setAttribute('aria-hidden', 'true');
+        el.tabIndex = -1;
+      }
+    }
+  }
+
   /* ---------- seeded random ---------- */
 
   function mulberry32(a) {
@@ -655,7 +704,10 @@
     showBanner();
     showGiveUp();
     listenFirstInput();
+    swallowUndoKeys();
+    disableUndoAndReveal();
     bootGame();
+    setTimeout(disableUndoAndReveal, 0);
   }
 
   function whenReady(fn) {

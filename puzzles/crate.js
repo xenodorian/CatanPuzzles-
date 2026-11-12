@@ -444,7 +444,7 @@
   }
 
   function undo() {
-    if (onceLocked()) return;
+    if (window.VaultOnce && window.VaultOnce.active()) return;
     if (!state.history.length) return;
     state.history = state.history.slice(0, -1);
     setStatus('');

@@ -291,7 +291,9 @@
     vis[id] = 1;
     var free = neighbors(n, id).some(function (x) { return !vis[x]; });
     if (!free) {
-      setStatus('The ghost knight is stuck. Use Undo or Restart.', 'fail');
+      setStatus(window.VaultOnce && window.VaultOnce.active()
+        ? 'The ghost knight is stuck.'
+        : 'The ghost knight is stuck. Use Undo or Restart.', 'fail');
       if (window.VaultOnce && window.VaultOnce.active()) {
         window.VaultOnce.fail({
           summary: 'The knight had no legal moves left.',
@@ -308,7 +310,7 @@
   }
 
   function undo() {
-    if (onceLocked()) return;
+    if (window.VaultOnce && window.VaultOnce.active()) return;
     if (game.path.length > 1) {
       game.path.pop();
         setStatus('', '');
