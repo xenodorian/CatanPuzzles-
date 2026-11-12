@@ -865,11 +865,6 @@
       c.strokeStyle = 'rgba(40,24,8,0.55)';
       c.stroke();
 
-      if (i === current && state.status === 'picking' && !tumblersFalling) {
-        c.strokeStyle = 'rgba(240,191,90,0.9)';
-        c.lineWidth = Math.max(2, dpr * 1.4);
-        c.strokeRect(ch.left - 3 * dpr, ch.top - 3 * dpr, ch.w + 6 * dpr, ch.bottom - ch.top + 6 * dpr);
-      }
       if (isSet) {
         c.fillStyle = 'rgba(126,207,192,0.35)';
         c.fillRect(ch.left + 2, L.shearY - 2 * dpr, ch.w - 4, 4 * dpr);
