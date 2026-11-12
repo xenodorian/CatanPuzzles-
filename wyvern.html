@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="4c8b87fb07";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="983284eeda";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -866,10 +866,10 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
 (function () {
   'use strict';
   var LEVELS = [
-    { name: 'Novice', depth: 1, noise: 1000, note: 'Makes mostly random moves. Good for learning the pieces.' },
-    { name: 'Easy', depth: 1, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
-    { name: 'Medium', depth: 2, noise: 120, note: 'Sees short tactics but still gives pieces away now and then.' },
-    { name: 'Hard', depth: 3, noise: 40, time: 1500, note: 'Searches three moves deep. Thinks for up to 1.5 seconds.' },
+    { name: 'Easy', depth: 1, noise: 1000, note: 'Makes mostly random moves. Good for learning the pieces.' },
+    { name: 'Medium', depth: 1, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
+    { name: 'Hard', depth: 2, noise: 120, note: 'Sees short tactics but still gives pieces away now and then.' },
+    { name: 'Very Hard', depth: 3, noise: 40, time: 1500, note: 'Searches three moves deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 4, noise: 0, time: 3000, note: 'Searches four moves deep. Thinks for up to 3 seconds per move.' }
   ];
   var REALM = ['', 'Underworld', 'Land', 'Sky'];
