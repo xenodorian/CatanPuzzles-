@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="fe380ad2f8";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=fe380ad2f8"></script>
+<!--vault-version--><script>(function(){var V="13323361d8";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=13323361d8"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -315,7 +315,7 @@ var DC = (function () {
   function newGame() {
     var st = emptyState(), b = st.board, f;
     if (VARIANT === 'wyvern') {
-      var wb = [U, T, C, K, O, T, U];
+      var wb = [U, T, O, K, T, O, U];
       for (f = 0; f < 7; f++) {
         b[idx(2, f, 0)] = wb[f]; b[idx(2, f, 7)] = -wb[f];
         b[idx(2, f, 1)] = W; b[idx(2, f, 6)] = -W;
@@ -863,7 +863,7 @@ var SFX = (function () {
 
 </script>
 <script>
-var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On Land only, moves or captures one king step.","The King cannot move to Sky in Wyvern Chess."]},{"letter":"C","name":"Cleric","value":9,"home":"Land","lines":["On any level, moves or captures one king step.","On any level, may instead move or capture one level straight up or down."]},{"letter":"R","name":"Dragon","value":8,"home":"Sky","lines":["On Sky only, moves or captures like a bishop or a king.","Instead of moving, may capture one enemy piece directly below it on Land, or next to that square.","When it captures from afar, the Dragon stays where it is."]},{"letter":"G","name":"Griffon","value":5,"home":"Sky","lines":["On Sky, moves or captures like a zebra: two squares diagonally, then one square orthogonally, jumping over pieces.","On Sky, may instead move or capture diagonally down to Land, to a square next to the square below it.","On Land, moves or captures one diagonal step, or may move or capture diagonally up to Sky."]},{"letter":"O","name":"Oliphant","value":5,"home":"Land","lines":["On Land only, moves or captures like a rook."]},{"letter":"T","name":"Ranger","value":4,"home":"Land","lines":["On Land only, moves or captures like a bishop.","Instead of moving, may capture one enemy piece on Sky directly above it. The Ranger does not move when it does this."]},{"letter":"U","name":"Unicorn","value":2.5,"home":"Land","lines":["On Land only, moves or captures like a knight."]},{"letter":"W","name":"Warrior","value":1,"home":"Land","lines":["On Land only, moves one square straight forward without capturing.","Captures one square diagonally forward.","Promotes to an Oliphant when it reaches the far rank."]},{"letter":"Y","name":"Wyvern","value":null,"home":"Sky","lines":["On Sky only, moves one or two squares in any straight or diagonal direction. It jumps over pieces.","Instead of moving, may capture an enemy piece on Land directly below it. The Wyvern does not move when it does this.","Its value is a design estimate, not from Gygax."]},{"letter":"A","name":"Aarokocra","value":null,"home":"Sky","lines":["On Sky only, moves or captures one square straight forward or diagonally forward. Never sideways or back.","Instead of moving, may capture up to two enemy pieces on Land: the square directly below, or one of the eight squares next to it.","A capture from afar does not move the Aarokocra. Reaching the far rank by a move promotes it to a Dragon."]}];
+var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On Land only, moves or captures one king step.","The King cannot move to Sky in Wyvern Chess."]},{"letter":"R","name":"Dragon","value":8,"home":"Sky","lines":["On Sky only, moves or captures like a bishop or a king.","Instead of moving, may capture one enemy piece directly below it on Land, or next to that square.","When it captures from afar, the Dragon stays where it is."]},{"letter":"G","name":"Griffon","value":5,"home":"Sky","lines":["On Sky, moves or captures like a zebra: two squares diagonally, then one square orthogonally, jumping over pieces.","On Sky, may instead move or capture diagonally down to Land, to a square next to the square below it.","On Land, moves or captures one diagonal step, or may move or capture diagonally up to Sky."]},{"letter":"O","name":"Oliphant","value":5,"home":"Land","lines":["On Land only, moves or captures like a rook."]},{"letter":"T","name":"Ranger","value":4,"home":"Land","lines":["On Land only, moves or captures like a bishop.","Instead of moving, may capture one enemy piece on Sky directly above it. The Ranger does not move when it does this."]},{"letter":"U","name":"Unicorn","value":2.5,"home":"Land","lines":["On Land only, moves or captures like a knight."]},{"letter":"W","name":"Warrior","value":1,"home":"Land","lines":["On Land only, moves one square straight forward without capturing.","Captures one square diagonally forward.","Promotes to an Oliphant when it reaches the far rank."]},{"letter":"Y","name":"Wyvern","value":null,"home":"Sky","lines":["On Sky only, moves one or two squares in any straight or diagonal direction. It jumps over pieces.","Instead of moving, may capture an enemy piece on Land directly below it. The Wyvern does not move when it does this.","Its value is a design estimate, not from Gygax."]},{"letter":"A","name":"Aarokocra","value":null,"home":"Sky","lines":["On Sky only, moves or captures one square straight forward or diagonally forward. Never sideways or back.","Instead of moving, may capture up to two enemy pieces on Land: the square directly below, or one of the eight squares next to it.","A capture from afar does not move the Aarokocra. Reaching the far rank by a move promotes it to a Dragon."]}];
 (function () {
   'use strict';
   var LEVELS = [
@@ -875,7 +875,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   ];
   var REALM = ['', 'Underworld', 'Land', 'Sky'];
   var WY = typeof VARIANT_ID !== 'undefined' && VARIANT_ID === 'wyvern';
-  var KEY = WY ? 'wyvern.v3' : 'dragonchess.v1'; // bump the version when the Wyvern layout changes, so old saves are ignored
+  var KEY = WY ? 'wyvern.v4' : 'dragonchess.v1'; // bump the version when the Wyvern layout changes, so old saves are ignored
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
   var st, moves = [], texts = [], caps = [], legal = [], stat = null;
@@ -1247,7 +1247,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       '<li>Gold moves first. Checkmate the enemy King to win. There is no castling.</li>' +
       '<li>Tap a piece to see its moves on both boards. Green dot: move. Green ring: capture. Orange ring: Dragon fire (capture from above without moving).</li>' +
       '<li>White outlines mark the squares directly above and below the selected piece.</li>' +
-      '<li>Wyvern Chess has no Sylph, Mage, Dwarf, Basilisk or Elemental. The second rank of Sky is filled with Wyverns.</li>' +
+      '<li>Wyvern Chess has no Cleric, Sylph, Mage, Dwarf, Basilisk or Elemental. The Land back rank is Unicorn, Ranger, Oliphant, King, Ranger, Oliphant, Unicorn. The two Rangers start on opposite square colors, so there is a bishop-style diagonal piece on both light and dark. There are two Oliphants instead of a Cleric. The second rank of Sky is filled with Wyverns.</li>' +
       '<li>Draws: stalemate, the same position three times, or 100 moves each with no capture or Warrior move.</li>' +
       '<li>Notation: piece letter, level, file, rank. Example: W2e2-2e3. A star marks Dragon fire.</li></ul>' :
       '<li>Three stacked 12 by 8 boards: Sky (level 3), Land (level 2) and Underworld (level 1).</li>' +

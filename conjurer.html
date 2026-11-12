@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="fe380ad2f8";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=fe380ad2f8"></script>
+<!--vault-version--><script>(function(){var V="13323361d8";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=13323361d8"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -329,7 +329,7 @@ var DC = (function () {
 
   /* ---------- State ---------- */
   function emptyReserve(a) {
-    a[W] = 7; a[Y] = 7; a[U] = 2; a[T] = 2; a[C] = 1; a[O] = 1; a[G] = 2; a[R] = 1; a[A] = 4;
+    a[W] = 7; a[Y] = 7; a[U] = 2; a[T] = 2; a[O] = 2; a[G] = 2; a[R] = 1; a[A] = 4;
   }
   function emptyState() {
     var st = { board: new Int8Array(288), turn: 1, half: 0, lo: 0, hi: 0, score: 0, hl: [], hh: [], ucap: [], uhalf: [], uscore: [], upro: [],
@@ -338,14 +338,13 @@ var DC = (function () {
     emptyReserve(st.resG); emptyReserve(st.resS);
     return st;
   }
-  var HOME_TYPES = [W, Y, U, T, C, O, G, R, A];
+  var HOME_TYPES = [W, Y, U, T, O, G, R, A];
   function homeSquares(side, typ) {
     var r1 = side > 0 ? 0 : 7, r2 = side > 0 ? 1 : 6, i, out = [];
     switch (typ) {
       case U: return [idx(2, 0, r1), idx(2, 6, r1)];
-      case T: return [idx(2, 1, r1), idx(2, 5, r1)];
-      case C: return [idx(2, 2, r1)];
-      case O: return [idx(2, 4, r1)];
+      case T: return [idx(2, 1, r1), idx(2, 4, r1)]; // b and e: opposite colors
+      case O: return [idx(2, 2, r1), idx(2, 5, r1)]; // c and f
       case G: return [idx(3, 0, r1), idx(3, 6, r1)];
       case R: return [idx(3, 3, r1)];
       case A: return [idx(3, 1, r1), idx(3, 2, r1), idx(3, 4, r1), idx(3, 5, r1)];
@@ -428,7 +427,7 @@ var DC = (function () {
       return refresh(st);
     }
     if (VARIANT === 'wyvern') {
-      var wb = [U, T, C, K, O, T, U];
+      var wb = [U, T, O, K, T, O, U];
       for (f = 0; f < 7; f++) {
         b[idx(2, f, 0)] = wb[f]; b[idx(2, f, 7)] = -wb[f];
         b[idx(2, f, 1)] = W; b[idx(2, f, 6)] = -W;
@@ -1118,7 +1117,7 @@ var SFX = (function () {
 
 </script>
 <script>
-var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On Land only, moves or captures one king step. The King cannot move to Sky.","The King may try to capture a piece that might be an illusion.","Check, checkmate and stalemate consider only real pieces. An illusion cannot put the King in check, and a King may legally step onto a square an illusion appears to attack."]},{"letter":"J","name":"Conjurer","value":7,"home":"Land","lines":["Moves and captures like the King: one king step on Land only, and cannot go to Sky.","Instead of moving, may summon one real reserve piece onto one of that type's empty default starting squares. The square must be empty; the Conjurer cannot summon onto the square it stands on.","Each real reserve piece can be summoned only once. A paralyzed Conjurer cannot move or summon."]},{"letter":"I","name":"Illusionist","value":6.5,"home":"Land","lines":["Moves and captures like the King: one king step on Land only, and cannot go to Sky.","Instead of moving, may weave an illusion of any reserve piece type (even if every real copy of that type has already been summoned) onto one of that type's empty default starting squares. Illusions of the King, Conjurer or Illusionist are not allowed.","A side may have at most three illusions on the board at once. Illusions do not come from the reserve.","Instead of weaving an illusion, may spend the turn revealing one unrevealed enemy piece. Both players then learn whether it is real or an illusion. Revealed illusions stay marked for the opponent. Already-revealed pieces cannot be revealed again.","A paralyzed Illusionist cannot move, weave illusions or reveal.","If this Illusionist is captured, every piece it paralyzed (every piece that struck one of its side's illusions) is freed."]},{"letter":"C","name":"Cleric","value":9,"home":"Land","lines":["On any level, moves or captures one king step.","On any level, may instead move or capture one level straight up or down."]},{"letter":"R","name":"Dragon","value":8,"home":"Sky","lines":["On Sky only, moves or captures like a bishop or a king.","Instead of moving, may capture one enemy piece directly below it on Land, or next to that square.","When it captures from afar, the Dragon stays where it is."]},{"letter":"G","name":"Griffon","value":5,"home":"Sky","lines":["On Sky, moves or captures like a zebra: two squares diagonally, then one square orthogonally, jumping over pieces.","On Sky, may instead move or capture diagonally down to Land, to a square next to the square below it.","On Land, moves or captures one diagonal step, or may move or capture diagonally up to Sky."]},{"letter":"O","name":"Oliphant","value":5,"home":"Land","lines":["On Land only, moves or captures like a rook."]},{"letter":"T","name":"Ranger","value":4,"home":"Land","lines":["On Land only, moves or captures like a bishop.","Instead of moving, may capture the enemy piece directly above it on Sky. The Ranger stays where it is."]},{"letter":"U","name":"Unicorn","value":2.5,"home":"Land","lines":["On Land only, moves or captures like a knight."]},{"letter":"W","name":"Warrior","value":1,"home":"Land","lines":["On Land only, moves one square straight forward, or captures one square diagonally forward.","On reaching the last rank, promotes to an Oliphant."]},{"letter":"Y","name":"Wyvern","value":5,"home":"Sky","lines":["On Sky, moves or captures like a queen, or may move or capture one square down to Land.","On Land, moves or captures one king step, or may move or capture one square up to Sky."]},{"letter":"A","name":"Aarakocra","value":3,"home":"Sky","lines":["On Sky only, moves or captures one square forward or diagonally forward.","Instead of moving, may capture one or two enemy pieces on Land, in the three-by-three area under it. The Aarakocra stays where it is.","On reaching the last rank, promotes to a Dragon."]}];
+var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On Land only, moves or captures one king step. The King cannot move to Sky.","The King may try to capture a piece that might be an illusion.","Check, checkmate and stalemate consider only real pieces. An illusion cannot put the King in check, and a King may legally step onto a square an illusion appears to attack."]},{"letter":"J","name":"Conjurer","value":7,"home":"Land","lines":["Moves and captures like the King: one king step on Land only, and cannot go to Sky.","Instead of moving, may summon one real reserve piece onto one of that type's empty default starting squares. The square must be empty; the Conjurer cannot summon onto the square it stands on.","Each real reserve piece can be summoned only once. A paralyzed Conjurer cannot move or summon."]},{"letter":"I","name":"Illusionist","value":6.5,"home":"Land","lines":["Moves and captures like the King: one king step on Land only, and cannot go to Sky.","Instead of moving, may weave an illusion of any reserve piece type (even if every real copy of that type has already been summoned) onto one of that type's empty default starting squares. Illusions of the King, Conjurer or Illusionist are not allowed.","A side may have at most three illusions on the board at once. Illusions do not come from the reserve.","Instead of weaving an illusion, may spend the turn revealing one unrevealed enemy piece. Both players then learn whether it is real or an illusion. Revealed illusions stay marked for the opponent. Already-revealed pieces cannot be revealed again.","A paralyzed Illusionist cannot move, weave illusions or reveal.","If this Illusionist is captured, every piece it paralyzed (every piece that struck one of its side's illusions) is freed."]},{"letter":"R","name":"Dragon","value":8,"home":"Sky","lines":["On Sky only, moves or captures like a bishop or a king.","Instead of moving, may capture one enemy piece directly below it on Land, or next to that square.","When it captures from afar, the Dragon stays where it is."]},{"letter":"G","name":"Griffon","value":5,"home":"Sky","lines":["On Sky, moves or captures like a zebra: two squares diagonally, then one square orthogonally, jumping over pieces.","On Sky, may instead move or capture diagonally down to Land, to a square next to the square below it.","On Land, moves or captures one diagonal step, or may move or capture diagonally up to Sky."]},{"letter":"O","name":"Oliphant","value":5,"home":"Land","lines":["On Land only, moves or captures like a rook."]},{"letter":"T","name":"Ranger","value":4,"home":"Land","lines":["On Land only, moves or captures like a bishop.","Instead of moving, may capture the enemy piece directly above it on Sky. The Ranger stays where it is."]},{"letter":"U","name":"Unicorn","value":2.5,"home":"Land","lines":["On Land only, moves or captures like a knight."]},{"letter":"W","name":"Warrior","value":1,"home":"Land","lines":["On Land only, moves one square straight forward, or captures one square diagonally forward.","On reaching the last rank, promotes to an Oliphant."]},{"letter":"Y","name":"Wyvern","value":5,"home":"Sky","lines":["On Sky, moves or captures like a queen, or may move or capture one square down to Land.","On Land, moves or captures one king step, or may move or capture one square up to Sky."]},{"letter":"A","name":"Aarakocra","value":3,"home":"Sky","lines":["On Sky only, moves or captures one square forward or diagonally forward.","Instead of moving, may capture one or two enemy pieces on Land, in the three-by-three area under it. The Aarakocra stays where it is.","On reaching the last rank, promotes to a Dragon."]}];
 (function () {
   'use strict';
   var LEVELS = [
@@ -1131,7 +1130,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   var REALM = ['', 'Underworld', 'Land', 'Sky'];
   var WY = typeof VARIANT_ID !== 'undefined' && VARIANT_ID === 'wyvern';
   var CJ = typeof VARIANT_ID !== 'undefined' && VARIANT_ID === 'conjurer';
-  var KEY = CJ ? 'conjurer.v1' : (WY ? 'wyvern.v3' : 'dragonchess.v1');
+  var KEY = CJ ? 'conjurer.v2' : (WY ? 'wyvern.v4' : 'dragonchess.v1');
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
   var st, moves = [], texts = [], caps = [], legal = [], stat = null;
@@ -1681,9 +1680,9 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   function buildGuide() {
     var h = '<ul>' + (CJ ?
       '<li>Two stacked 7 by 8 boards: Sky (level 3) and Land (level 2). There is no Underworld.</li>' +
-      '<li>Each side begins with only a King, a Conjurer (to the King\'s left from that player\'s view) and an Illusionist (to the King\'s right). Gold starts at 2d1, 2c1 and 2e1; Scarlet at 2d8, 2e8 and 2c8. All other pieces begin off the board in a reserve.</li>' +
+      '<li>Each side begins with only a King, a Conjurer (to the King\'s left from that player\'s view) and an Illusionist (to the King\'s right). Gold starts at 2d1, 2c1 and 2e1; Scarlet at 2d8, 2e8 and 2c8. All other pieces begin off the board in a reserve. There is no Cleric; the reserve has two Oliphants and two Rangers, matching Wyvern Chess.</li>' +
       '<li>A turn is one of: move a piece; have the Conjurer summon a remaining reserve piece onto one of that type\'s empty default starting squares; have the Illusionist weave an illusion of a reserve type onto an empty default starting square; or have the Illusionist reveal one unrevealed enemy piece.</li>' +
-      '<li>Summon and illusion targets must be empty. Neither the Conjurer nor the Illusionist can place a piece on the square they stand on.</li>' +
+      '<li>Summon and illusion targets must be empty. Neither the Conjurer nor the Illusionist can place a piece on the square they stand on. Gold\'s Conjurer starts on an Oliphant home (2c1) and the Illusionist on a Ranger home (2e1); Scarlet\'s Conjurer starts on a Ranger home (2e8) and the Illusionist on an Oliphant home (2c8), so those summons wait until the square is vacated. The other Oliphant and Ranger homes (Gold 2f1 and 2b1, Scarlet 2f8 and 2b8) start empty.</li>' +
       '<li>Each side may have at most three illusions on the board. Illusions of the King, Conjurer or Illusionist are not allowed. An illusion may be woven even if every real copy of that type has already been summoned. Illusions do not use up the reserve.</li>' +
       '<li>You see your own illusions tinted blue. To the opponent they look like ordinary pieces until they are revealed or they vanish.</li>' +
       '<li>Illusions move like the piece they mimic, but they cannot capture; they may only move to empty squares. An opponent may notice that a piece never captures.</li>' +
@@ -1701,7 +1700,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       '<li>Gold moves first. Checkmate the enemy King to win. There is no castling.</li>' +
       '<li>Tap a piece to see its moves on both boards. Green dot: move. Green ring: capture. Orange ring: Dragon fire (capture from above without moving).</li>' +
       '<li>White outlines mark the squares directly above and below the selected piece.</li>' +
-      '<li>Wyvern Chess has no Sylph, Mage, Dwarf, Basilisk or Elemental. The second rank of Sky is filled with Wyverns.</li>' +
+      '<li>Wyvern Chess has no Cleric, Sylph, Mage, Dwarf, Basilisk or Elemental. The Land back rank is Unicorn, Ranger, Oliphant, King, Ranger, Oliphant, Unicorn. The two Rangers start on opposite square colors, so there is a bishop-style diagonal piece on both light and dark. There are two Oliphants instead of a Cleric. The second rank of Sky is filled with Wyverns.</li>' +
       '<li>Draws: stalemate, the same position three times, or 100 moves each with no capture or Warrior move.</li>' +
       '<li>Notation: piece letter, level, file, rank. Example: W2e2-2e3. A star marks Dragon fire.</li></ul>' :
       '<li>Three stacked 12 by 8 boards: Sky (level 3), Land (level 2) and Underworld (level 1).</li>' +
