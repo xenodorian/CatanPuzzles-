@@ -253,7 +253,8 @@
     muted: saved.muted,
     wiggle: 0,
     tumblersSet: 0,
-    tumblerLift: []
+    tumblerLift: [],
+    pattern: []
   };
 
   function currentDiff() { return diffByKey(state.diffKey) || DIFFS[0]; }
@@ -318,11 +319,11 @@
         '<em>Hold to Turn</em> button to apply tension with the wrench. The closer the pick is to the lock&rsquo;s ' +
         'hidden sweet spot, the farther the cylinder turns. If the cylinder stops short, the pick is off the ' +
         'mark &mdash; release and try a new angle. Holding against a bind will snap the pick. A full quarter-turn ' +
-        'sets one tumbler: you will hear a click, the cylinder springs back, and a new sweet spot is chosen. ' +
+        'sets one tumbler: you will hear a click, the cylinder springs back, and the next tumbler&rsquo;s sweet spot takes over. ' +
         'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, Hard 5, and ' +
         'Very Hard 6. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
         'pin rises as you turn. If the pick snaps, every set tumbler falls and you start that lock over, keeping ' +
-        'any picks you have left. Difficulty also narrows the sweet spot, shortens the forgiving range, and makes ' +
+        'any picks you have left. The lock keeps the same sweet spots until you start a new lock. Difficulty also narrows the sweet spot, shortens the forgiving range, and makes ' +
         'picks more brittle. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
       '</div>';
   }
@@ -944,7 +945,15 @@
     var d = currentDiff();
     var prev = state.sweet;
     state.status = 'picking';
-    state.sweet = opts.sweet != null ? opts.sweet : randomSweet(prev);
+    // The lock's pattern: one sweet spot per tumbler, fixed for the life of this lock.
+    // A broken pick drops the tumblers but keeps the pattern; only a new lock rerolls it.
+    state.pattern = [];
+    var nT = d.tumblers, last = prev;
+    for (var pi = 0; pi < nT; pi++) {
+      last = (pi === 0 && opts.sweet != null) ? opts.sweet : randomSweet(last);
+      state.pattern.push(last);
+    }
+    state.sweet = state.pattern[0];
     if (opts.pin != null) state.pin = clamp(opts.pin, PIN_MIN, PIN_MAX);
     state.cylinder = 0;
     state.pinHealth = 1;
@@ -992,7 +1001,7 @@
     state.tumblersSet = 0;
     tumblersFalling = true;
     awaitReturn = false;
-    state.sweet = randomSweet(state.sweet);
+    state.sweet = state.pattern[0];
     saveStore();
     if (state.pinsLeft <= 0) {
       state.status = 'failed';
@@ -1024,7 +1033,7 @@
     state.wiggle = 0;
     needRelease = true;
     awaitReturn = true;
-    state.sweet = randomSweet(state.sweet);
+    state.sweet = state.pattern[state.tumblersSet];
     sfxClick();
     playTone('triangle', 720, 0.1, 0.16, 980);
     flashStatus('A tumbler sets. ' + (n - state.tumblersSet) + ' remaining.', 'success', 1500);
@@ -1298,6 +1307,7 @@
       pinDrain: currentDiff().pinDrain,
       tumblersSet: state.tumblersSet,
       tumblerCount: currentDiff().tumblers,
+      patternDeg: state.pattern.map(function (a) { return a / DEG; }),
       tumblerLift: state.tumblerLift.slice(),
       tumblersFalling: tumblersFalling
     };
