@@ -23,3 +23,9 @@ This site includes three games imported from other projects. Each entry lists th
   - Rules references: Wikipedia, and The Chess Variant Pages (Edward Jackman, Hans Bodlaender).
   - Piece icons from game-icons.net by Lorc, Delapouite and contributors, licensed under CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/).
   - Unofficial fan implementation, not affiliated with the Gygax estate, Wizards of the Coast, or Dragonchess Inc.
+
+## Lockpick
+
+- Page: `lock.html`
+- An original puzzle inspired by the lockpicking mechanic in Fallout 4, and by Evan Kurtz's Lockpicking Mechanic Recreation (https://evankurtzart.itch.io/lockpicking-project). No code or assets from that project were used. Fallout is a trademark of Bethesda Softworks; this is an unofficial fan puzzle and is not affiliated with Bethesda or ZeniMax.
+
