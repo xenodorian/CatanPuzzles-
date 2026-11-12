@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="8cf8bc1629";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="1b1787cbde";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -69,14 +69,14 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
 .piece.black .glyph{color:#f4efe2}
 .piece.moving{z-index:60}
 .piece.dying{opacity:0;transform:scale(.15);filter:blur(2px);z-index:1;pointer-events:none;
-  transition:transform .45s ease-in,opacity .45s ease-in,filter .45s}
-.piece.arrive{animation:piece-arrive .55s ease-out}
+  transition:transform .2s ease-in,opacity .2s ease-in,filter .2s}
+.piece.arrive{animation:piece-arrive .2s ease-out}
 @keyframes piece-arrive{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
 .fx-poof{position:absolute;inset:-10%;pointer-events:none;z-index:8;border-radius:50%;
   background:radial-gradient(circle,rgba(230,245,255,.95) 0%,rgba(90,170,255,.7) 32%,rgba(40,100,200,.15) 58%,transparent 72%);
-  animation:poof .7s ease-out forwards}
+  animation:poof .2s ease-out forwards}
 @keyframes poof{0%{opacity:1;transform:scale(.25)}60%{opacity:.85;transform:scale(1.2)}100%{opacity:0;transform:scale(1.45)}}
-.cell.placed{animation:placed-glow .9s ease-out}
+.cell.placed{animation:placed-glow .2s ease-out}
 @keyframes placed-glow{0%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.55),0 0 0 4px #c7ecff,0 0 22px rgba(140,200,255,1)}
   100%{box-shadow:inset 0 0 0 100px rgba(255,235,90,.38),0 0 0 3px #7ec8ff,0 0 0 transparent}}
 .piece.illusion{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#5aa0e8 45%,#1d5fa8 100%)!important;box-shadow:0 0 0 2px #8ec8ff,0 0 10px rgba(80,160,255,.7)}
@@ -149,7 +149,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 #choice button{font-size:13px;text-align:left}
 
 </style>
-<script src="puzzles/once.js?v=8cf8bc1629"></script>
+<script src="puzzles/once.js?v=1b1787cbde"></script>
 </head>
 <body>
 
@@ -1049,7 +1049,7 @@ var SFX = (function () {
     var fx = document.createElement('div');
     fx.className = 'fx-poof';
     cells[s].appendChild(fx);
-    setTimeout(function () { if (fx.parentNode) fx.parentNode.removeChild(fx); }, 750);
+    setTimeout(function () { if (fx.parentNode) fx.parentNode.removeChild(fx); }, 220);
   }
   function vanishEl(el, s) {
     poofAt(s);
@@ -1058,13 +1058,13 @@ var SFX = (function () {
     var gone = el;
     setTimeout(function () {
       if (gone && gone.parentNode && gone.classList.contains('dying')) gone.parentNode.removeChild(gone);
-    }, 520);
+    }, 220);
   }
   function markPlaced(s) {
     if (!cells[s]) return;
     cells[s].classList.add('placed');
     var cell = cells[s];
-    setTimeout(function () { if (cell) cell.classList.remove('placed'); }, 950);
+    setTimeout(function () { if (cell) cell.classList.remove('placed'); }, 220);
   }
   function afterAnim(ms, fn) {
     var id = ++animGen;
@@ -1463,7 +1463,7 @@ var SFX = (function () {
       else SFX.play('move');
     }
     refreshMarks(); refreshPanel(); store();
-    var delay = wasIll ? 950 : ((o.summon || o.illusionAct) ? 600 : 400);
+    var delay = wasIll ? 400 : ((o.summon || o.illusionAct) ? 600 : 400);
     if (stat.over) afterAnim(700, showOver);
     else if (!humanTurn()) afterAnim(delay, function () { if (!stat.over) askAI(); });
   }
