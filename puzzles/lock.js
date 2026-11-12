@@ -18,10 +18,9 @@
   } catch (e) { /* ignore */ }
 
   var DIFFS = [
-    { key: 'easy',     label: 'Easy',      sweetWidth: 14 * DEG, falloff: 40 * DEG, pinDrain: 0.5, pins: 5, tumblers: 3 },
-    { key: 'medium',   label: 'Medium',    sweetWidth: 11 * DEG, falloff: 30 * DEG, pinDrain: 0.5, pins: 5, tumblers: 4 },
-    { key: 'hard',     label: 'Hard',      sweetWidth: 8 * DEG, falloff: 20 * DEG, pinDrain: 0.5, pins: 5, tumblers: 5 },
-    { key: 'veryhard', label: 'Very Hard', sweetWidth: 5 * DEG, falloff: 10 * DEG, pinDrain: 0.5, pins: 5, tumblers: 6 }
+    { key: 'easy',     label: 'Easy',      sweetWidth: 14 * DEG, falloff: 40 * DEG, pinDrain: 1 / 3, pins: 1, tumblers: 3 },
+    { key: 'medium',   label: 'Medium',    sweetWidth: 11 * DEG, falloff: 30 * DEG, pinDrain: 1 / 3, pins: 1, tumblers: 4 },
+    { key: 'hard',     label: 'Hard',      sweetWidth: 8 * DEG, falloff: 20 * DEG, pinDrain: 1 / 3, pins: 1, tumblers: 5 }
   ];
   var TUMBLER_FALL = 2.4;
 
@@ -62,6 +61,7 @@
       var o = JSON.parse(raw);
       if (o && typeof o === 'object') {
         if (diffByKey(o.difficulty)) out.difficulty = o.difficulty;
+        else if (o.difficulty === 'veryhard') out.difficulty = 'hard';
         out.muted = !!o.muted;
         if (isFinite(o.locksOpened) && o.locksOpened >= 0) out.locksOpened = Math.floor(o.locksOpened);
         if (isFinite(o.pinsBroken) && o.pinsBroken >= 0) out.pinsBroken = Math.floor(o.pinsBroken);
@@ -303,13 +303,14 @@
           '<div class="lp-health" aria-hidden="true"><span></span></div>' +
           '<div class="lp-stats">' +
             '<div class="move-counter lp-set">Tumblers: 0/3</div>' +
-            '<div class="move-counter lp-pins">Picks: 0</div>' +
+            '<div class="move-counter lp-pins">Picks broken: 0</div>' +
             '<div class="move-counter lp-opened">Locks opened: 0</div>' +
           '</div>' +
         '</div>' +
         '<div class="status-msg lp-status" aria-live="polite"></div>' +
         '<div class="btn-row">' +
           '<button type="button" class="btn btn-primary lp-turn" data-lp-act="turn">Hold to Turn</button>' +
+          '<button type="button" class="btn btn-primary lp-retry" data-lp-act="retry" hidden>Try Again</button>' +
           '<button type="button" class="btn" data-lp-act="new">New Lock</button>' +
           '<button type="button" class="btn lp-mute" data-lp-act="mute">Sound</button>' +
         '</div>' +
@@ -322,11 +323,10 @@
         'hidden sweet spot, the farther the cylinder turns. If the cylinder stops short, the pick is off the ' +
         'mark &mdash; release and try a new angle. Holding against a bind will snap the pick. A full quarter-turn ' +
         'sets one tumbler: you will hear a click, and the cylinder springs back. Every tumbler has its own sweet spot, and all the unset ones are live at once, so you can set them in any order. ' +
-        'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, Hard 5, and ' +
-        'Very Hard 6. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
-        'pin rises as you turn. If the pick snaps, every set tumbler falls and you start that lock over, keeping ' +
-        'any picks you have left. The lock keeps the same sweet spots until you start a new lock. Difficulty also narrows the sweet spot and shortens the forgiving range. Every ' +
-        'level gives you 5 picks, and each one snaps after 2 seconds of forcing. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
+        'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, and Hard 5. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
+        'pin rises as you turn. You get one pick: it snaps after 3 seconds of forcing, every set tumbler ' +
+        'falls, and the attempt is over. Try Again gives you a fresh pick on the same lock, with the same sweet spots; ' +
+        'New Lock rolls new ones. Difficulty also narrows the sweet spot and shortens the forgiving range. On a touch screen, drag to aim and hold the Turn button to apply tension.</p>' +
       '</div>';
   }
 
@@ -920,7 +920,9 @@
     boards.classList.toggle('lp-won', state.status === 'unlocked');
     boards.classList.toggle('lp-failed', state.status === 'failed');
     root.querySelector('.lp-set').textContent = 'Tumblers: ' + state.tumblersSet + '/' + d.tumblers;
-    root.querySelector('.lp-pins').textContent = 'Picks: ' + state.pinsLeft + '/' + d.pins;
+    root.querySelector('.lp-pins').textContent = 'Picks broken: ' + state.pinsBroken;
+    var retryBtn = root.querySelector('.lp-retry');
+    if (retryBtn) retryBtn.hidden = state.status !== 'failed';
     root.querySelector('.lp-opened').textContent = 'Locks opened: ' + state.locksOpened;
     var bar = root.querySelector('.lp-health');
     var fill = bar.querySelector('span');
@@ -942,7 +944,7 @@
     if (state.status === 'unlocked') {
       setStatus('The lock yields. The vault opens.', 'success');
     } else if (state.status === 'failed') {
-      setStatus('You are out of picks. The lock holds fast.', 'fail');
+      setStatus('The pick snapped and the tumblers fell. Try Again keeps this lock; New Lock starts fresh.', 'fail');
     } else if (bindHeld) {
       setStatus('The pick catches. Ease off before it snaps.', 'fail');
     } else if (state.tumblersSet > 0) {
@@ -994,6 +996,27 @@
     syncUi();
   }
 
+  // Fresh pick on the same lock: same sweet spots, tumblers start down.
+  function retryLock() {
+    if (state.status !== 'failed') return;
+    state.status = 'picking';
+    state.cylinder = 0;
+    state.pinHealth = 1;
+    state.pinsLeft = currentDiff().pins;
+    state.wiggle = 0;
+    state.tumblersSet = 0;
+    state.setFlags = [];
+    awaitReturn = false;
+    statusHold = { text: '', cls: '', until: 0 };
+    bindHeld = false;
+    bindTime = 0;
+    needRelease = true;
+    breakFlash = 0;
+    stopScrape();
+    refreshActive();
+    syncUi();
+  }
+
   function breakPin() {
     if (state.status !== 'picking') return;
     stopScrape();
@@ -1020,16 +1043,12 @@
     awaitReturn = false;
     refreshActive();
     saveStore();
-    if (state.pinsLeft <= 0) {
-      state.status = 'failed';
-      state.cylinder = Math.min(state.cylinder, maxAllowed());
-      syncUi();
-      flashStatus('You are out of picks. The lock holds fast.', 'fail', 2000);
-      return;
-    }
-    state.pinHealth = 1;
+    // One pick per attempt: a snap ends the attempt. The lock and its pattern stay
+    // until the player starts a new lock.
+    state.status = 'failed';
+    state.cylinder = Math.min(state.cylinder, maxAllowed());
     syncUi();
-    flashStatus('The pick snaps. All tumblers fall. ' + state.pinsLeft + ' remaining.', 'fail', 1800);
+    flashStatus('The pick snaps. All tumblers fall.', 'fail', 1800);
   }
 
   function onFullTurn() {
@@ -1303,6 +1322,7 @@
     }
     var act = t.getAttribute('data-lp-act');
     if (act === 'new') newLock();
+    else if (act === 'retry') retryLock();
     else if (act === 'mute') toggleMute();
   }
 
@@ -1396,6 +1416,7 @@
       if (on) ensureAudio();
       return getState();
     },
+    retryLock: function () { retryLock(); return getState(); },
     newLock: function (opts) {
       opts = opts || {};
       var o = {};
