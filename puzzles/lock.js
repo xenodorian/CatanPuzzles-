@@ -19,9 +19,9 @@
 
   var DIFFS = [
     { key: 'easy',     label: 'Easy',      sweetWidth: 14 * DEG, falloff: 40 * DEG, pinDrain: 0.5, pins: 5, tumblers: 3 },
-    { key: 'medium',   label: 'Medium',    sweetWidth:  8 * DEG, falloff: 26 * DEG, pinDrain: 0.5, pins: 5, tumblers: 4 },
-    { key: 'hard',     label: 'Hard',      sweetWidth: 4.5 * DEG, falloff: 16 * DEG, pinDrain: 0.5, pins: 5, tumblers: 5 },
-    { key: 'veryhard', label: 'Very Hard', sweetWidth:  2 * DEG, falloff: 10 * DEG, pinDrain: 0.5, pins: 5, tumblers: 6 }
+    { key: 'medium',   label: 'Medium',    sweetWidth: 11 * DEG, falloff: 30 * DEG, pinDrain: 0.5, pins: 5, tumblers: 4 },
+    { key: 'hard',     label: 'Hard',      sweetWidth: 8 * DEG, falloff: 20 * DEG, pinDrain: 0.5, pins: 5, tumblers: 5 },
+    { key: 'veryhard', label: 'Very Hard', sweetWidth: 5 * DEG, falloff: 10 * DEG, pinDrain: 0.5, pins: 5, tumblers: 6 }
   ];
   var TUMBLER_FALL = 2.4;
 
