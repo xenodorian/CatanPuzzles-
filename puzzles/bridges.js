@@ -308,8 +308,7 @@
     '.rb-ok text{fill:var(--success);}',
     '.rb-over circle{stroke:var(--danger);}',
     '.rb-over text{fill:var(--danger);}',
-    '.rb-isl.rb-sel circle{stroke:var(--rune);stroke-width:8;}',
-    '.rb-isl.rb-hint circle{stroke:var(--rune);stroke-width:8;}'
+    '.rb-isl.rb-sel circle{stroke:var(--rune);stroke-width:8;}'
   ].join('\n');
 
   var MARKUP = [
@@ -334,8 +333,7 @@
     '  <div class="status-msg rb-status"></div>',
     '  <div class="btn-row">',
     '    <button class="btn" data-rb-act="clear">Clear</button>',
-    '    <button class="btn" data-rb-act="new">New Puzzle</button>',
-    '    <button class="btn btn-primary" data-rb-act="hint">Hint</button>',
+    '    <button class="btn btn-primary" data-rb-act="new">New Puzzle</button>',
     '  </div>',
     '</div>',
     '<div class="dm-panel">',
@@ -366,7 +364,7 @@
     var S = SPACING, P = PAD, R = RADIUS;
     var state = {
       diff: 4, puzzle: null, edges: [], index: {}, counts: [], target: [],
-      sel: -1, solved: false, hintPair: null
+      sel: -1, solved: false
     };
 
     function setStatus(msg, cls) {
@@ -422,7 +420,6 @@
         var need = p2.n, d = deg[idx];
         var cls = d === need ? 'rb-ok' : (d < need ? 'rb-under' : 'rb-over');
         if (state.sel === idx) cls += ' rb-sel';
-        if (state.hintPair && (state.hintPair[0] === idx || state.hintPair[1] === idx)) cls += ' rb-hint';
         var q = xy(idx);
         islSvg += '<g class="rb-isl ' + cls + '" data-i="' + idx + '">' +
           '<circle cx="' + q.x + '" cy="' + q.y + '" r="' + R + '"/>' +
@@ -471,7 +468,7 @@
       if (state.solved) return;
       if (state.sel < 0) {
         state.sel = i;
-        setStatus('Now tap a stone in a straight, clear line.', 'hint');
+        setStatus('Now tap a stone in a straight, clear line.', 'info');
         render();
         return;
       }
@@ -509,7 +506,6 @@
       });
       state.sel = -1;
       state.solved = false;
-      state.hintPair = null;
       setStatus('A new span of ' + p.islands.length + ' stones awaits. Tap two stones in line to bridge them.', '');
       render();
     }
@@ -519,39 +515,6 @@
       state.sel = -1;
       setStatus('The bridges are cleared.', '');
       afterChange();
-    }
-
-    // Hint: first remove any bridge the stored solution does not have (always valid),
-    // then add or correct one bridge toward the solution. Each step keeps the board
-    // a subset of the solution, so it can never introduce a crossing.
-    function hint() {
-      if (state.solved) { setStatus('The puzzle is already solved.', 'hint'); return; }
-      var idx = -1, i;
-      for (i = 0; i < state.counts.length; i++) {
-        if (state.counts[i] > state.target[i]) { idx = i; break; }
-      }
-      if (idx < 0) {
-        for (i = 0; i < state.counts.length; i++) {
-          if (state.counts[i] < state.target[i]) { idx = i; break; }
-        }
-      }
-      if (idx < 0) { setStatus('Your bridges already match the solution.', 'hint'); return; }
-
-      var e = state.edges[idx];
-      var A = state.puzzle.islands[e.a], B = state.puzzle.islands[e.b];
-      var t = state.target[idx];
-      state.counts[idx] = t;
-      var what = t === 0 ? 'remove the bridge' :
-        'set the bridge to ' + t + (t === 1 ? ' span' : ' spans');
-      setStatus('Hint: ' + what + ' between the stone at row ' + (A.r + 1) + ', column ' + (A.c + 1) +
-        ' and the stone at row ' + (B.r + 1) + ', column ' + (B.c + 1) + '.', 'hint');
-      state.hintPair = [e.a, e.b];
-      state.sel = -1;
-      afterChange();
-      setTimeout(function () {
-        state.hintPair = null;
-        render();
-      }, 2500);
     }
 
     function setDifficulty(k) {
@@ -591,7 +554,6 @@
         var act = b.getAttribute('data-rb-act');
         if (act === 'clear') clearAll();
         else if (act === 'new') newPuzzle();
-        else if (act === 'hint') hint();
       });
     });
 

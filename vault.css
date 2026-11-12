@@ -129,7 +129,7 @@
   }
   .status-msg.success { color: var(--success); text-shadow: 0 0 20px rgba(90,170,112,0.5); }
   .status-msg.fail { color: var(--danger); }
-  .status-msg.hint { color: var(--rune); }
+  .status-msg.info { color: var(--rune); }
 
   /* ========================================
      PUZZLE 1: PIPE/PATH PUZZLE

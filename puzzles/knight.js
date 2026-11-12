@@ -15,8 +15,6 @@
   var DELTAS = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]];
   var GEN_NODE_CAP = 4000;    // node budget per generation attempt
   var GEN_TIME_MS = 4;        // time budget per generation attempt
-  var HINT_NODE_CAP = 200000; // bounded search for hints
-
   var STYLE = [
     '.kt-stage { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; width: 100%; min-width: 0; }',
     '.kt-diff .btn { font-size: 0.66rem; padding: 0.5rem 0.9rem; }',
@@ -44,12 +42,6 @@
     '.kt-visited { background-image: linear-gradient(rgba(201,148,58,0.16), rgba(201,148,58,0.16)); color: var(--parchment-dark); }',
     '.kt-current { background-image: linear-gradient(rgba(201,148,58,0.26), rgba(201,148,58,0.26)); box-shadow: inset 0 0 0 2px var(--gold); }',
     '.kt-legal { box-shadow: inset 0 0 0 2px var(--rune); }',
-    '.kt-hint { box-shadow: inset 0 0 0 3px var(--rune), 0 0 14px rgba(126,207,192,0.6); animation: kt-pulse 1.2s ease-in-out infinite alternate; }',
-    '@keyframes kt-pulse {',
-    '  from { box-shadow: inset 0 0 0 3px var(--rune), 0 0 6px rgba(126,207,192,0.35); }',
-    '  to { box-shadow: inset 0 0 0 3px var(--rune), 0 0 18px rgba(126,207,192,0.85); }',
-    '}',
-    '@media (prefers-reduced-motion: reduce) { .kt-hint { animation: none; } }',
     '.kt-knight {',
     '  font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols", sans-serif;',
     '  font-size: clamp(1rem, calc(100cqw / var(--n) * 0.6), 2.4rem);',
@@ -75,7 +67,6 @@
     '  <div class="btn-row">',
     '    <button type="button" class="btn" data-kt="undo">Undo</button>',
     '    <button type="button" class="btn" data-kt="restart">Restart</button>',
-    '    <button type="button" class="btn" data-kt="hint">Hint</button>',
     '    <button type="button" class="btn btn-primary" data-kt="new">New Puzzle</button>',
     '  </div>',
     '</div>',
@@ -83,8 +74,7 @@
     '  <div class="dm-label">DM Configuration</div>',
     '  <p>Click a ringed flagstone to step the ghost knight onto it. Each puzzle is built by first computing',
     '  a complete tour, and that tour\'s first square becomes the start, so a full tour always exists from',
-    '  the start. Hint highlights the next flagstone of the stored tour while the player follows it;',
-    '  otherwise it searches for a completion from the current square.</p>',
+    '  the start.</p>',
     '</div>'
   ].join('\n');
 
@@ -200,7 +190,7 @@
   /* setLevel / getState / moveTo are attached after the UI functions exist. */
 
   // ---------- Game state and UI ----------
-  var game = { n: 5, level: 'easy', start: 0, tourIdx: [], path: [], hint: null };
+  var game = { n: 5, level: 'easy', start: 0, tourIdx: [], path: [] };
 
   function $(id) { return document.getElementById(id); }
 
@@ -237,7 +227,6 @@
       if (vn[i]) { cls += ' kt-visited'; label += ', visited as square ' + vn[i]; }
       if (i === pos) cls += ' kt-current';
       if (legal[i]) { cls += ' kt-legal'; label += ', reachable'; }
-      if (i === game.hint) cls += ' kt-hint';
       var inner = '';
       if (i === pos) inner = '<span class="kt-knight" aria-hidden="true">♞</span>';
       if (vn[i]) inner += '<span class="kt-num">' + vn[i] + '</span>';
@@ -269,7 +258,6 @@
     game.tourIdx = g.tour.map(function (rc) { return rc[0] * game.n + rc[1]; });
     game.start = g.start[0] * game.n + g.start[1];
     game.path = [game.start];
-    game.hint = null;
     setStatus('', '');
     render();
   }
@@ -292,7 +280,6 @@
       return;
     }
     path.push(id);
-    game.hint = null;
     if (path.length === total) {
       setStatus('Every flagstone has been trodden exactly once.', 'success');
       render();
@@ -324,10 +311,9 @@
     if (onceLocked()) return;
     if (game.path.length > 1) {
       game.path.pop();
-      game.hint = null;
-      setStatus('', '');
+        setStatus('', '');
     } else {
-      setStatus('Nothing to undo. The knight stands on its start.', 'hint');
+      setStatus('Nothing to undo. The knight stands on its start.', 'info');
     }
     render();
   }
@@ -335,41 +321,7 @@
   function restart() {
     if (onceLocked()) return;
     game.path = [game.start];
-    game.hint = null;
     setStatus('', '');
-    render();
-  }
-
-  function hint() {
-    if (window.VaultOnce && window.VaultOnce.active()) return;
-    var n = game.n, total = n * n, path = game.path;
-    if (path.length === total) {
-      setStatus('Every flagstone is already trodden.', 'hint');
-      return;
-    }
-    var onTour = true;
-    for (var k = 0; k < path.length; k++) {
-      if (game.tourIdx[k] !== path[k]) { onTour = false; break; }
-    }
-    if (onTour) {
-      game.hint = game.tourIdx[path.length];
-      setStatus('Hint: the highlighted flagstone continues a valid tour.', 'hint');
-    } else {
-      var res = search(n, visitedArr(), path[path.length - 1], total - path.length, {
-        rng: null,
-        maxNodes: HINT_NODE_CAP,
-        deadline: Infinity
-      });
-      if (res.path) {
-        game.hint = res.path[0];
-        setStatus('Hint: the highlighted flagstone leads to a full tour.', 'hint');
-      } else {
-        game.hint = null;
-        setStatus(res.aborted
-          ? 'No tour found from here within the search limit, undo some moves.'
-          : 'No tour is possible from here, undo some moves.', 'fail');
-      }
-    }
     render();
   }
 
@@ -382,7 +334,6 @@
     else if (act === 'level') setLevel(el.getAttribute('data-level'));
     else if (act === 'undo') undo();
     else if (act === 'restart') restart();
-    else if (act === 'hint') hint();
     else if (act === 'new') newPuzzle();
   }
 

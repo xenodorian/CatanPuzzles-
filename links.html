@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="55ae6f196e";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="c6ce96ba80";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One-time links - The Puzzle Vault</title>
-<link rel="stylesheet" href="vault.css?v=55ae6f196e">
-<script src="puzzles/once.js?v=55ae6f196e"></script>
-<script src="puzzles/cio-catalog.js?v=55ae6f196e"></script>
+<link rel="stylesheet" href="vault.css?v=c6ce96ba80">
+<script src="puzzles/once.js?v=c6ce96ba80"></script>
+<script src="puzzles/cio-catalog.js?v=c6ce96ba80"></script>
 <style>
   .links-wrap{max-width:720px;margin:0 auto;padding:0 1rem 3rem}
   .links-note{
@@ -24,7 +24,7 @@
     color:var(--parchment);border:1px solid var(--gold-dim);padding:0.5rem 0.7rem;
     font:inherit;font-size:1rem
   }
-  .links-form .hint{font-size:0.9rem;color:var(--parchment-dark);margin-top:0.3rem}
+  .links-form .field-note{font-size:0.9rem;color:var(--parchment-dark);margin-top:0.3rem}
   .links-form .check{display:flex;align-items:center;gap:0.5rem;color:var(--parchment)}
   .batch{margin-top:1.5rem}
   .link-row{
@@ -65,7 +65,7 @@
     <div class="row" id="row-puzzle" hidden>
       <label class="field" for="puzzle">Puzzle number</label>
       <select id="puzzle"></select>
-      <p class="hint" id="puzzle-hint"></p>
+      <p class="field-note" id="puzzle-note"></p>
     </div>
     <div class="row" id="row-orient" hidden>
       <label class="field" for="orient">Orientation</label>
@@ -83,12 +83,12 @@
     <div class="row" id="row-cio" hidden>
       <label class="field" for="cio-id">Chess in One puzzle id</label>
       <input id="cio-id" type="text" placeholder="Leave blank to pick one at random from this level" spellcheck="false">
-      <p class="hint">Leave blank and a random puzzle from the chosen level is pinned on every link in the batch.</p>
+      <p class="field-note">Leave blank and a random puzzle from the chosen level is pinned on every link in the batch.</p>
     </div>
     <div class="row" id="row-seed" hidden>
       <label class="field" for="seed">Seed</label>
       <input id="seed" type="text" placeholder="Leave blank to generate one" spellcheck="false">
-      <p class="hint">A seed pins the same generated puzzle for every player.</p>
+      <p class="field-note">A seed pins the same generated puzzle for every player.</p>
     </div>
     <div class="row" id="row-side" hidden>
       <label class="field" for="side">Player side</label>
@@ -155,7 +155,7 @@
     var html = '<option value="">Random (pinned by a seed)</option>';
     for (var i = 1; i <= n; i++) html += '<option value="' + i + '">Puzzle ' + i + '</option>';
     puzzleSel.innerHTML = html;
-    document.getElementById('puzzle-hint').textContent =
+    document.getElementById('puzzle-note').textContent =
       '1–' + n + ' in this bank. Leave as random to pin a seed instead.';
   }
 
