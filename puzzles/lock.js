@@ -254,6 +254,8 @@
     wiggle: 0,
     tumblersSet: 0,
     tumblerLift: [],
+    setFlags: [],
+    active: 0,
     pattern: []
   };
 
@@ -319,7 +321,7 @@
         '<em>Hold to Turn</em> button to apply tension with the wrench. The closer the pick is to the lock&rsquo;s ' +
         'hidden sweet spot, the farther the cylinder turns. If the cylinder stops short, the pick is off the ' +
         'mark &mdash; release and try a new angle. Holding against a bind will snap the pick. A full quarter-turn ' +
-        'sets one tumbler: you will hear a click, the cylinder springs back, and the next tumbler&rsquo;s sweet spot takes over. ' +
+        'sets one tumbler: you will hear a click, and the cylinder springs back. Every tumbler has its own sweet spot, and all the unset ones are live at once, so you can set them in any order. ' +
         'Set every tumbler in a row to open the lock. Easy needs 3 successful turns, Medium 4, Hard 5, and ' +
         'Very Hard 6. The sidebar shows those tumblers: set pins stay raised at the shear line, and the current ' +
         'pin rises as you turn. If the pick snaps, every set tumbler falls and you start that lock over, keeping ' +
@@ -648,6 +650,23 @@
 
   function tumblerCount() { return currentDiff().tumblers; }
 
+  // Every unset tumbler is live at once: the one whose sweet spot the pick is
+  // closest to is the one the wrench works against.
+  function activeTumbler() {
+    var d = currentDiff(), n = tumblerCount(), best = -1, bestTurn = -1, bestDist = Infinity;
+    for (var i = 0; i < n; i++) {
+      if (state.setFlags[i] || state.pattern[i] == null) continue;
+      var t = maxTurn(state.pin, state.pattern[i], d.sweetWidth, d.falloff);
+      var dist = Math.abs(state.pin - state.pattern[i]);
+      if (t > bestTurn || (t === bestTurn && dist < bestDist)) { best = i; bestTurn = t; bestDist = dist; }
+    }
+    return best;
+  }
+  function refreshActive() {
+    var a = activeTumbler();
+    if (a >= 0) { state.active = a; state.sweet = state.pattern[a]; }
+  }
+
   function ensureLifts() {
     var n = tumblerCount();
     if (!state.tumblerLift) state.tumblerLift = [];
@@ -760,7 +779,7 @@
     var L = sideLayout(w, h, n);
     var time = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
     var c = sideCtx;
-    var current = state.tumblersSet;
+    var current = state.active;
     var wigAmt = (bindHeld && !tumblersFalling) ? (REDUCE ? 0.2 : 1) * Math.sin(time * 48) * L.boreW * 0.05 : 0;
 
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -816,7 +835,7 @@
 
     for (i = 0; i < n; i++) {
       ch = L.chambers[i];
-      var isSet = !tumblersFalling && i < state.tumblersSet;
+      var isSet = !tumblersFalling && !!state.setFlags[i];
       var pin = { lift: state.tumblerLift[i] || 0, set: isSet };
       var geo = pinGeometry(pin, ch, L);
       var jx = (i === current && wigAmt) ? wigAmt : 0;
@@ -954,12 +973,14 @@
       state.pattern.push(last);
     }
     state.sweet = state.pattern[0];
+    state.active = 0;
     if (opts.pin != null) state.pin = clamp(opts.pin, PIN_MIN, PIN_MAX);
     state.cylinder = 0;
     state.pinHealth = 1;
     state.pinsLeft = d.pins;
     state.wiggle = 0;
     state.tumblersSet = 0;
+    state.setFlags = [];
     state.tumblerLift = [];
     ensureLifts();
     tumblersFalling = false;
@@ -994,14 +1015,15 @@
     var n = tumblerCount();
     var curLift = state.cylinder / UNLOCK_TURN;
     for (var i = 0; i < n; i++) {
-      if (i < state.tumblersSet) state.tumblerLift[i] = 1;
-      else if (i === state.tumblersSet) state.tumblerLift[i] = curLift;
+      if (state.setFlags[i]) state.tumblerLift[i] = 1;
+      else if (i === state.active) state.tumblerLift[i] = curLift;
       else state.tumblerLift[i] = 0;
     }
     state.tumblersSet = 0;
+    state.setFlags = [];
     tumblersFalling = true;
     awaitReturn = false;
-    state.sweet = state.pattern[0];
+    refreshActive();
     saveStore();
     if (state.pinsLeft <= 0) {
       state.status = 'failed';
@@ -1019,8 +1041,10 @@
     if (state.status !== 'picking') return;
     ensureLifts();
     var n = tumblerCount();
-    if (state.tumblersSet < n) {
-      state.tumblerLift[state.tumblersSet] = 1;
+    var a = state.active;
+    if (a >= 0 && a < n && !state.setFlags[a]) {
+      state.setFlags[a] = true;
+      state.tumblerLift[a] = 1;
       state.tumblersSet += 1;
     }
     if (state.tumblersSet >= n) {
@@ -1033,7 +1057,7 @@
     state.wiggle = 0;
     needRelease = true;
     awaitReturn = true;
-    state.sweet = state.pattern[state.tumblersSet];
+    refreshActive();
     sfxClick();
     playTone('triangle', 720, 0.1, 0.16, 980);
     flashStatus('A tumbler sets. ' + (n - state.tumblersSet) + ' remaining.', 'success', 1500);
@@ -1053,6 +1077,7 @@
     ensureLifts();
     var n = tumblerCount();
     state.tumblersSet = n;
+    for (var fi = 0; fi < n; fi++) state.setFlags[fi] = true;
     for (var i = 0; i < n; i++) state.tumblerLift[i] = 1;
     unlockFlash = 1;
     state.locksOpened += 1;
@@ -1066,6 +1091,7 @@
 
   function maxAllowed() {
     var d = currentDiff();
+    if (state.status === 'picking') refreshActive();
     return maxTurn(state.pin, state.sweet, d.sweetWidth, d.falloff);
   }
 
@@ -1089,8 +1115,8 @@
       return;
     }
     for (i = 0; i < n; i++) {
-      if (i < state.tumblersSet) state.tumblerLift[i] = 1;
-      else if (i === state.tumblersSet && !awaitReturn && state.status === 'picking') {
+      if (state.setFlags[i]) state.tumblerLift[i] = 1;
+      else if (i === state.active && !awaitReturn && state.status === 'picking') {
         state.tumblerLift[i] = clamp(state.cylinder / UNLOCK_TURN, 0, 1);
       } else {
         state.tumblerLift[i] = 0;
@@ -1306,6 +1332,8 @@
       falloffDeg: currentDiff().falloff / DEG,
       pinDrain: currentDiff().pinDrain,
       tumblersSet: state.tumblersSet,
+      setFlags: state.setFlags.slice(),
+      activeTumbler: state.active,
       tumblerCount: currentDiff().tumblers,
       patternDeg: state.pattern.map(function (a) { return a / DEG; }),
       tumblerLift: state.tumblerLift.slice(),
