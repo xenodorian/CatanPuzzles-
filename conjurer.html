@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="7916518f79";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=7916518f79"></script>
+<!--vault-version--><script>(function(){var V="5657c8dd8a";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=5657c8dd8a"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -158,9 +158,13 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 .cell.rev{box-shadow:inset 0 0 0 3px #d4a0ff,inset 0 0 12px rgba(180,100,255,.4)}
 #reserve{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:12px;color:var(--dim);margin:6px 0 10px}
 #reserve .rg{display:flex;align-items:center;gap:3px}
-#choice{position:fixed;z-index:80;background:#182033;border:1px solid #2b3654;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px #0008}
+#choice{position:fixed;z-index:80;background:#182033;border:1px solid #2b3654;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px #0008;max-width:min(260px,calc(100vw - 16px));max-height:min(50vh,320px);overflow:auto}
 #choice[hidden]{display:none}
 #choice button{font-size:13px;text-align:left}
+.piece.ghost{opacity:.5;pointer-events:none;cursor:default;z-index:1;transition:none}
+.piece.ghost.ghost-ill{background:radial-gradient(circle at 35% 28%,#d7e9ff 0%,#5aa0e8 45%,#1d5fa8 100%);box-shadow:0 0 0 2px #8ec8ff}
+.piece.ghost.ghost-ill svg{fill:#06244a}
+.piece.ghost .ghost-n{position:absolute;right:-2px;top:-2px;z-index:5;font:700 9px/1 system-ui,sans-serif;background:#182033;color:#fff;border-radius:7px;padding:2px 3px}
 
 </style>
 </head>
@@ -1131,7 +1135,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
   var st, moves = [], texts = [], caps = [], legal = [], stat = null;
-  var sel = -1, targets = {}, pendRem = -1, flipped = false, side = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
+  var sel = -1, choiceSq = -1, targets = {}, pendRem = -1, flipped = false, side = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var cells = new Array(288), guideByLetter = {};
   GUIDE.forEach(function (g) { guideByLetter[g.letter] = g; });
 
@@ -1231,7 +1235,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     }
     for (var i = 0; i < 288; i++) if (st.board[i] !== 0) cells[i].appendChild(pieceEl(st.board[i], i));
   }
-  function pieceIn(sq) { return cells[sq].querySelector('.piece:not(.dying):not(.burn)'); }
+  function pieceIn(sq) { return cells[sq].querySelector('.piece:not(.dying):not(.burn):not(.ghost)'); }
 
   function refreshMarks() {
     var i, k;
@@ -1263,6 +1267,50 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
         cells[k].classList.add(kind);
       }
       if (pendRem >= 0 && cells[pendRem]) cells[pendRem].classList.add('pend');
+    }
+    if (CJ) showGhosts();
+    else clearGhosts();
+  }
+  function clearGhosts() {
+    var gs = document.querySelectorAll('#boards .piece.ghost'), i;
+    for (i = 0; i < gs.length; i++) if (gs[i].parentNode) gs[i].parentNode.removeChild(gs[i]);
+  }
+  function showGhosts() {
+    clearGhosts();
+    if (sel < 0 || !humanTurn() || busy || (stat && stat.over)) return;
+    var p = st.board[sel];
+    if (!p || (p > 0) !== (st.turn > 0)) return;
+    var t = p > 0 ? p : -p;
+    if (t !== DC.J && t !== DC.I) return;
+    var wantSummon = t === DC.J, wantIll = t === DC.I;
+    var bySq = {}, k, i, o, typ, types, sq, el, badge;
+    for (k in targets) {
+      for (i = 0; i < targets[k].length; i++) {
+        o = DC.toObj(targets[k][i]);
+        if (wantSummon && o.summon) typ = o.typ;
+        else if (wantIll && o.illusionAct) typ = o.typ;
+        else continue;
+        sq = o.to;
+        if (!bySq[sq]) bySq[sq] = [];
+        if (bySq[sq].indexOf(typ) < 0) bySq[sq].push(typ);
+      }
+    }
+    for (k in bySq) {
+      sq = +k;
+      if (!cells[sq] || st.board[sq] !== 0) continue;
+      types = bySq[sq];
+      typ = types[0];
+      el = pieceEl(st.turn > 0 ? typ : -typ, null);
+      el.className = 'piece ghost ' + (st.turn > 0 ? 'gold' : 'scarlet') + (wantIll ? ' ghost-ill' : '');
+      el.setAttribute('aria-hidden', 'true');
+      el.title = (wantIll ? 'Illusion of ' : 'Summon ') + nameOf(typ);
+      if (types.length > 1) {
+        badge = document.createElement('span');
+        badge.className = 'ghost-n';
+        badge.textContent = '+' + (types.length - 1);
+        el.appendChild(badge);
+      }
+      cells[sq].appendChild(el);
     }
   }
   function mini(p) {
@@ -1339,10 +1387,12 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     }
     if (c > 64) c = 64;
     document.documentElement.style.setProperty('--cell', c + 'px');
+    var choiceEl = $('choice');
+    if (choiceEl && !choiceEl.hidden && choiceSq >= 0 && cells[choiceSq]) positionChoice(choiceEl, cells[choiceSq]);
   }
 
   /* ---------- interaction ---------- */
-  function hideChoice() { var ch = $('choice'); if (ch) { ch.hidden = true; ch.innerHTML = ''; } }
+  function hideChoice() { var ch = $('choice'); if (ch) { ch.hidden = true; ch.innerHTML = ''; ch.style.visibility = ''; } choiceSq = -1; }
   function deselect() { sel = -1; targets = {}; pendRem = -1; hideChoice(); }
   function actionLabel(m) {
     var o = DC.toObj(m);
@@ -1366,16 +1416,36 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       b.setAttribute('data-m', String(ms[i]));
       ch.appendChild(b);
     }
-    var cell = cells[sq], r = cell.getBoundingClientRect();
-    ch.style.left = Math.max(8, Math.min(window.innerWidth - 200, r.left)) + 'px';
-    ch.style.top = Math.max(8, r.bottom + 6) + 'px';
-    ch.hidden = false;
+    choiceSq = sq;
+    positionChoice(ch, cells[sq]);
     ch.onclick = function (e) {
       var btn = e.target.closest ? e.target.closest('button') : e.target;
       if (!btn || !btn.getAttribute('data-m')) return;
       var mm = +btn.getAttribute('data-m');
       hideChoice(); deselect(); doMove(mm);
     };
+  }
+  function positionChoice(ch, cell) {
+    if (!ch || !cell) return;
+    ch.style.visibility = 'hidden';
+    ch.hidden = false;
+    var r = cell.getBoundingClientRect();
+    var wr = ch.getBoundingClientRect();
+    var w = wr.width, h = wr.height, pad = 8;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var top = r.top - h - 6;
+    if (top < pad) {
+      var below = r.bottom + 6;
+      if (below + h <= vh - pad) top = below;
+      else top = Math.max(pad, Math.min(vh - h - pad, r.top - h - 6));
+    }
+    var left = r.left + (r.width - w) / 2;
+    left = Math.max(pad, Math.min(left, vw - w - pad));
+    if (!isFinite(left)) left = pad;
+    if (!isFinite(top)) top = pad;
+    ch.style.left = left + 'px';
+    ch.style.top = top + 'px';
+    ch.style.visibility = '';
   }
   // Targets map square -> list of moves that end there (a double capture is listed under both victims).
   function onCell(sq) {
@@ -1451,6 +1521,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     }, 320);
   }
   function doMove(m) {
+    deselect();
     var o = DC.toObj(m), wasFrozen = frozenCount();
     push(m);
     animate(m);
@@ -1621,6 +1692,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       '<li>Check, checkmate and stalemate consider only real pieces. An illusion cannot put a King in check, and a King may legally walk onto a square an illusion appears to attack.</li>' +
       '<li>Gold moves first. Checkmate the enemy King to win. There is no castling.</li>' +
       '<li>Tap a piece to see its moves on both boards. Green dot: move. Green ring: capture. Blue outline: summon or weave an illusion. Purple outline: reveal. Orange ring: Dragon fire (capture from above without moving). If a square could be two actions, choose from the popup.</li>' +
+      '<li>Selecting your Conjurer or Illusionist also shows 50% transparent ghost pieces on every empty home where that piece can currently summon or weave an illusion. Only you see those ghosts (in a two-player game, the side to move).</li>' +
       '<li>White outlines mark the squares directly above and below the selected piece.</li>' +
       '<li>Draws: stalemate, the same position three times, or 100 moves each with no capture or Warrior move.</li>' +
       '<li>Notation: piece letter, level, file, rank. Example: W2e2-2e3. A star marks Dragon fire.</li></ul>' :
@@ -1771,6 +1843,20 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       deselect();
       buildBoards(); refreshMarks(); refreshPanel();
       if (stat.over) showOver();
+    },
+    selectSquare: function (sq) { onCell(sq); },
+    deselect: function () { deselect(); refreshMarks(); },
+    ghostSquares: function () {
+      var out = [], i, el, typ, use;
+      for (i = 0; i < 288; i++) {
+        if (!cells[i]) continue;
+        el = cells[i].querySelector('.piece.ghost');
+        if (!el) continue;
+        use = el.querySelector('use');
+        typ = use ? (use.getAttribute('href') || '').replace('#pc-', '') : '';
+        out.push({ sq: i, typ: typ, opacity: el.style.opacity || null, className: el.className });
+      }
+      return out;
     }
   };
   init();
