@@ -71,7 +71,7 @@
     '    </div>',
     '    <div class="rc-moves" data-rc="movebtns"></div>',
     '  </div>',
-    '  <div class="status-msg info" data-rc="status">Press a rune, then drag (or tap) an arrow to turn its layer.</div>',
+    '  <div class="status-msg info" data-rc="status">Press a rune, then drag (or tap) an arrow to turn its layer. W A S D rotate the whole cube.</div>',
     '  <div class="btn-row">',
     '    <button type="button" class="btn" data-rc="undo">Undo</button>',
     '    <button type="button" class="btn" data-rc="hint">Hint</button>',
@@ -85,7 +85,7 @@
     '      <li>Solve it by making every face show a single rune. A 2&times;2 has no fixed centres, so any face may end up on top.</li>',
     '      <li>The cube stays still: it never spins around, only its layers turn.</li>',
     '      <li>Press any rune on the cube: four arrows appear, two for its row and two for its column. Drag toward an arrow to turn that layer that way (the layer lights up as you go), or tap the rune and then tap an arrow. Tap elsewhere to hide the arrows. The buttons below the cube work too.</li>',
-    '      <li>Keys: <kbd>U</kbd> <kbd>D</kbd> <kbd>L</kbd> <kbd>R</kbd> <kbd>F</kbd> <kbd>B</kbd> turn a face clockwise (as seen from that face); hold <kbd>Shift</kbd> for the prime (anticlockwise) turn. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.</li>',
+    '      <li>Keys rotate the whole cube so you can see its hidden faces: <kbd>W</kbd> tips the front face up (the bottom comes into view), <kbd>S</kbd> tips it down (the top comes to the front), <kbd>A</kbd> turns it left (the right face comes to the front) and <kbd>D</kbd> turns it right (the left face comes to the front). Rotating the cube is free: it is not a move and Undo skips it.</li>',
     '      <li>Hint shows the next turn of a shortest solution. A 2&times;2 never needs more than 14 quarter turns.</li>',
     '    </ul>',
     '  </div>',
@@ -149,6 +149,31 @@
     return [x1, y2];
   }
 
+  /* ---------- whole-cube rotations (W A S D) ---------- */
+  // The view never moves; W/A/S/D rotate the cube itself. G maps the original (scramble) frame to the
+  // current world frame, so history stays in the original frame and Undo turns the right physical layer.
+  var ROTS = {
+    w: { M: [1, 0, 0, 0, 0, 1, 0, -1, 0], n: [1, 0, 0], a: -90 },  // front tips up, bottom comes to the front
+    s: { M: [1, 0, 0, 0, 0, -1, 0, 1, 0], n: [1, 0, 0], a: 90 },   // front tips down, top comes to the front
+    a: { M: [0, 0, -1, 0, 1, 0, 1, 0, 0], n: [0, 1, 0], a: -90 },  // front turns to the left, right face comes to the front
+    d: { M: [0, 0, 1, 0, 1, 0, -1, 0, 0], n: [0, 1, 0], a: 90 }    // front turns to the right, left face comes to the front
+  };
+  var IDENT = [1, 0, 0, 0, 1, 0, 0, 0, 1], G = IDENT.slice();
+  function mapMove(m, M) { // the same turn, re-expressed after a whole-cube rotation M
+    var n = E._internal.mulMV(M, E.FACES[m >> 1].n);
+    for (var f = 0; f < 6; f++) { var fn = E.FACES[f].n; if (fn[0] === n[0] && fn[1] === n[1] && fn[2] === n[2]) return f * 2 + (m & 1); }
+    return m;
+  }
+  function rotateAll(c, M) {
+    c.forEach(function (q) { q.pos = E._internal.mulMV(M, q.pos); q.O = E._internal.mulMM(M, q.O); });
+    return c;
+  }
+  function rotateCube(k) {
+    if (!ROTS[k]) return;
+    queue.push({ rot: k });
+    if (!animating) next();
+  }
+
   /* ---------- turning ---------- */
   function turn(m, opts) {
     opts = opts || {};
@@ -160,10 +185,10 @@
     var job = queue.shift();
     if (!job) { animating = false; return; }
     animating = true;
-    var mi = E.moveInfo(job.m), n = mi.n;
-    var layer = cube.filter(function (q) { return q.pos[0] * n[0] + q.pos[1] * n[1] + q.pos[2] * n[2] > 0; });
+    var rot = job.rot ? ROTS[job.rot] : null, mi = rot ? null : E.moveInfo(job.m), n = rot ? rot.n : mi.n;
+    var layer = rot ? cube.slice() : cube.filter(function (q) { return q.pos[0] * n[0] + q.pos[1] * n[1] + q.pos[2] * n[2] > 0; });
     // model rotation R(n, a) is CSS rotate3d(nx, -ny, nz, -a)
-    var a = mi.angleAboutNormal, axis = n[0] + ',' + (-n[1]) + ',' + n[2];
+    var a = rot ? rot.a : mi.angleAboutNormal, axis = n[0] + ',' + (-n[1]) + ',' + n[2];
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var dur = reduce || document.hidden ? 0 : 200;
     hideArrows();
@@ -182,7 +207,7 @@
         el.style.transform = cubieTransform(q, 'rotate3d(' + axis + ',' + (-a) + 'deg)', V);
       });
     });
-    E.applyMove(cube, job.m);
+    if (rot) { rotateAll(cube, rot.M); G = E._internal.mulMM(rot.M, G); } else E.applyMove(cube, job.m);
     var done = function () {
       VIEWS.forEach(function (V) { layer.forEach(function (q) { var el = V.els[q.id]; el.style.transition = 'none'; el.style.transform = cubieTransform(q, null, V); }); });
       afterMove(job);
@@ -191,8 +216,12 @@
     if (dur) setTimeout(done, dur + 20); else done();
   }
   function afterMove(job) {
+    if (job.rot) { // reorientation: not a move, not in Undo; re-read the hint in the new frame
+      if (hintMove >= 0) { hintMove = mapMove(hintMove, ROTS[job.rot].M); markHint(); }
+      save(); return;
+    }
     if (job.record) {
-      if (job.undo) hist.pop(); else hist.push(job.m);
+      if (job.undo) hist.pop(); else hist.push(mapMove(job.m, E._internal.transpose(G))); // history in the original frame
       if (!startAt && !solved && hist.length) startTimer();
       hintMove = -1; markHint();
       refresh();
@@ -227,17 +256,17 @@
   function setLevel() { level = 'easy'; newGame(); }
   function newGame(fixed) {
     queue = []; animating = false;
-    scr = fixed || E.scramble(SCRAMBLE_TURNS);
+    scr = fixed || E.scramble(SCRAMBLE_TURNS); G = IDENT.slice();
     cube = E.applyMoves(E.solvedCube(), scr);
     if (E.isSolved(cube)) { scr = E.scramble(4); cube = E.applyMoves(E.solvedCube(), scr); }
     hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); hintMove = -1;
     buildCube(); refresh(); markHint();
-    setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer.');
+    setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer; W A S D rotate the whole cube.');
     save();
   }
   function undo() {
     if (once() || solved || !hist.length || animating || queue.length) return;
-    turn(E.inverse(hist[hist.length - 1]), { undo: true });
+    turn(mapMove(E.inverse(hist[hist.length - 1]), G), { undo: true });
   }
   function hint() {
     if (once() || solved) return;
@@ -257,7 +286,14 @@
   /* ---------- storage ---------- */
   function save() {
     if (once()) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ level: level, scr: scr, hist: hist, elapsed: startAt ? Date.now() - startAt : elapsed, solved: solved })); } catch (e) { }
+    try { localStorage.setItem(KEY, JSON.stringify({ level: level, scr: scr, hist: hist, elapsed: startAt ? Date.now() - startAt : elapsed, solved: solved, orient: G })); } catch (e) { }
+  }
+  function validOrient(M) { // a whole-cube rotation: 9 entries of -1/0/1, rows orthonormal, determinant +1
+    if (!Array.isArray(M) || M.length !== 9 || !M.every(function (x) { return x === -1 || x === 0 || x === 1; })) return false;
+    var MMt = E._internal.mulMM(M, E._internal.transpose(M));
+    for (var i = 0; i < 9; i++) if (MMt[i] !== IDENT[i]) return false;
+    var det = M[0] * (M[4] * M[8] - M[5] * M[7]) - M[1] * (M[3] * M[8] - M[5] * M[6]) + M[2] * (M[3] * M[7] - M[4] * M[6]);
+    return det === 1;
   }
   function restore() {
     try {
@@ -267,7 +303,8 @@
       if (!o.scr.every(ok) || !o.hist.every(ok)) return false;
       if (o.level && o.level !== 'easy') return false; // saves from the old Medium/Hard/Expert levels start a fresh cube
       level = 'easy'; scr = o.scr; hist = o.hist.slice();
-      cube = E.applyMoves(E.applyMoves(E.solvedCube(), scr), hist);
+      G = validOrient(o.orient) ? o.orient.slice() : IDENT.slice();
+      cube = rotateAll(E.applyMoves(E.applyMoves(E.solvedCube(), scr), hist), G);
       solved = !!o.solved && E.isSolved(cube);
       elapsed = +o.elapsed || 0;
       buildCube(); refresh();
@@ -380,13 +417,13 @@
     if (t.closest && (t.closest('.rc-arrow') || t.closest('.rc-sticker'))) return;
     hideArrows(); // tapping anywhere else hides the arrows
   }
+  // The only keys: W/A/S/D rotate the whole cube. No other shortcuts.
   function onKey(e) {
     if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { if (!once()) { undo(); e.preventDefault(); } return; }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    var k = (e.key || '').toUpperCase(), f = 'UDLRFB'.indexOf(k);
-    if (f < 0 || k.length !== 1) return;
-    turn(f * 2 + (e.shiftKey ? 1 : 0));
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    var k = (e.key || '').toLowerCase();
+    if (k.length !== 1 || !ROTS[k]) return;
+    rotateCube(k);
     e.preventDefault();
   }
   function onClick(e) {
@@ -435,7 +472,9 @@
     turn: function (m) { turn(typeof m === 'string' ? E.parseMove(m) : m); },
     state: function () { return { level: level, scramble: scr.slice(), history: hist.slice(), solved: solved, isSolved: E.isSolved(cube), busy: animating || queue.length > 0, moves: hist.length }; },
     _options: function (vi, id, face) { return stickerOptions(vi, id, face).map(function (o) { return { m: o.m, name: E.MOVE_NAMES[o.m], dir: o.dir }; }); },
-    _load: function (list) { scr = []; queue = []; animating = false; cube = E.applyMoves(E.solvedCube(), list || []); hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); buildCube(); refresh(); },
+    rotate: function (k) { rotateCube(String(k).toLowerCase()); },
+    _orient: function () { return G.slice(); },
+    _load: function (list) { scr = []; queue = []; animating = false; G = IDENT.slice(); cube = E.applyMoves(E.solvedCube(), list || []); hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); buildCube(); refresh(); },
     _cube: function () { return cube; },
     _views: VIEWS
   };
