@@ -101,7 +101,16 @@
         { key: '3', label: 'Very Hard' },
         { key: '4', label: 'Expert' }
       ],
-      hasSide: true }
+      hasSide: true },
+    { id: 'onitama', file: 'onitama.html', name: 'Onitama',
+      diffs: [
+        { key: '0', label: 'Easy' },
+        { key: '1', label: 'Medium' },
+        { key: '2', label: 'Hard' },
+        { key: '3', label: 'Very Hard' },
+        { key: '4', label: 'Expert' }
+      ],
+      hasSide: true, sideLabels: ['Blue', 'Red'] }
   ];
 
   var HIDE = [
@@ -674,7 +683,7 @@
     var level = parseInt(params.d, 10);
     if (!isFinite(level)) level = 1;
     var side = 1;
-    if (params.side === 'scarlet' || params.side === '-1') side = -1;
+    if (params.side === 'scarlet' || params.side === 'red' || params.side === '-1') side = -1;
     ui.startOnce({ level: level, side: side });
     var lastOver = false;
     setInterval(function () {
@@ -696,7 +705,7 @@
       else if (gameId === 'bridges') bootBridges();
       else if (gameId === 'knight') bootKnight();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'onitama') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 

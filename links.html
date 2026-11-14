@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="1b1787cbde";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="88ccbff65d";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One-time links - The Puzzle Vault</title>
-<link rel="stylesheet" href="vault.css?v=1b1787cbde">
-<script src="puzzles/once.js?v=1b1787cbde"></script>
-<script src="puzzles/cio-catalog.js?v=1b1787cbde"></script>
+<link rel="stylesheet" href="vault.css?v=88ccbff65d">
+<script src="puzzles/once.js?v=88ccbff65d"></script>
+<script src="puzzles/cio-catalog.js?v=88ccbff65d"></script>
 <style>
   .links-wrap{max-width:720px;margin:0 auto;padding:0 1rem 3rem}
   .links-note{
@@ -166,6 +166,8 @@
     document.getElementById('row-seed').hidden = !g.hasSeed && !(g.hasPuzzle && !puzzleSel.value);
     document.getElementById('row-cio').hidden = !g.hasCio;
     document.getElementById('row-side').hidden = !g.hasSide;
+    var sl = g.sideLabels || ['Gold (moves first)', 'Scarlet'];
+    sideSel.options[0].text = sl[0]; sideSel.options[1].text = sl[1];
     if (g.hasPuzzle) fillPuzzles();
   }
 
