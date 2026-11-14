@@ -110,7 +110,16 @@
         { key: '3', label: 'Very Hard' },
         { key: '4', label: 'Expert' }
       ],
-      hasSide: true, sideLabels: ['Blue', 'Red'] }
+      hasSide: true, sideLabels: ['Blue', 'Red'] },
+    { id: 'hnefatafl', file: 'hnefatafl.html', name: 'Hnefatafl',
+      diffs: [
+        { key: '0', label: 'Easy' },
+        { key: '1', label: 'Medium' },
+        { key: '2', label: 'Hard' },
+        { key: '3', label: 'Very Hard' },
+        { key: '4', label: 'Expert' }
+      ],
+      hasSide: true, sideLabels: ['Attackers (move first)', 'Defenders'] }
   ];
 
   var HIDE = [
@@ -677,13 +686,13 @@
   }
 
   function bootDragon() {
-    var ui = root.DragonChessUI;
+    var ui = gameId === 'hnefatafl' ? root.HnefataflUI : root.DragonChessUI;
     if (!ui || typeof ui.startOnce !== 'function') return;
     hideNewDialog();
     var level = parseInt(params.d, 10);
     if (!isFinite(level)) level = 1;
     var side = 1;
-    if (params.side === 'scarlet' || params.side === 'red' || params.side === '-1') side = -1;
+    if (params.side === 'scarlet' || params.side === 'red' || params.side === '-1' || params.side === 'defenders') side = -1;
     ui.startOnce({ level: level, side: side });
     var lastOver = false;
     setInterval(function () {
@@ -705,7 +714,7 @@
       else if (gameId === 'bridges') bootBridges();
       else if (gameId === 'knight') bootKnight();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'onitama') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'onitama' || gameId === 'hnefatafl') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 

@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--vault-version--><script>(function(){var V="c7bc2e80c7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=c7bc2e80c7"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="theme-color" content="#0d1322">
+<title>Hnefatafl</title>
+<style>
+:root{--cell:44px;--gold:#f2c14e;--ink:#e9e4d6;--dim:#9aa3b8;--bg:#0d1322;--card:#182033;--line:#2b3654}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 700px at 50% -10%,#24345c 0%,#111a30 45%,#080c17 100%) fixed #0d1322;color:var(--ink);
+  font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none}
+button{font:inherit;color:var(--ink);background:#222d49;border:1px solid #3a4870;border-radius:8px;padding:7px 12px;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .05s}
+button:hover{background:#2c3a5e;border-color:#5669a0}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:linear-gradient(#f6d27a,#d59a25);color:#2b1c00;border-color:#8a6210;font-weight:700}
+button.primary:hover{background:linear-gradient(#ffe096,#e0a52c)}
+button.ghost{background:transparent}
+button.on{background:#3b4d82;border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+button.off{opacity:.55}
+
+#top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;padding-top:max(6px,env(safe-area-inset-top));
+  background:rgba(8,12,23,.72);border-bottom:1px solid var(--line);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#top h1{margin:0;font:700 20px/1 Georgia,"Palatino Linotype","Times New Roman",serif;letter-spacing:.14em;text-transform:uppercase;
+  background:linear-gradient(#ffe7a3,#d59a25);-webkit-background-clip:text;background-clip:text;color:transparent}
+#top nav{display:flex;gap:6px}
+#top nav button{padding:6px 10px;font-size:13px}
+
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
+body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#play{display:flex;flex-direction:column;align-items:center;min-width:0}
+#status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
+#turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
+#turnTok.att{background:radial-gradient(circle at 35% 30%,#8a8f9e,#2a2d36 60%,#0b0c10);border-color:#b8342a}
+#turnTok.def{background:radial-gradient(circle at 35% 30%,#fffdf3,#e6dcc0 60%,#a8946a);border-color:#5d4a20}
+#spin{width:14px;height:14px;border-radius:50%;border:2px solid #56648c;border-top-color:var(--gold);animation:spin .8s linear infinite}
+#spin[hidden]{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+#info{height:20px;max-width:calc(var(--cell)*11 + 8px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+#info b{color:var(--ink)}
+
+.board{display:grid;grid-template-columns:repeat(11,var(--cell));grid-auto-rows:var(--cell);border:4px solid #4a2f17;border-radius:6px;position:relative;
+  box-shadow:0 0 0 1px #1c1006,0 8px 26px rgba(0,0,0,.55);background:#6b4520}
+.cell{position:relative;width:var(--cell);height:var(--cell);background:#c99a5b;box-shadow:inset 0 0 0 1px rgba(60,30,5,.45)}
+.cell.alt{background:#bf8d4f}
+.cell.res{background:#7a4a22}
+.cell.res::after{content:"";position:absolute;inset:16%;border:2px solid rgba(255,220,150,.45);transform:rotate(45deg);pointer-events:none}
+.cell.throne::after{inset:20%;border-radius:2px}
+.cell.home{background:#b3824a}
+.coord{position:absolute;font:700 calc(var(--cell)*.2)/1 system-ui,sans-serif;opacity:.6;pointer-events:none;color:#2a1605;z-index:1}
+.cell.res .coord{color:#f1d9b2}
+.coord.f{right:2px;bottom:1px}.coord.r{left:2px;top:1px}
+
+.piece{position:absolute;left:10%;top:10%;width:80%;height:80%;border-radius:50%;z-index:2;cursor:pointer;
+  transition:transform .28s cubic-bezier(.2,.8,.25,1),opacity .25s;will-change:transform}
+.piece svg{position:absolute;left:16%;top:14%;width:68%;height:68%;display:block;pointer-events:none}
+.piece.att{background:radial-gradient(circle at 35% 28%,#9097a8 0%,#3a3e4a 45%,#111318 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.05) #8e231b,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55),inset 0 -2px 3px rgba(0,0,0,.5)}
+.piece.def{background:radial-gradient(circle at 35% 28%,#ffffff 0%,#efe6cc 45%,#b49c6c 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.05) #4f3c14,0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55),inset 0 -2px 3px rgba(90,60,0,.35)}
+.piece.king{background:radial-gradient(circle at 35% 28%,#fff6cf 0%,#f3c64f 45%,#c98f17 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.05) #5d3d00,0 0 calc(var(--cell)*.2) rgba(255,210,90,.55),0 calc(var(--cell)*.07) calc(var(--cell)*.1) rgba(0,0,0,.55)}
+.piece.king svg{fill:#3b2500}
+.piece.moving{z-index:60}
+.piece.dying{animation:die .3s forwards;z-index:3}
+@keyframes die{30%{filter:brightness(2.2);transform:scale(1.15)}100%{opacity:0;transform:scale(.25) rotate(25deg)}}
+.cell.hit{box-shadow:inset 0 0 0 100px rgba(255,60,40,.45)}
+
+.cell.last{box-shadow:inset 0 0 0 100px rgba(255,235,90,.38)}
+.cell.sel{box-shadow:inset 0 0 0 100px rgba(80,220,140,.55)}
+.cell.danger{box-shadow:inset 0 0 0 100px rgba(255,40,40,.45);animation:pulse 1s infinite alternate}
+@keyframes pulse{to{box-shadow:inset 0 0 0 100px rgba(255,40,40,.18)}}
+.cell.tgt{cursor:pointer}
+.cell.tgt::before{content:"";position:absolute;left:35%;top:35%;width:30%;height:30%;border-radius:50%;z-index:4;pointer-events:none;
+  background:#27e08a;box-shadow:0 0 0 2px rgba(0,40,20,.75),0 0 8px #27e08a}
+.cell.tgt.kills::before{background:#ff9a1f;box-shadow:0 0 0 2px rgba(60,20,0,.75),0 0 10px #ff6a00}
+
+#panel{width:100%;max-width:calc(var(--cell)*11 + 8px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
+body.wide #panel{width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+#matchup{font-weight:600}
+#matchup small{display:block;color:var(--dim);font-weight:400}
+.caps{display:flex;flex-wrap:wrap;gap:2px;min-height:22px;align-items:center;font-size:12.5px;color:var(--dim)}
+.caps .mini{position:relative;width:18px;height:18px;--cell:18px}
+.caps .mini .piece{cursor:default;left:5%;top:5%;width:90%;height:90%}
+#rules{margin:0;padding-left:16px;font-size:12.5px;color:#cfd6e6;-webkit-user-select:text;user-select:text}
+#rules li{margin:2px 0}
+#movelist{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:2.2em 1fr 1fr;gap:2px 6px;font:12.5px/1.5 ui-monospace,Consolas,Menlo,monospace;
+  max-height:220px;overflow:auto;align-content:start;grid-auto-rows:min-content;-webkit-user-select:text;user-select:text}
+body.wide #movelist{max-height:none;flex:1;min-height:80px}
+#movelist .n{color:var(--dim);text-align:right}
+#movelist .mv{padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#movelist .mv.cur{background:#35446f;color:#fff}
+
+.modal{position:fixed;inset:0;z-index:100;background:rgba(4,7,14,.72);display:flex;align-items:center;justify-content:center;padding:14px;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fade .18s}
+.modal[hidden]{display:none}
+@keyframes fade{from{opacity:0}}
+.card{background:linear-gradient(#1d2740,#151c2f);border:1px solid #3a4870;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:100%;overflow:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card.wide{max-width:640px}
+.card.center{text-align:center}
+.card h2{margin:0 0 10px;font:700 20px/1.2 Georgia,serif;letter-spacing:.06em;color:var(--gold)}
+.card h3{margin:14px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row>button{flex:1 1 auto}
+.row.end{justify-content:flex-end;margin-top:18px}
+.row.end>button{flex:0 0 auto;min-width:110px}
+.row.between{justify-content:space-between;align-items:center}
+.row.between>button{flex:0 0 auto}
+.note{color:var(--dim);font-size:13px;margin:8px 0 0;min-height:36px}
+#optLevel>button{flex:1 1 28%}
+#guideBody{-webkit-user-select:text;user-select:text}
+#guideBody p,#guideBody li{color:#cfd6e6;font-size:14px}
+#guideBody ul{padding-left:18px;margin:6px 0}
+.credits{font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+@media (max-width:480px){#top{padding-left:8px;padding-right:8px}#top h1{font-size:14px;letter-spacing:.05em}#top nav{gap:3px}#top nav button{padding:6px 5px;font-size:11.5px}}
+@media (prefers-reduced-motion:reduce){.piece{transition:none}.cell.danger{animation:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="crown" viewBox="0 0 512 512"><path d="M408.256 119.46l-37.7 52.165 19.57 44.426 34.8-37.214-16.67-59.375zm86.074 12.513L384.44 249.498 334.01 135.02l-75.162 132.947-86.948-131.78-33.334 114.122L17.922 132.83l39.3 127.6c1.945-.348 3.94-.54 5.98-.54 18.812 0 34.26 15.452 34.26 34.262 0 13.823-8.346 25.822-20.235 31.22l5.337 17.33c12.425 25.466 71.863 45.152 176.582 47.206 110.805 2.174 178.12-17.54 189.854-47.207h-.002l4.357-20.26c-16.836-2.114-30.02-16.612-30.02-33.986 0-18.81 15.45-34.262 34.263-34.262 3.513 0 6.91.54 10.11 1.54l26.622-123.762zm-391.77 2.04l1.22 56.337 25.56 24.89 9.592-32.842-36.37-48.386zm150.585 2.91l-24.483 51.36 28.955 43.885 24.922-44.08-29.395-51.166zm204.453 135.962c-8.712 0-15.575 6.862-15.575 15.572 0 8.71 6.863 15.574 15.575 15.574s15.572-6.863 15.572-15.573-6.86-15.572-15.572-15.572zM63.2 278.58c-8.71 0-15.573 6.864-15.573 15.574s6.862 15.573 15.574 15.573c8.713 0 15.573-6.862 15.573-15.573 0-8.71-6.86-15.574-15.572-15.574zm130.33 17.842c18.812 0 34.26 15.45 34.26 34.262 0 18.81-15.448 34.26-34.26 34.26-18.813 0-34.262-15.45-34.262-34.26s15.45-34.262 34.26-34.262zm131.234 0c18.812 0 34.26 15.45 34.26 34.262 0 18.81-15.448 34.26-34.26 34.26-18.813 0-34.262-15.45-34.262-34.26s15.45-34.262 34.262-34.262zm-131.235 18.69c-8.713 0-15.573 6.86-15.573 15.572 0 8.71 6.86 15.574 15.572 15.574 8.71 0 15.572-6.864 15.572-15.574s-6.86-15.573-15.573-15.573zm131.234 0c-8.712 0-15.573 6.86-15.573 15.572 0 8.71 6.862 15.574 15.574 15.574s15.574-6.864 15.574-15.574-6.862-15.573-15.574-15.573z"/></symbol></defs></svg>
+<div id="app">
+  <header id="top">
+    <h1>Hnefatafl</h1>
+    <nav>
+      <button id="bNew" type="button">New</button>
+      <button id="bUndo" type="button">Undo</button>
+      <button id="bFlip" type="button">Flip</button>
+      <button id="bSound" type="button">Sound</button>
+      <button id="bGuide" type="button">Rules</button>
+    </nav>
+  </header>
+  <main id="main">
+    <section id="play">
+      <div id="status"><span id="turnTok"></span><span id="statusText"></span><span id="spin" hidden></span></div>
+      <div id="info">Tap a piece to see where it can go.</div>
+      <div id="board" class="board"></div>
+    </section>
+    <aside id="panel">
+      <div id="matchup"></div>
+      <h2>Captured</h2>
+      <div id="capA" class="caps"></div>
+      <div id="capD" class="caps"></div>
+      <h2>Rules</h2>
+      <ul id="rules">
+        <li>Attackers (dark, 24) move first. Defenders (light, 12) protect the <b>King</b>.</li>
+        <li>Every piece moves like a rook. Only the King may stop on the throne or the corners.</li>
+        <li>Capture by sandwiching an enemy between two of yours, or against a corner or hostile throne.</li>
+        <li>King wins by reaching a corner. Attackers win by surrounding the King on 4 sides (3 + throne).</li>
+      </ul>
+      <h2>Moves</h2>
+      <ol id="movelist"></ol>
+    </aside>
+  </main>
+  <p style="text-align:center;margin:10px 0 0"><a href="index.html" style="font-size:12px;color:#a09d96;text-decoration:underline">Back to the Puzzle Vault</a></p>
+</div>
+
+<div id="dlgNew" class="modal" hidden>
+  <div class="card">
+    <h2>New game</h2>
+    <div class="row" id="optMode">
+      <button type="button" data-v="ai">vs Computer</button>
+      <button type="button" data-v="2p">Two players</button>
+    </div>
+    <div id="aiOpts">
+      <div id="sideOpts">
+      <h3>Play as</h3>
+      <div class="row" id="optSide">
+        <button type="button" data-v="1">Attackers (first)</button>
+        <button type="button" data-v="-1">Defenders</button>
+        <button type="button" data-v="0">Random</button>
+      </div>
+      </div>
+      <h3>Difficulty</h3>
+      <div class="row" id="optLevel"></div>
+      <p id="levelNote" class="note"></p>
+    </div>
+    <div class="row end">
+      <button type="button" id="newCancel" class="ghost">Cancel</button>
+      <button type="button" id="newStart" class="primary">Start</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgOver" class="modal" hidden>
+  <div class="card center">
+    <h2 id="overTitle"></h2>
+    <p id="overText"></p>
+    <div class="row end">
+      <button type="button" id="overClose" class="ghost">View board</button>
+      <button type="button" id="overNew" class="primary">New game</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgGuide" class="modal" hidden>
+  <div class="card wide">
+    <div class="row between"><h2>How to play</h2><button type="button" id="guideClose" class="ghost">Close</button></div>
+    <div id="guideBody">
+      <p>Hnefatafl ("King's table") is the Viking board game. This page plays the <b>Copenhagen</b> rules on an 11 by 11 board.</p>
+      <ul>
+        <li><b>Sides.</b> 24 Attackers (dark) start in T shapes on the four edges. 12 Defenders (light) and the King (gold) start in the middle. Attackers move first.</li>
+        <li><b>Moving.</b> Every piece, the King included, moves any number of empty squares in a straight line, like a rook. No jumping.</li>
+        <li><b>Restricted squares.</b> The throne (centre) and the four corners. Only the King may stop on them. Other pieces may pass over the empty throne.</li>
+        <li><b>Capture.</b> Move a piece so an enemy is sandwiched between it and another of your pieces on the opposite side (in a row or column, not diagonally). The corners are hostile to everyone. The throne is always hostile to Attackers, and hostile to Defenders when it is empty. A piece may safely move between two enemies. The King can help capture.</li>
+        <li><b>Shieldwall.</b> A row of two or more pieces along the board edge is captured all at once if every piece in it has an enemy directly in front of it, and you close both ends of the row (a corner can close one end). The King is never taken this way.</li>
+        <li><b>Capturing the King.</b> Attackers must surround the King on all four sides, or on three sides when the fourth is the throne. The King cannot be captured on the board edge.</li>
+        <li><b>Defenders win</b> when the King reaches any corner.</li>
+        <li><b>Attackers win</b> by capturing the King, or by surrounding the King and every remaining Defender so none of them can reach the board edge.</li>
+        <li><b>No moves.</b> A player who cannot move loses.</li>
+        <li><b>Repetition.</b> Per Copenhagen, perpetual repetition is a loss for the Defenders: if the same position (same side to move) occurs a third time, the Attackers win.</li>
+        <li>Not included: the optional edge-fort win for the Defenders.</li>
+        <li>Tap a piece, then a green dot. An orange dot means the move captures.</li>
+        <li>Notation: files a to k from the left, ranks 1 to 11 from the bottom. K marks the King, x marks captured squares.</li>
+      </ul>
+      <p class="credits">Rules follow the Copenhagen Hnefatafl rules (Fetlar and Copenhagen Hnefatafl Clubs). Crown icon by Lorc, game-icons.net, CC BY 3.0.</p>
+    </div>
+  </div>
+</div>
+
+<script id="engine-src">
+/* Copenhagen Hnefatafl 11x11 rules engine and AI. Runs in the page and in a Web Worker. */
+var HN = (function () {
+  'use strict';
+  var N = 11, NN = 121, THRONE = 60;
+  var ATT = 1, DEF = 2, KING = 3;
+  var WIN = 100000;
+  var CORNER = new Uint8Array(NN), RESTRICT = new Uint8Array(NN), EDGE = new Uint8Array(NN), NB = new Int16Array(NN * 4);
+  var CORNERS = [0, 10, 110, 120];
+  var i, r, c;
+  CORNERS.forEach(function (s) { CORNER[s] = 1; RESTRICT[s] = 1; });
+  RESTRICT[THRONE] = 1;
+  for (i = 0; i < NN; i++) {
+    r = (i / N) | 0; c = i % N;
+    EDGE[i] = (r === 0 || r === 10 || c === 0 || c === 10) ? 1 : 0;
+    NB[i * 4] = r < 10 ? i + N : -1;   // north (rank up)
+    NB[i * 4 + 1] = c < 10 ? i + 1 : -1; // east
+    NB[i * 4 + 2] = r > 0 ? i - N : -1;  // south
+    NB[i * 4 + 3] = c > 0 ? i - 1 : -1;  // west
+  }
+  var GUARD = [2, 12, 22, 8, 20, 32, 88, 100, 112, 98, 108, 118];
+  // Zobrist
+  var seed = 0x2545F491;
+  function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed | 0; }
+  var ZL = new Int32Array(4 * NN), ZH = new Int32Array(4 * NN);
+  for (i = 0; i < 4 * NN; i++) { ZL[i] = rnd(); ZH[i] = rnd(); }
+  var ZTL = rnd(), ZTH = rnd();
+
+  function sq(rank, file) { return rank * N + file; }
+  function sqName(s) { return 'abcdefghijk'.charAt(s % N) + (((s / N) | 0) + 1); }
+
+  function rehash(st) {
+    var lo = 0, hi = 0, b = st.b;
+    for (var k = 0; k < NN; k++) if (b[k]) { lo ^= ZL[b[k] * NN + k]; hi ^= ZH[b[k] * NN + k]; }
+    if (st.turn < 0) { lo ^= ZTL; hi ^= ZTH; }
+    st.lo = lo; st.hi = hi;
+    return st;
+  }
+  function newGame() {
+    var b = new Int8Array(NN), k;
+    for (k = 3; k <= 7; k++) { b[sq(0, k)] = ATT; b[sq(10, k)] = ATT; b[sq(k, 0)] = ATT; b[sq(k, 10)] = ATT; }
+    b[sq(1, 5)] = ATT; b[sq(9, 5)] = ATT; b[sq(5, 1)] = ATT; b[sq(5, 9)] = ATT;
+    [[3, 5], [4, 4], [4, 5], [4, 6], [5, 3], [5, 4], [5, 6], [5, 7], [6, 4], [6, 5], [6, 6], [7, 5]].forEach(function (p) { b[sq(p[0], p[1])] = DEF; });
+    b[THRONE] = KING;
+    return rehash({ b: b, turn: 1, king: THRONE, kingDead: false, lo: 0, hi: 0 });
+  }
+  function clone(st) { return { b: new Int8Array(st.b), turn: st.turn, king: st.king, kingDead: st.kingDead, lo: st.lo, hi: st.hi }; }
+  function fromData(d) {
+    var st = { b: new Int8Array(d.b), turn: d.turn, king: d.king, kingDead: !!d.kingDead, lo: 0, hi: 0 };
+    return rehash(st);
+  }
+  function mine(p, turn) { return turn === 1 ? p === ATT : (p === DEF || p === KING); }
+
+  function genMoves(st, out) {
+    var b = st.b, turn = st.turn, s, d, t, p, k;
+    out = out || [];
+    if (st.kingDead) return out;
+    for (s = 0; s < NN; s++) {
+      p = b[s];
+      if (!p || !mine(p, turn)) continue;
+      k = p === KING;
+      for (d = 0; d < 4; d++) {
+        t = s;
+        while ((t = NB[t * 4 + d]) >= 0) {
+          if (b[t]) break;
+          if (RESTRICT[t] && !k) { if (t === THRONE) continue; break; }
+          out.push(s * NN + t);
+        }
+      }
+    }
+    return out;
+  }
+  // Is square o an anvil for the mover (att = attackers moving)?
+  function anvil(b, o, att) {
+    if (o < 0) return false;
+    var v = b[o];
+    if (CORNER[o]) return true;
+    if (att) return v === ATT || (o === THRONE && v === 0);
+    return v === DEF || v === KING || o === THRONE;
+  }
+  function friend(v, att) { return att ? v === ATT : (v === DEF || v === KING); }
+  function foe(v, att) { return att ? (v === DEF || v === KING) : v === ATT; }
+
+  // Squares captured (custodial + shieldwall) by the piece that just landed on t. Board already updated.
+  function findCaps(b, t, att, out) {
+    var d, n, v, o;
+    for (d = 0; d < 4; d++) {
+      n = NB[t * 4 + d];
+      if (n < 0) continue;
+      v = b[n];
+      if (att ? v !== DEF : v !== ATT) continue;
+      o = NB[n * 4 + d];
+      if (anvil(b, o, att)) out.push(n);
+    }
+    if (EDGE[t] && !CORNER[t]) {
+      var tr = (t / N) | 0, tc = t % N;
+      var inward = tr === 0 ? 0 : tr === 10 ? 2 : tc === 0 ? 1 : 3;
+      var par = (inward === 0 || inward === 2) ? [1, 3] : [0, 2];
+      for (var pi = 0; pi < 2; pi++) {
+        var pd = par[pi], row = [], x = NB[t * 4 + pd], ok = true;
+        while (x >= 0 && foe(b[x], att)) { row.push(x); x = NB[x * 4 + pd]; }
+        if (row.length < 2 || x < 0) continue;
+        if (!(friend(b[x], att) || CORNER[x])) continue;
+        for (var j = 0; j < row.length; j++) {
+          var front = NB[row[j] * 4 + inward];
+          if (front < 0 || !friend(b[front], att)) { ok = false; break; }
+        }
+        if (!ok) continue;
+        for (j = 0; j < row.length; j++) if (b[row[j]] !== KING && out.indexOf(row[j]) < 0) out.push(row[j]);
+      }
+    }
+    return out;
+  }
+  function kingTrapped(b, k) {
+    for (var d = 0; d < 4; d++) {
+      var n = NB[k * 4 + d];
+      if (n < 0) return false;
+      if (!(b[n] === ATT || (n === THRONE && b[n] === 0))) return false;
+    }
+    return true;
+  }
+  // Applies a move. Returns undo info {f,t,p,caps,vals,king,kingDead}.
+  function make(st, m) {
+    var f = (m / NN) | 0, t = m % NN, b = st.b, p = b[f], att = st.turn === 1, u;
+    u = { m: m, f: f, t: t, p: p, caps: [], vals: [], king: st.king, kingDead: st.kingDead };
+    b[f] = 0; st.lo ^= ZL[p * NN + f]; st.hi ^= ZH[p * NN + f];
+    b[t] = p; st.lo ^= ZL[p * NN + t]; st.hi ^= ZH[p * NN + t];
+    if (p === KING) st.king = t;
+    findCaps(b, t, att, u.caps);
+    for (var j = 0; j < u.caps.length; j++) {
+      var s = u.caps[j], v = b[s];
+      u.vals.push(v); b[s] = 0; st.lo ^= ZL[v * NN + s]; st.hi ^= ZH[v * NN + s];
+    }
+    if (att) {
+      var k = st.king, adj = false;
+      for (var d = 0; d < 4; d++) if (NB[k * 4 + d] === t) adj = true;
+      if (adj && kingTrapped(b, k)) {
+        st.kingDead = true; u.caps.push(k); u.vals.push(KING);
+        b[k] = 0; st.lo ^= ZL[KING * NN + k]; st.hi ^= ZH[KING * NN + k];
+      }
+    }
+    st.turn = -st.turn; st.lo ^= ZTL; st.hi ^= ZTH;
+    return u;
+  }
+  function unmake(st, u) {
+    var b = st.b;
+    st.turn = -st.turn; st.lo ^= ZTL; st.hi ^= ZTH;
+    for (var j = u.caps.length - 1; j >= 0; j--) {
+      var s = u.caps[j], v = u.vals[j];
+      b[s] = v; st.lo ^= ZL[v * NN + s]; st.hi ^= ZH[v * NN + s];
+    }
+    b[u.t] = 0; st.lo ^= ZL[u.p * NN + u.t]; st.hi ^= ZH[u.p * NN + u.t];
+    b[u.f] = u.p; st.lo ^= ZL[u.p * NN + u.f]; st.hi ^= ZH[u.p * NN + u.f];
+    st.king = u.king; st.kingDead = u.kingDead;
+  }
+  // Would this move capture anything? (cheap preview, ignores the vacated square)
+  function capsOf(st, m) {
+    var c = clone(st), u = make(c, m);
+    return u.caps;
+  }
+  function encircled(b) {
+    var seen = new Uint8Array(NN), stack = [], s, d, n;
+    for (s = 0; s < NN; s++) if (b[s] === DEF || b[s] === KING) { stack.push(s); seen[s] = 1; }
+    if (!stack.length) return true;
+    while (stack.length) {
+      s = stack.pop();
+      if (EDGE[s]) return false;
+      for (d = 0; d < 4; d++) { n = NB[s * 4 + d]; if (n >= 0 && !seen[n] && b[n] !== ATT) { seen[n] = 1; stack.push(n); } }
+    }
+    return true;
+  }
+  function kingRoutes(st) {
+    var b = st.b, k = st.king, routes = 0, mob = 0, edge = 0, d, t;
+    for (d = 0; d < 4; d++) {
+      t = k;
+      while ((t = NB[t * 4 + d]) >= 0) {
+        if (b[t]) break;
+        mob++;
+        if (CORNER[t]) { routes++; break; }
+        if (EDGE[t]) edge++;
+      }
+    }
+    return { routes: routes, mob: mob, edge: edge };
+  }
+  // hist: array of [lo,hi] for every position so far including the current one.
+  function status(st, hist) {
+    if (st.kingDead) return { over: true, winner: 1, result: 'king' };
+    if (CORNER[st.king]) return { over: true, winner: -1, result: 'corner' };
+    if (st.turn === -1 && encircled(st.b)) return { over: true, winner: 1, result: 'encircle' };
+    if (hist) {
+      var n = 0;
+      for (var j = 0; j < hist.length; j++) if (hist[j][0] === st.lo && hist[j][1] === st.hi) n++;
+      if (n >= 3) return { over: true, winner: 1, result: 'repetition' };
+    }
+    if (!genMoves(st).length) return { over: true, winner: -st.turn, result: 'nomoves' };
+    return { over: false, winner: 0, result: '' };
+  }
+
+  /* ---------- evaluation (from the side to move) ---------- */
+  function evaluate(st) {
+    var b = st.b, a = 0, d = 0, s, v;
+    for (s = 0; s < NN; s++) { v = b[s]; if (v === ATT) a++; else if (v === DEF) d++; }
+    var e = a * 100 - d * 170;
+    var k = st.king, kr = (k / N) | 0, kc = k % N;
+    var cd = Math.min(kr, 10 - kr) + Math.min(kc, 10 - kc);
+    e += cd * 14;
+    var kr2 = kingRoutes(st);
+    e -= kr2.mob * 4 + kr2.edge * 25 + kr2.routes * 300;
+    if (st.turn === -1 && kr2.routes >= 1) e -= 20000;
+    else if (kr2.routes >= 2) e -= 12000;
+    var adj = 0, n;
+    for (var dd = 0; dd < 4; dd++) { n = NB[k * 4 + dd]; if (n >= 0 && (b[n] === ATT || n === THRONE)) adj++; }
+    e += adj * 45 + (adj >= 3 ? 80 : 0);
+    for (var g = 0; g < GUARD.length; g++) if (b[GUARD[g]] === ATT) e += 18;
+    return st.turn === 1 ? e : -e;
+  }
+
+  /* ---------- search ---------- */
+  var nodes = 0, deadline = 0, aborted = false, path = null, HIST = new Int32Array(NN * NN), killers = [];
+  function now() { return (typeof performance !== 'undefined' ? performance : Date).now(); }
+  function orderMoves(st, moves, ply, first) {
+    var b = st.b, att = st.turn === 1, sc = new Array(moves.length), k = st.king;
+    for (var j = 0; j < moves.length; j++) {
+      var m = moves[j], f = (m / NN) | 0, t = m % NN, s = HIST[m] >> 4;
+      if (m === first) s += 1e9;
+      if (killers[ply] && (killers[ply][0] === m || killers[ply][1] === m)) s += 5000;
+      // quick capture test
+      for (var d = 0; d < 4; d++) {
+        var n = NB[t * 4 + d];
+        if (n < 0 || n === f) continue;
+        var v = b[n];
+        if (att ? v === DEF : v === ATT) { var o = NB[n * 4 + d]; if (o !== f && anvil(b, o, att)) s += 20000; }
+        if (att && n === k) s += 300;
+      }
+      if (b[f] === KING) { if (CORNER[t]) s += 1e8; else if (EDGE[t]) s += 2000; else s += 200; }
+      sc[j] = s;
+    }
+    var idx = moves.map(function (_, j) { return j; });
+    idx.sort(function (x, y) { return sc[y] - sc[x]; });
+    return idx.map(function (j) { return moves[j]; });
+  }
+  function repeats(st) {
+    var n = 0;
+    for (var j = path.length - 1; j >= 0; j--) if (path[j][0] === st.lo && path[j][1] === st.hi) n++;
+    return n;
+  }
+  function ab(st, depth, alpha, beta, ply) {
+    nodes++;
+    if ((nodes & 1023) === 0 && deadline && now() > deadline) aborted = true;
+    if (aborted) return 0;
+    if (st.kingDead) return -(WIN - ply); // attackers just won, defenders to move
+    if (CORNER[st.king]) return -(WIN - ply); // defenders just won, attackers to move
+    if (repeats(st) >= 3) return st.turn === 1 ? WIN - ply : -(WIN - ply);
+    if (depth <= 0) return evaluate(st);
+    var moves = genMoves(st);
+    if (!moves.length) return -(WIN - ply);
+    moves = orderMoves(st, moves, ply, 0);
+    var best = -Infinity;
+    for (var j = 0; j < moves.length; j++) {
+      var u = make(st, moves[j]);
+      path.push([st.lo, st.hi]);
+      var sc = -ab(st, depth - 1, -beta, -alpha, ply + 1);
+      path.pop();
+      unmake(st, u);
+      if (aborted) return 0;
+      if (sc > best) best = sc;
+      if (sc > alpha) alpha = sc;
+      if (alpha >= beta) {
+        var m = moves[j];
+        HIST[m] += depth * depth;
+        if (!killers[ply]) killers[ply] = [0, 0];
+        if (killers[ply][0] !== m) { killers[ply][1] = killers[ply][0]; killers[ply][0] = m; }
+        break;
+      }
+    }
+    return best;
+  }
+  // opt: {depth, time (ms), noise}. hist: [[lo,hi],...] including the current position.
+  function think(st0, hist, opt) {
+    var st = clone(st0);
+    opt = opt || {};
+    var maxD = opt.depth || 2, noise = opt.noise || 0;
+    nodes = 0; aborted = false; HIST = new Int32Array(NN * NN); killers = [];
+    deadline = opt.time ? now() + opt.time : 0;
+    path = (hist || []).slice();
+    var moves = genMoves(st);
+    if (!moves.length) return -1;
+    if (moves.length === 1) return moves[0];
+    var bestMove = moves[0], scores = {};
+    for (var d = 1; d <= maxD; d++) {
+      moves = orderMoves(st, moves, 0, bestMove);
+      var alpha = -Infinity, cur = {}, curBest = moves[0], curScore = -Infinity, done = 0;
+      for (var j = 0; j < moves.length; j++) {
+        var u = make(st, moves[j]);
+        path.push([st.lo, st.hi]);
+        // Full window at the root so every move gets a comparable score (needed for noise).
+        var sc = noise ? -ab(st, d - 1, -Infinity, Infinity, 1) : -ab(st, d - 1, -Infinity, -alpha, 1);
+        path.pop();
+        unmake(st, u);
+        if (aborted) break;
+        cur[moves[j]] = sc; done++;
+        if (sc > curScore) { curScore = sc; curBest = moves[j]; }
+        if (sc > alpha) alpha = sc;
+      }
+      if (aborted && done === 0) break;
+      if (!aborted || cur[bestMove] === undefined || curScore >= cur[bestMove]) { bestMove = curBest; scores = cur; }
+      if (aborted) break;
+      if (curScore >= WIN - 50) break;
+      if (opt.time && now() > deadline - (opt.time * 0.4)) break; // next ply unlikely to finish
+    }
+    if (noise) {
+      var pick = bestMove, top = -Infinity;
+      for (var key in scores) {
+        var s = scores[key];
+        if (s < WIN - 1000 && s > -(WIN - 1000)) s += Math.random() * noise;
+        else s += s > 0 ? 1e6 : 0;
+        if (s > top) { top = s; pick = +key; }
+      }
+      bestMove = pick;
+    }
+    return bestMove;
+  }
+
+  return {
+    N: N, NN: NN, THRONE: THRONE, ATT: ATT, DEF: DEF, KING: KING, CORNER: CORNER, RESTRICT: RESTRICT, EDGE: EDGE,
+    newGame: newGame, clone: clone, fromData: fromData, genMoves: genMoves, make: make, unmake: unmake, status: status,
+    capsOf: capsOf, encircled: encircled, kingTrapped: kingTrapped, think: think, evaluate: evaluate, sqName: sqName, sq: sq,
+    lastNodes: function () { return nodes; }
+  };
+})();
+if (typeof self !== 'undefined' && typeof window === 'undefined' && typeof importScripts === 'function') {
+  self.onmessage = function (e) {
+    var d = e.data, st = HN.fromData(d.state);
+    var m = HN.think(st, d.hist, d.opt);
+    self.postMessage({ id: d.id, move: m });
+  };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = HN;
+</script>
+<script>
+var SFX = (function () {
+  var ctx = null, muted = false;
+  function getCtx() {
+    if (ctx) return ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC(); return ctx;
+  }
+  function knock(freq, len, amp) {
+    var c = getCtx(); if (!c) return;
+    var t0 = c.currentTime, o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq, t0); o.frequency.exponentialRampToValueAtTime(freq * 0.45, t0 + len);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(amp, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + len + 0.02);
+  }
+  return {
+    play: function (k) {
+      if (muted) return;
+      try {
+        if (k === 'move') knock(220, 0.12, 0.25);
+        else if (k === 'capture') { knock(330, 0.18, 0.3); setTimeout(function () { knock(140, 0.2, 0.3); }, 60); }
+        else if (k === 'win') { knock(392, 0.25, 0.25); setTimeout(function () { knock(523, 0.35, 0.25); }, 140); }
+        else if (k === 'lose') { knock(196, 0.3, 0.25); setTimeout(function () { knock(147, 0.4, 0.25); }, 160); }
+      } catch (e) { }
+    },
+    setMuted: function (m) { muted = !!m; }
+  };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var LEVELS = [
+    { name: 'Easy', depth: 1, noise: 1000, note: 'Makes mostly random moves, but grabs an immediate win. Good for learning.' },
+    { name: 'Medium', depth: 1, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
+    { name: 'Hard', depth: 2, noise: 120, note: 'Sees short tactics but still gives pieces away now and then.' },
+    { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four moves deep. Thinks for up to 1.5 seconds.' },
+    { name: 'Expert', depth: 5, noise: 0, time: 3000, note: 'Searches up to five moves deep. Thinks for up to 3 seconds per move.' }
+  ];
+  var KEY = 'hnefatafl.v1';
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = { mode: 'ai', side: 1, level: 1, sound: true };
+  var st, moves = [], texts = [], hist = [], stat = null, legal = [];
+  var sel = -1, targets = {}, flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
+  var cells = new Array(121);
+  var NN = HN.NN;
+
+  /* ---------- storage ---------- */
+  function store() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped })); } catch (e) { }
+  }
+  function restore() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY));
+      if (!o || !o.cfg) return null;
+      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p') cfg.mode = o.cfg.mode;
+      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
+      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
+      cfg.sound = o.cfg.sound !== false;
+      flipped = !!o.flipped;
+      return Array.isArray(o.moves) ? o.moves : null;
+    } catch (e) { return null; }
+  }
+
+  /* ---------- game state ---------- */
+  function push(m) {
+    var f = (m / NN) | 0, t = m % NN, p = st.b[f];
+    var u = HN.make(st, m);
+    hist.push([st.lo, st.hi]);
+    legal = HN.genMoves(st); stat = HN.status(st, hist);
+    var txt = (p === HN.KING ? 'K' : '') + HN.sqName(f) + '-' + HN.sqName(t);
+    u.caps.forEach(function (c) { txt += ' x' + HN.sqName(c); });
+    if (stat.over && stat.winner) txt += stat.result === 'corner' || stat.result === 'king' ? '#' : '';
+    moves.push(m); texts.push(txt);
+    return u;
+  }
+  function replay(list) {
+    st = HN.newGame(); moves = []; texts = []; hist = [[st.lo, st.hi]];
+    legal = HN.genMoves(st); stat = HN.status(st, hist);
+    for (var i = 0; i < list.length; i++) {
+      if (stat.over || legal.indexOf(list[i]) < 0) break;
+      push(list[i]);
+    }
+  }
+  function sideWord(s) { return s > 0 ? 'Attackers' : 'Defenders'; }
+  function humanTurn() { return cfg.mode === '2p' || st.turn === cfg.side; }
+  function botLevel(s) { return cfg.mode === 'ai' && s !== cfg.side ? cfg.level : -1; }
+  function sideName(s, cap) {
+    var l = botLevel(s), n;
+    if (l >= 0) n = LEVELS[l].name + ' bot (' + sideWord(s) + ')';
+    else n = cfg.mode === '2p' ? sideWord(s) : 'You (' + sideWord(s) + ')';
+    return n;
+  }
+
+  /* ---------- DOM ---------- */
+  function pieceEl(p) {
+    var d = document.createElement('div');
+    d.className = 'piece ' + (p === HN.ATT ? 'att' : p === HN.DEF ? 'def' : 'king');
+    if (p === HN.KING) d.innerHTML = '<svg viewBox="0 0 512 512"><use href="#crown"/></svg>';
+    return d;
+  }
+  var HOME = {};
+  (function () {
+    var g = HN.newGame();
+    for (var i = 0; i < NN; i++) if (g.b[i] === HN.ATT) HOME[i] = 1;
+  })();
+  function buildBoard() {
+    var root = $('board'); root.innerHTML = '';
+    for (var row = 0; row < 11; row++) for (var col = 0; col < 11; col++) {
+      var r = flipped ? row : 10 - row, f = flipped ? 10 - col : col, s = r * 11 + f;
+      var c = document.createElement('div');
+      c.className = 'cell' + ((r + f) % 2 ? ' alt' : '') + (HN.RESTRICT[s] ? ' res' : '') + (s === HN.THRONE ? ' throne' : '') + (HOME[s] ? ' home' : '');
+      c.setAttribute('data-sq', s);
+      if (col === 0) c.innerHTML += '<span class="coord r">' + (r + 1) + '</span>';
+      if (row === 10) c.innerHTML += '<span class="coord f">' + 'abcdefghijk'.charAt(f) + '</span>';
+      cells[s] = c; root.appendChild(c);
+    }
+    for (var i = 0; i < NN; i++) if (st.b[i]) cells[i].appendChild(pieceEl(st.b[i]));
+  }
+  function pieceIn(s) { return cells[s].querySelector('.piece:not(.dying)'); }
+  function refreshMarks() {
+    var i;
+    for (i = 0; i < NN; i++) cells[i].classList.remove('sel', 'tgt', 'kills', 'last', 'danger');
+    if (moves.length) {
+      var lm = moves[moves.length - 1];
+      cells[(lm / NN) | 0].classList.add('last'); cells[lm % NN].classList.add('last');
+    }
+    if (!st.kingDead && !stat.over) {
+      var adj = 0, k = st.king;
+      [11, 1, -11, -1].forEach(function (d, j) {
+        var n = k + d; if ((j === 1 && k % 11 === 10) || (j === 3 && k % 11 === 0) || n < 0 || n >= NN) return;
+        if (st.b[n] === HN.ATT || (n === HN.THRONE && !st.b[n])) adj++;
+      });
+      if (adj >= 3) cells[k].classList.add('danger');
+    }
+    if (sel >= 0) {
+      cells[sel].classList.add('sel');
+      for (var t in targets) { cells[t].classList.add('tgt'); if (targets[t].kills) cells[t].classList.add('kills'); }
+    }
+  }
+  function refreshPanel() {
+    var over = stat.over;
+    $('turnTok').className = st.turn > 0 ? 'att' : 'def';
+    var txt;
+    if (over) txt = stat.winner ? sideWord(stat.winner) + ' win' : 'Draw';
+    else if (cfg.mode === 'ai') txt = humanTurn() ? 'Your move (' + sideWord(st.turn) + ')' : LEVELS[cfg.level].name + ' bot is thinking';
+    else txt = sideWord(st.turn) + ' to move';
+    $('statusText').textContent = txt;
+    $('spin').hidden = !busy;
+    $('matchup').innerHTML = cfg.mode === 'ai'
+      ? 'You: ' + sideWord(cfg.side) + '<small>Computer: ' + LEVELS[cfg.level].name + ' (' + sideWord(-cfg.side) + ')</small>'
+      : 'Two players<small>Attackers move first</small>';
+    var a = 0, d = 0;
+    for (var i = 0; i < NN; i++) { if (st.b[i] === HN.ATT) a++; else if (st.b[i] === HN.DEF) d++; }
+    function caps(el, p, n, label) {
+      var h = '';
+      for (var j = 0; j < n; j++) h += '<span class="mini"><div class="piece ' + p + '"></div></span>';
+      $(el).innerHTML = (n ? h : '') + '<span style="margin-left:4px">' + label + ' lost: ' + n + '</span>';
+    }
+    caps('capA', 'att', 24 - a, 'Attackers');
+    caps('capD', 'def', 12 - d, 'Defenders');
+    var ml = $('movelist'), h = '';
+    for (var k = 0; k < texts.length; k += 2) {
+      h += '<li class="n">' + (k / 2 + 1) + '.</li><li class="mv' + (k === texts.length - 1 ? ' cur' : '') + '" title="' + texts[k] + '">' + texts[k] + '</li>' +
+        '<li class="mv' + (k + 1 === texts.length - 1 ? ' cur' : '') + '" title="' + (texts[k + 1] || '') + '">' + (texts[k + 1] || '') + '</li>';
+    }
+    ml.innerHTML = h; ml.scrollTop = ml.scrollHeight;
+    $('bUndo').disabled = moves.length === 0;
+    $('bSound').classList.toggle('off', !cfg.sound);
+  }
+  function layout() {
+    var w = window.innerWidth, h = window.innerHeight;
+    var wide = w >= 860;
+    document.body.classList.toggle('wide', wide);
+    var aw = wide ? w - 360 : w - 24, ah = h - 120;
+    var size = Math.floor(Math.min(aw, wide ? ah : Math.max(ah, 300)) / 11) - 0;
+    size = Math.max(24, Math.min(60, size));
+    document.documentElement.style.setProperty('--cell', size + 'px');
+  }
+
+  /* ---------- interaction ---------- */
+  function deselect() { sel = -1; targets = {}; }
+  function select(s) {
+    sel = s; targets = {};
+    for (var i = 0; i < legal.length; i++) {
+      var m = legal[i];
+      if (((m / NN) | 0) === s) targets[m % NN] = { m: m, kills: HN.capsOf(st, m).length > 0 };
+    }
+    var n = Object.keys(targets).length;
+    var p = st.b[s];
+    $('info').innerHTML = '<b>' + (p === HN.KING ? 'King' : p === HN.ATT ? 'Attacker' : 'Defender') + '</b> on ' + HN.sqName(s) + ': ' +
+      (n ? n + ' move' + (n === 1 ? '' : 's') + '.' : 'no moves.');
+  }
+  function onCell(s) {
+    if (stat.over || busy || !humanTurn()) return;
+    if (sel >= 0 && targets[s]) { var m = targets[s].m; deselect(); doMove(m); return; }
+    var p = st.b[s];
+    if (p && (st.turn === 1 ? p === HN.ATT : p !== HN.ATT) && s !== sel) select(s);
+    else { deselect(); $('info').textContent = 'Tap a piece to see where it can go.'; }
+    refreshMarks();
+  }
+  function animate(u) {
+    var el = pieceIn(u.f);
+    if (el) {
+      var fr = cells[u.f].getBoundingClientRect(), tr = cells[u.t].getBoundingClientRect();
+      cells[u.t].appendChild(el);
+      el.style.transition = 'none';
+      el.style.transform = 'translate(' + (fr.left - tr.left) + 'px,' + (fr.top - tr.top) + 'px)';
+      el.classList.add('moving');
+      void el.offsetWidth;
+      el.style.transition = '';
+      el.style.transform = '';
+      setTimeout(function () { el.classList.remove('moving'); }, 320);
+    }
+    u.caps.forEach(function (c) {
+      var pe = pieceIn(c);
+      if (!pe) return;
+      setTimeout(function () {
+        pe.classList.add('dying'); cells[c].classList.add('hit');
+        setTimeout(function () { if (pe.parentNode) pe.parentNode.removeChild(pe); cells[c].classList.remove('hit'); }, 320);
+      }, 220);
+    });
+  }
+  function doMove(m) {
+    var u = push(m);
+    animate(u);
+    SFX.play(u.caps.length ? 'capture' : 'move');
+    $('info').textContent = texts[texts.length - 1];
+    refreshMarks(); refreshPanel(); store();
+    if (stat.over) { setTimeout(function () { SFX.play(cfg.mode === '2p' || stat.winner === cfg.side ? 'win' : 'lose'); showOver(); }, 650); return; }
+    if (!humanTurn()) setTimeout(askAI, 330);
+  }
+
+  /* ---------- AI ---------- */
+  function getWorker() {
+    if (worker || !useWorker) return worker;
+    try {
+      var src = $('engine-src').textContent;
+      worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      worker.onmessage = onAI;
+      worker.onerror = function () { useWorker = false; worker = null; if (busy) runLocal(); };
+    } catch (e) { useWorker = false; worker = null; }
+    return worker;
+  }
+  var lastReq = null;
+  function askAI() {
+    if (stat.over || humanTurn() || busy) return;
+    busy = true; refreshPanel();
+    var L = LEVELS[cfg.level];
+    reqId++; reqAt = Date.now();
+    lastReq = { id: reqId, state: { b: Array.prototype.slice.call(st.b), turn: st.turn, king: st.king, kingDead: st.kingDead }, hist: hist.slice(), opt: { depth: L.depth, time: L.time || 0, noise: L.noise || 0 } };
+    var w = getWorker();
+    if (w) w.postMessage(lastReq); else setTimeout(runLocal, 30);
+  }
+  function runLocal() {
+    if (!lastReq) return;
+    var o = lastReq.opt, st2 = HN.fromData(lastReq.state);
+    var m = HN.think(st2, lastReq.hist, { depth: Math.min(o.depth, 3), time: Math.min(o.time || 1200, 1200), noise: o.noise });
+    onAI({ data: { id: lastReq.id, move: m } });
+  }
+  function onAI(e) {
+    var d = e.data;
+    if (!busy || d.id !== reqId) return;
+    var wait = Math.max(0, 350 - (Date.now() - reqAt));
+    setTimeout(function () {
+      if (!busy || d.id !== reqId) return;
+      busy = false;
+      if (legal.indexOf(d.move) < 0) { refreshPanel(); return; }
+      doMove(d.move);
+    }, wait);
+  }
+  function cancelAI() {
+    reqId++;
+    if (busy && worker) { worker.terminate(); worker = null; }
+    busy = false;
+  }
+
+  /* ---------- dialogs ---------- */
+  function overTitle() {
+    if (!stat.winner) return 'Draw';
+    if (cfg.mode === 'ai') return stat.winner === cfg.side ? 'You win!' : 'You lose';
+    return sideWord(stat.winner) + ' win';
+  }
+  var WHY = {
+    corner: 'The King escaped to a corner.',
+    king: 'The King was surrounded and captured.',
+    encircle: 'The Attackers surrounded the King and every Defender.',
+    repetition: 'The same position occurred a third time. Perpetual repetition is a loss for the Defenders.',
+    nomoves: 'The side to move had no legal move.'
+  };
+  function showOver() {
+    if (!stat.over) return;
+    $('overTitle').textContent = overTitle();
+    $('overText').textContent = WHY[stat.result] || '';
+    $('dlgOver').hidden = false;
+  }
+  var pend = { mode: 'ai', side: 1, level: 1 };
+  function markOpts() {
+    var set = function (id, v) {
+      var bs = $(id).children;
+      for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-v') === String(v));
+    };
+    set('optMode', pend.mode); set('optSide', pend.side); set('optLevel', pend.level);
+    $('aiOpts').style.display = pend.mode === 'ai' ? '' : 'none';
+    $('levelNote').textContent = LEVELS[pend.level].note;
+  }
+  function openNew() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    pend = { mode: cfg.mode, side: cfg.side, level: cfg.level };
+    markOpts(); $('dlgOver').hidden = true; $('dlgNew').hidden = false;
+  }
+  function startNew() {
+    cancelAI();
+    cfg.mode = pend.mode; cfg.level = pend.level;
+    cfg.side = pend.side === 0 ? (Math.random() < 0.5 ? 1 : -1) : pend.side;
+    flipped = false;
+    replay([]); deselect();
+    $('dlgNew').hidden = true; $('dlgOver').hidden = true;
+    $('info').textContent = 'Tap a piece to see where it can go.';
+    buildBoard(); refreshMarks(); refreshPanel(); store();
+    if (!humanTurn()) setTimeout(askAI, 300);
+  }
+  function undo() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    if (!moves.length) return;
+    cancelAI();
+    var list = moves.slice(0, -1);
+    if (cfg.mode === 'ai' && list.length && (list.length % 2 === 0 ? 1 : -1) !== cfg.side) list.pop();
+    replay(list); deselect();
+    $('dlgOver').hidden = true;
+    buildBoard(); refreshMarks(); refreshPanel(); store();
+    if (!stat.over && !humanTurn()) askAI();
+  }
+
+  /* ---------- wiring ---------- */
+  function init() {
+    var onceLink = false;
+    try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
+    var saved = onceLink ? null : restore();
+    replay(saved || []);
+    SFX.setMuted(!cfg.sound);
+    LEVELS.forEach(function (L, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
+      $('optLevel').appendChild(b);
+    });
+    layout(); buildBoard(); refreshMarks(); refreshPanel();
+    $('board').addEventListener('click', function (e) {
+      var c = e.target.closest ? e.target.closest('.cell') : null;
+      if (c) onCell(+c.getAttribute('data-sq'));
+    });
+    ['optMode', 'optSide', 'optLevel'].forEach(function (id) {
+      $(id).addEventListener('click', function (e) {
+        var v = e.target.getAttribute && e.target.getAttribute('data-v');
+        if (v === null || v === undefined) return;
+        if (id === 'optMode') pend.mode = v; else if (id === 'optSide') pend.side = +v; else pend.level = +v;
+        markOpts();
+      });
+    });
+    $('bNew').onclick = openNew;
+    $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
+    $('newStart').onclick = startNew;
+    $('bUndo').onclick = undo;
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoard(); refreshMarks(); store(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
+    $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
+    $('overClose').onclick = function () { $('dlgOver').hidden = true; };
+    $('overNew').onclick = openNew;
+    var mods = document.querySelectorAll('.modal');
+    for (var i = 0; i < mods.length; i++) mods[i].addEventListener('click', function (e) { if (e.target === this && this.id !== 'dlgNew') this.hidden = true; });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { $('dlgGuide').hidden = true; $('dlgOver').hidden = true; if (moves.length) $('dlgNew').hidden = true; deselect(); refreshMarks(); }
+    });
+    window.addEventListener('resize', layout);
+    window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+    if (onceLink) { /* VaultOnce boots the pinned AI game through HnefataflUI.startOnce. */ }
+    else if (!saved) openNew();
+    else if (stat.over) showOver();
+    else if (!humanTurn()) askAI();
+  }
+  window.HnefataflUI = {
+    startOnce: function (opts) {
+      opts = opts || {};
+      var level = opts.level;
+      if (!(level >= 0 && level < LEVELS.length)) level = 1;
+      var s = opts.side === -1 || opts.side === 'defenders' || opts.side === 'scarlet' ? -1 : 1;
+      pend = { mode: 'ai', side: s, level: level };
+      startNew();
+    },
+    result: function () {
+      if (!stat || !stat.over) return { over: false };
+      var draw = !stat.winner, success = !draw && stat.winner === cfg.side;
+      var summary = (success ? 'You won. ' : draw ? 'Draw. ' : 'You lost. ') + (WHY[stat.result] || '');
+      return { over: true, success: success, draw: draw, summary: summary, result: stat.result, winner: stat.winner };
+    },
+    isOver: function () { return !!(stat && stat.over); },
+    // test hooks
+    _state: function () { return { st: st, moves: moves.slice(), texts: texts.slice(), stat: stat, legal: legal.slice(), cfg: cfg, busy: busy }; },
+    _load: function (list) { cancelAI(); replay(list); deselect(); buildBoard(); refreshMarks(); refreshPanel(); }
+  };
+  init();
+})();
+</script>
+</body>
+</html>
