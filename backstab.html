@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--vault-version--><script>(function(){var V="5211869ddd";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=5211869ddd"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="theme-color" content="#0d1322">
+<title>Backstab</title>
+<style>
+:root{--cell:44px;--gold:#f2c14e;--ink:#e9e4d6;--dim:#9aa3b8;--bg:#0d1322;--card:#182033;--line:#2b3654}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 700px at 50% -10%,#24345c 0%,#111a30 45%,#080c17 100%) fixed #0d1322;color:var(--ink);
+  font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none}
+button{font:inherit;color:var(--ink);background:#222d49;border:1px solid #3a4870;border-radius:8px;padding:7px 12px;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .05s}
+button:hover{background:#2c3a5e;border-color:#5669a0}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:linear-gradient(#f6d27a,#d59a25);color:#2b1c00;border-color:#8a6210;font-weight:700}
+button.primary:hover{background:linear-gradient(#ffe096,#e0a52c)}
+button.ghost{background:transparent}
+button.on{background:#3b4d82;border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+button.off{opacity:.55}
+
+#top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px;padding-top:max(6px,env(safe-area-inset-top));
+  background:rgba(8,12,23,.72);border-bottom:1px solid var(--line);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#top h1{margin:0;font:700 20px/1 Georgia,"Palatino Linotype","Times New Roman",serif;letter-spacing:.14em;text-transform:uppercase;
+  background:linear-gradient(#ffe7a3,#d59a25);-webkit-background-clip:text;background-clip:text;color:transparent}
+#top nav{display:flex;gap:6px}
+#top nav button{padding:6px 10px;font-size:13px}
+
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
+body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#play{display:flex;flex-direction:column;align-items:center;min-width:0}
+#status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
+#turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
+#turnTok.g0{background:radial-gradient(circle at 35% 30%,#fff3c4,#e2ac35 60%,#8a5a0c)}
+#turnTok.g1{background:radial-gradient(circle at 35% 30%,#ff9a8a,#b3261e 60%,#4a0b08)}
+#spin{width:14px;height:14px;border-radius:50%;border:2px solid #56648c;border-top-color:var(--gold);animation:spin .8s linear infinite}
+#spin[hidden]{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+#info{height:20px;max-width:calc(var(--cell)*5 + 8px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+#info b{color:var(--ink)}
+
+
+.board{display:grid;grid-template-columns:repeat(5,var(--cell));grid-auto-rows:var(--cell);border:5px solid #2a2f3d;border-radius:8px;position:relative;
+  box-shadow:0 0 0 1px #0b0d14,0 8px 26px rgba(0,0,0,.55);background:#1b1f2a}
+.cell{position:relative;width:var(--cell);height:var(--cell);background:#6d7487;box-shadow:inset 0 0 0 1px rgba(10,12,20,.35)}
+.cell.alt{background:#5a6074}
+.cell.home0{background:#7d7259}.cell.home0.alt{background:#6b6049}
+.cell.home1{background:#7a5c63}.cell.home1.alt{background:#684a51}
+.coord{position:absolute;font:700 calc(var(--cell)*.14)/1 system-ui,sans-serif;opacity:.65;pointer-events:none;color:#11131b;z-index:1}
+.coord.f{right:3px;bottom:2px}.coord.r{left:3px;top:2px}
+
+.piece{position:absolute;left:14%;top:14%;width:72%;height:72%;border-radius:50%;z-index:2;cursor:pointer;
+  transition:transform .28s cubic-bezier(.2,.8,.25,1),opacity .25s;will-change:transform}
+.piece .ico{position:absolute;left:20%;top:20%;width:60%;height:60%;display:block;pointer-events:none}
+.piece.c0{background:radial-gradient(circle at 35% 28%,#fff6d2 0%,#efc256 45%,#9a6510 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.035) #4d3204,0 calc(var(--cell)*.05) calc(var(--cell)*.08) rgba(0,0,0,.55),inset 0 -2px 3px rgba(80,40,0,.4)}
+.piece.c0 .ico{fill:#3d2600}
+.piece.c1{background:radial-gradient(circle at 35% 28%,#ffb3a6 0%,#c8352a 45%,#5a0d09 100%);
+  box-shadow:0 0 0 calc(var(--cell)*.035) #2d0402,0 calc(var(--cell)*.05) calc(var(--cell)*.08) rgba(0,0,0,.55),inset 0 -2px 3px rgba(40,0,0,.45)}
+.piece.c1 .ico{fill:#fff0e8}
+.piece.host{border-radius:30%}
+.piece.host.cap0{box-shadow:0 0 0 calc(var(--cell)*.05) #f2c14e,0 0 0 calc(var(--cell)*.08) #2a1a00,0 calc(var(--cell)*.05) calc(var(--cell)*.08) rgba(0,0,0,.55)}
+.piece.host.cap1{box-shadow:0 0 0 calc(var(--cell)*.05) #d1392c,0 0 0 calc(var(--cell)*.08) #2a0503,0 calc(var(--cell)*.05) calc(var(--cell)*.08) rgba(0,0,0,.55)}
+.piece .dir{position:absolute;inset:-18%;pointer-events:none;transition:transform .25s cubic-bezier(.2,.8,.25,1)}
+.piece .dir::before{content:"";position:absolute;left:50%;top:0;transform:translateX(-50%);width:0;height:0;
+  border-left:calc(var(--cell)*.09) solid transparent;border-right:calc(var(--cell)*.09) solid transparent;border-bottom:calc(var(--cell)*.13) solid #fff;
+  filter:drop-shadow(0 0 1px #000) drop-shadow(0 1px 1px rgba(0,0,0,.8))}
+.piece.c0 .dir::before{border-bottom-color:#ffe08a}
+.piece.c1 .dir::before{border-bottom-color:#ff7a6a}
+.piece .chain{position:absolute;right:-12%;top:-12%;width:42%;height:42%;border-radius:50%;background:#1d2233;border:1px solid #9aa3b8;display:none;pointer-events:none}
+.piece .chain svg{position:absolute;left:12%;top:12%;width:76%;height:76%;fill:#d8dde9}
+.piece.held .chain{display:block}
+.piece.held::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:repeating-linear-gradient(45deg,rgba(20,24,36,.55) 0 3px,transparent 3px 7px)}
+.piece.moving{z-index:60}
+.piece.dying{animation:die .3s forwards;z-index:3}
+@keyframes die{30%{filter:brightness(2.2);transform:scale(1.15)}100%{opacity:0;transform:scale(.25) rotate(25deg)}}
+.cell.hit{box-shadow:inset 0 0 0 100px rgba(255,60,40,.45)}
+.cell.last{box-shadow:inset 0 0 0 100px rgba(255,235,90,.33)}
+.cell.sel{box-shadow:inset 0 0 0 100px rgba(80,220,140,.5)}
+.cell.tgt{cursor:pointer}
+.cell.tgt::before{content:"";position:absolute;left:39%;top:39%;width:22%;height:22%;border-radius:50%;z-index:4;pointer-events:none;
+  background:#27e08a;box-shadow:0 0 0 2px rgba(0,40,20,.75),0 0 8px #27e08a}
+.cell.tgt.kills::before{left:30%;top:30%;width:40%;height:40%;background:rgba(255,154,31,.35);border:3px solid #ff9a1f;box-shadow:0 0 10px #ff6a00}
+.cell.tgt.win::before{left:28%;top:28%;width:44%;height:44%;background:rgba(80,255,170,.3);border:3px solid #3dffa8;box-shadow:0 0 12px #3dffa8}
+.turnbtn{position:absolute;width:calc(var(--cell)*.27);height:calc(var(--cell)*.27);margin:calc(var(--cell)*-.135) 0 0 calc(var(--cell)*-.135);border-radius:50%;
+  z-index:8;background:rgba(20,26,44,.92);border:1.5px solid #8fe8b8;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.turnbtn:hover{background:#2f6b4c}
+.turnbtn i{position:absolute;inset:0;pointer-events:none}
+.turnbtn i::before{content:"";position:absolute;left:50%;top:18%;transform:translateX(-50%);width:0;height:0;
+  border-left:calc(var(--cell)*.055) solid transparent;border-right:calc(var(--cell)*.055) solid transparent;border-bottom:calc(var(--cell)*.11) solid #8fe8b8}
+
+#panel{width:100%;max-width:calc(var(--cell)*5 + 10px);min-width:min(100%,320px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
+body.wide #panel{width:320px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+#matchup{font-weight:600}
+#matchup small{display:block;color:var(--dim);font-weight:400}
+.caps{display:flex;flex-wrap:wrap;gap:3px;min-height:24px;align-items:center;font-size:12.5px;color:var(--dim)}
+.caps .mini{position:relative;width:22px;height:22px;--cell:22px}
+.caps .mini .piece{cursor:default;left:5%;top:5%;width:90%;height:90%}
+.caps .mini .dir,.caps .mini .chain{display:none}
+#rules{margin:0;padding-left:16px;font-size:12.5px;color:#cfd6e6;-webkit-user-select:text;user-select:text}
+#rules li{margin:2px 0}
+#movelist{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:2.2em 1fr 1fr;gap:2px 6px;font:12.5px/1.5 ui-monospace,Consolas,Menlo,monospace;
+  max-height:220px;overflow:auto;align-content:start;grid-auto-rows:min-content;-webkit-user-select:text;user-select:text}
+body.wide #movelist{max-height:none;flex:1;min-height:80px}
+#movelist .n{color:var(--dim);text-align:right}
+#movelist .mv{padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#movelist .mv.cur{background:#35446f;color:#fff}
+#hostInfo .caps{flex-wrap:nowrap;margin:2px 0}#hostInfo .caps .mini{flex:none}
+#info{max-width:none;width:calc(var(--cell)*5 + 10px)}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(4,7,14,.72);display:flex;align-items:center;justify-content:center;padding:14px;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fade .18s}
+.modal[hidden]{display:none}
+@keyframes fade{from{opacity:0}}
+.card{background:linear-gradient(#1d2740,#151c2f);border:1px solid #3a4870;border-radius:14px;padding:18px;width:100%;max-width:420px;max-height:100%;overflow:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card.wide{max-width:640px}
+.card.center{text-align:center}
+.card h2{margin:0 0 10px;font:700 20px/1.2 Georgia,serif;letter-spacing:.06em;color:var(--gold)}
+.card h3{margin:14px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row>button{flex:1 1 auto}
+.row.end{justify-content:flex-end;margin-top:18px}
+.row.end>button{flex:0 0 auto;min-width:110px}
+.row.between{justify-content:space-between;align-items:center}
+.row.between>button{flex:0 0 auto}
+.note{color:var(--dim);font-size:13px;margin:8px 0 0;min-height:36px}
+#optLevel>button{flex:1 1 28%}
+#guideBody{-webkit-user-select:text;user-select:text}
+#guideBody p,#guideBody li{color:#cfd6e6;font-size:14px}
+#guideBody ul{padding-left:18px;margin:6px 0}
+.credits{font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+@media (max-width:480px){#top{padding-left:8px;padding-right:8px}#top h1{font-size:14px;letter-spacing:.05em}#top nav{gap:3px}#top nav button{padding:6px 5px;font-size:11.5px}}
+@media (prefers-reduced-motion:reduce){.piece{transition:none}.cell.danger{animation:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-fighter" viewBox="0 0 24 24"><path d="M12 2.5l7.5 2.8v6.1c0 4.6-3.1 8.3-7.5 10.1-4.4-1.8-7.5-5.5-7.5-10.1V5.3z"/></symbol>
+<symbol id="i-rogue" viewBox="0 0 24 24"><path d="M12 1.5l2.2 12.3H9.8z M6.5 14.2h11v2.3h-11z M10.8 16.5h2.4v4.3h-2.4z M12 20.2a1.7 1.7 0 1 1 0 3.3 1.7 1.7 0 1 1 0-3.3z"/></symbol>
+<symbol id="i-barb" viewBox="0 0 24 24"><path d="M10.9 2h2.2v20.5h-2.2z M13.4 3.5c5 .3 8.1 3.3 8.1 7.2 0 1.9-.8 3.2-1.9 3.9-1.4-1.8-3.4-2.6-6.2-2.6z M10.6 3.5c-5 .3-8.1 3.3-8.1 7.2 0 1.9.8 3.2 1.9 3.9 1.4-1.8 3.4-2.6 6.2-2.6z"/></symbol>
+<symbol id="i-host" viewBox="0 0 24 24"><path d="M12 2.5a4 4 0 1 1 0 8 4 4 0 1 1 0-8z M4.5 21.5v-3.2c0-3.6 3.4-6.3 7.5-6.3s7.5 2.7 7.5 6.3v3.2z"/></symbol>
+<symbol id="i-chain" viewBox="0 0 24 24"><path d="M9.2 7.1l1.6-1.6a4.6 4.6 0 0 1 6.5 0l1.2 1.2a4.6 4.6 0 0 1 0 6.5l-1.6 1.6-1.9-1.9 1.6-1.6a1.9 1.9 0 0 0 0-2.7l-1.2-1.2a1.9 1.9 0 0 0-2.7 0L11.1 9z M14.8 16.9l-1.6 1.6a4.6 4.6 0 0 1-6.5 0l-1.2-1.2a4.6 4.6 0 0 1 0-6.5l1.6-1.6 1.9 1.9-1.6 1.6a1.9 1.9 0 0 0 0 2.7l1.2 1.2a1.9 1.9 0 0 0 2.7 0l1.6-1.6z M8.6 13.5l4.9-4.9 1.9 1.9-4.9 4.9z"/></symbol>
+</defs></svg>
+<div id="app">
+  <header id="top">
+    <h1>Backstab</h1>
+    <nav>
+      <button id="bNew" type="button">New</button>
+      <button id="bUndo" type="button">Undo</button>
+      <button id="bFlip" type="button">Flip</button>
+      <button id="bSound" type="button">Sound</button>
+      <button id="bGuide" type="button">Rules</button>
+    </nav>
+  </header>
+  <main id="main">
+    <section id="play">
+      <div id="status"><span id="turnTok"></span><span id="statusText"></span><span id="spin" hidden></span></div>
+      <div id="info">Tap a piece to see its moves and turns.</div>
+      <div id="board" class="board"></div>
+    </section>
+    <aside id="panel">
+      <div id="matchup"></div>
+      <h2>Hostages</h2>
+      <div id="hostInfo"></div>
+      <h2>Captured</h2>
+      <div id="cap0" class="caps"></div>
+      <div id="cap1" class="caps"></div>
+      <h2>Rules</h2>
+      <ul id="rules">
+        <li>Every piece faces one of 8 directions (the pointer). An action is a <b>move</b> or a <b>turn</b>.</li>
+        <li><b>Fighters</b> and <b>Barbarians</b> step 1 square forward and capture whatever enemy is there.</li>
+        <li><b>Rogues</b> slide any distance forward, but capture only from behind: moving the same way the target faces.</li>
+        <li><b>Barbarians</b> grapple enemies beside or behind them: a grappled piece can't act.</li>
+        <li>You move the <b>hostage</b> in the enemy's back row (your colour). Win by walking it home to your back row, or by capturing it with one of your own pieces (a rescue).</li>
+      </ul>
+      <h2>Moves</h2>
+      <ol id="movelist"></ol>
+    </aside>
+  </main>
+  <p style="text-align:center;margin:10px 0 0"><a href="index.html" style="font-size:12px;color:#a09d96;text-decoration:underline">Back to the Puzzle Vault</a></p>
+</div>
+
+<div id="dlgNew" class="modal" hidden>
+  <div class="card">
+    <h2>New game</h2>
+    <div class="row" id="optMode">
+      <button type="button" data-v="ai">vs Computer</button>
+      <button type="button" data-v="2p">Two players</button>
+    </div>
+    <div id="aiOpts">
+      <div id="sideOpts">
+      <h3>Play as</h3>
+      <div class="row" id="optSide">
+        <button type="button" data-v="1">Gold (first)</button>
+        <button type="button" data-v="-1">Scarlet</button>
+        <button type="button" data-v="0">Random</button>
+      </div>
+      </div>
+      <h3>Difficulty</h3>
+      <div class="row" id="optLevel"></div>
+      <p id="levelNote" class="note"></p>
+    </div>
+    <div class="row end">
+      <button type="button" id="newCancel" class="ghost">Cancel</button>
+      <button type="button" id="newStart" class="primary">Start</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgOver" class="modal" hidden>
+  <div class="card center">
+    <h2 id="overTitle"></h2>
+    <p id="overText"></p>
+    <div class="row end">
+      <button type="button" id="overClose" class="ghost">View board</button>
+      <button type="button" id="overNew" class="primary">New game</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgGuide" class="modal" hidden>
+  <div class="card wide">
+    <div class="row between"><h2>How to play</h2><button type="button" id="guideClose" class="ghost">Close</button></div>
+    <div id="guideBody">
+      <p>Backstab is a small tactics game on a 5 by 5 board. Each player has two rows: five <b>Fighters</b> in front and, behind them, <b>Rogue, Barbarian, Hostage, Barbarian, Rogue</b>. Gold moves first.</p>
+      <ul>
+        <li><b>Facing.</b> Every piece except the Hostage faces one of 8 directions (straight or diagonal), shown by its pointer. Everything starts facing the enemy.</li>
+        <li><b>Your turn.</b> Do one action with one piece: <b>move</b> it, or <b>turn</b> it to face any other direction (turning uses the whole turn). Moving never changes facing.</li>
+        <li><b>Fighters</b> move one square in the direction they face. If an enemy is on that square, it is captured, whichever way the enemy faces.</li>
+        <li><b>Rogues</b> slide any number of empty squares in the direction they face, like a queen limited to one line. A Rogue can capture only by a <b>backstab</b>: it may end its slide on an enemy only when it is moving the same way that enemy faces, so it arrives from directly behind. Any other piece in the way just blocks it.</li>
+        <li><b>Barbarians</b> move and capture like Fighters. They also <b>grapple</b>: an enemy piece with a Barbarian on any adjacent square except its front three (straight ahead and the two forward diagonals) can't move, turn or capture. Grappled pieces show a chain and hatching. A grappled piece can still be captured.</li>
+        <li><b>Hostages.</b> The middle of each back row holds the <i>enemy's</i> hostage. It is drawn in its controller's colour, ringed in its captors' colour. You move the hostage sitting in your opponent's back row: one square in any of 8 directions, onto an empty square only. It never captures, and moving it is your whole turn.</li>
+        <li><b>Held hostages.</b> A hostage can't move while any enemy (captor) Barbarian is next to it. At the start both captor Barbarians stand beside it, so both must leave or be captured first.</li>
+        <li><b>Winning.</b> You win when your hostage reaches your own back row (the far side from where it started), or when one of your pieces captures your hostage, which rescues it. A Rogue may rescue from any direction, since a hostage has no facing. Captors can't capture the hostage; it just blocks them.</li>
+        <li><b>Other endings.</b> A player with no legal action loses. The game is a draw if the same position occurs three times, or after 200 actions without a winner.</li>
+        <li>Tap one of your pieces: green dots are moves, orange rings are captures, a bright green ring wins the game. The small arrows around the piece turn it.</li>
+        <li>Notation: files a to e from the left, ranks 1 to 5 from Gold's side. F Fighter, R Rogue, B Barbarian, H Hostage. "x" is a capture and "&gt;NE" a turn.</li>
+      </ul>
+      <p class="credits">Backstab is an original game designed for the Puzzle Vault.</p>
+    </div>
+  </div>
+</div>
+
+<script id="engine-src">
+/* Backstab 5x5 rules engine and AI. Runs in the page and in a Web Worker. */
+var BS = (function () {
+  'use strict';
+  var N = 5, NN = 25, WIN = 100000, TURN0 = 1000;
+  var FIGHTER = 0, ROGUE = 1, BARB = 2, HOST = 3;
+  var DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  var DR = [1, 1, 0, -1, -1, -1, 0, 1], DC = [0, 1, 1, 1, 0, -1, -1, -1];
+  var STEP = new Int8Array(NN * 8), i, k;
+  for (i = 0; i < NN; i++) for (k = 0; k < 8; k++) {
+    var r = ((i / N) | 0) + DR[k], c = (i % N) + DC[k];
+    STEP[i * 8 + k] = (r >= 0 && r < N && c >= 0 && c < N) ? r * N + c : -1;
+  }
+  function enc(type, color, face) { return 1 + ((type << 4) | (color << 3) | face); }
+  function typeOf(v) { return (v - 1) >> 4; }
+  function colorOf(v) { return ((v - 1) >> 3) & 1; }
+  function faceOf(v) { return (v - 1) & 7; }
+  function colorOfTurn(t) { return t === 1 ? 0 : 1; }
+  function goalRank(color) { return color === 0 ? 0 : N - 1; } // a hostage of colour c escapes to c's own back row
+  var VAL = [100, 230, 160, 0];
+
+  var seed = 0x1B873593;
+  function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed | 0; }
+  var ZL = new Int32Array(65 * NN), ZH = new Int32Array(65 * NN);
+  for (i = 0; i < 65 * NN; i++) { ZL[i] = rnd(); ZH[i] = rnd(); }
+  var ZTL = rnd(), ZTH = rnd();
+
+  function sq(rank, file) { return rank * N + file; }
+  function sqName(s) { return 'abcde'.charAt(s % N) + (((s / N) | 0) + 1); }
+  function rehash(st) {
+    var lo = 0, hi = 0, b = st.b;
+    for (var s = 0; s < NN; s++) if (b[s]) { lo ^= ZL[b[s] * NN + s]; hi ^= ZH[b[s] * NN + s]; }
+    if (st.turn < 0) { lo ^= ZTL; hi ^= ZTH; }
+    st.lo = lo; st.hi = hi; return st;
+  }
+  function newGame() {
+    var b = new Int8Array(NN), f;
+    var back = [ROGUE, BARB, HOST, BARB, ROGUE];
+    for (f = 0; f < N; f++) {
+      // Gold (colour 0) on ranks 1-2 facing N; its back row holds Scarlet's hostage (colour 1).
+      b[sq(0, f)] = back[f] === HOST ? enc(HOST, 1, 0) : enc(back[f], 0, 0);
+      b[sq(1, f)] = enc(FIGHTER, 0, 0);
+      b[sq(4, f)] = back[f] === HOST ? enc(HOST, 0, 0) : enc(back[f], 1, 4);
+      b[sq(3, f)] = enc(FIGHTER, 1, 4);
+    }
+    return rehash({ b: b, turn: 1, winner: 0, how: '', ply: 0, lo: 0, hi: 0 });
+  }
+  function clone(st) { return { b: new Int8Array(st.b), turn: st.turn, winner: st.winner, how: st.how, ply: st.ply, lo: st.lo, hi: st.hi }; }
+  function fromData(d) { return rehash({ b: new Int8Array(d.b), turn: d.turn, winner: d.winner || 0, how: d.how || '', ply: d.ply || 0, lo: 0, hi: 0 }); }
+  function toData(st) { return { b: Array.prototype.slice.call(st.b), turn: st.turn, winner: st.winner, how: st.how, ply: st.ply }; }
+
+  // Is the piece on s held by an enemy Barbarian on its rear or flank? (Hostages: any adjacent enemy Barbarian.)
+  function grappledBy(b, s) {
+    var v = b[s], out = [];
+    if (!v) return out;
+    var c = colorOf(v), t = typeOf(v), f = faceOf(v);
+    for (var d = 0; d < 8; d++) {
+      var n = STEP[s * 8 + d]; if (n < 0) continue;
+      var w = b[n];
+      if (!w || typeOf(w) !== BARB || colorOf(w) === c) continue;
+      if (t !== HOST) { var df = (d - f + 8) & 7; if (df === 0 || df === 1 || df === 7) continue; }
+      out.push(n);
+    }
+    return out;
+  }
+  function grappled(b, s) { return grappledBy(b, s).length > 0; }
+  // Can a piece of `color` moving in direction `dir` take the piece w it runs into?
+  function canTake(w, color, dir, rogue) {
+    if (typeOf(w) === HOST) return colorOf(w) === color; // only the hostage's own side can rescue it
+    if (colorOf(w) === color) return false;
+    return rogue ? faceOf(w) === dir : true;
+  }
+  function genMoves(st, out, capsOnly) {
+    out = out || [];
+    if (st.winner) return out;
+    var b = st.b, color = colorOfTurn(st.turn), s, v, t, f, n, w, d;
+    for (s = 0; s < NN; s++) {
+      v = b[s]; if (!v || colorOf(v) !== color) continue;
+      if (grappled(b, s)) continue;
+      t = typeOf(v);
+      if (t === HOST) {
+        for (d = 0; d < 8; d++) {
+          n = STEP[s * 8 + d];
+          if (n < 0 || b[n]) continue;
+          if (capsOnly && ((n / N) | 0) !== goalRank(color)) continue;
+          out.push(s * NN + n);
+        }
+        continue;
+      }
+      f = faceOf(v);
+      if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f) out.push(TURN0 + s * 8 + d);
+      n = STEP[s * 8 + f];
+      if (t === ROGUE) {
+        while (n >= 0) {
+          w = b[n];
+          if (!w) { if (!capsOnly) out.push(s * NN + n); n = STEP[n * 8 + f]; continue; }
+          if (canTake(w, color, f, true)) out.push(s * NN + n);
+          break;
+        }
+      } else if (n >= 0) {
+        w = b[n];
+        if (!w) { if (!capsOnly) out.push(s * NN + n); }
+        else if (canTake(w, color, f, false)) out.push(s * NN + n);
+      }
+    }
+    return out;
+  }
+  function isTurn(m) { return m >= TURN0; }
+  function setSq(st, s, v) {
+    var o = st.b[s];
+    if (o) { st.lo ^= ZL[o * NN + s]; st.hi ^= ZH[o * NN + s]; }
+    st.b[s] = v;
+    if (v) { st.lo ^= ZL[v * NN + s]; st.hi ^= ZH[v * NN + s]; }
+  }
+  // Applies an action. Returns undo info.
+  function make(st, m) {
+    var u = { m: m, f: -1, t: -1, p: 0, cap: 0, winner: st.winner, how: st.how };
+    if (m >= TURN0) {
+      var s = (m - TURN0) >> 3, d = (m - TURN0) & 7, v = st.b[s];
+      u.f = u.t = s; u.p = v;
+      setSq(st, s, enc(typeOf(v), colorOf(v), d));
+    } else {
+      var f = (m / NN) | 0, t = m % NN, p = st.b[f], cap = st.b[t];
+      u.f = f; u.t = t; u.p = p; u.cap = cap;
+      setSq(st, f, 0); setSq(st, t, p);
+      if (cap && typeOf(cap) === HOST) { st.winner = st.turn; st.how = 'rescue'; }
+      else if (typeOf(p) === HOST && ((t / N) | 0) === goalRank(colorOf(p))) { st.winner = st.turn; st.how = 'escape'; }
+    }
+    st.turn = -st.turn; st.lo ^= ZTL; st.hi ^= ZTH; st.ply++;
+    return u;
+  }
+  function unmake(st, u) {
+    st.turn = -st.turn; st.lo ^= ZTL; st.hi ^= ZTH; st.ply--;
+    if (u.m >= TURN0) setSq(st, u.f, u.p);
+    else { setSq(st, u.t, u.cap); setSq(st, u.f, u.p); }
+    st.winner = u.winner; st.how = u.how;
+  }
+  var MAXPLY = 200;
+  function status(st, hist) {
+    if (st.winner) return { over: true, winner: st.winner, result: st.how };
+    if (hist) {
+      var n = 0;
+      for (var j = 0; j < hist.length; j++) if (hist[j][0] === st.lo && hist[j][1] === st.hi) n++;
+      if (n >= 3) return { over: true, winner: 0, result: 'repetition' };
+    }
+    if (st.ply >= MAXPLY) return { over: true, winner: 0, result: 'maxply' };
+    if (!genMoves(st).length) return { over: true, winner: -st.turn, result: 'nomoves' };
+    return { over: false, winner: 0, result: '' };
+  }
+
+  /* ---------- evaluation (from the side to move) ---------- */
+  function cheb(a, b2) { return Math.max(Math.abs(((a / N) | 0) - ((b2 / N) | 0)), Math.abs(a % N - b2 % N)); }
+  function evaluate(st) {
+    var b = st.b, e = 0, s, v, sg, t, c, host = [-1, -1];
+    for (s = 0; s < NN; s++) {
+      v = b[s]; if (!v) continue;
+      t = typeOf(v); c = colorOf(v); sg = c === 0 ? 1 : -1;
+      if (t === HOST) { host[c] = s; continue; }
+      e += sg * VAL[t];
+      if (grappled(b, s)) e -= sg * 25;
+      // exposed back: an enemy right behind us is dangerous
+      var f = faceOf(v), bk = STEP[s * 8 + ((f + 4) & 7)];
+      if (bk >= 0 && b[bk] && colorOf(b[bk]) !== c && typeOf(b[bk]) !== HOST) e -= sg * 20;
+    }
+    for (c = 0; c < 2; c++) {
+      s = host[c]; if (s < 0) continue;
+      sg = c === 0 ? 1 : -1;
+      var dist = Math.abs(((s / N) | 0) - goalRank(c));
+      e += sg * (4 - dist) * 45;
+      if (dist === 1) e += sg * 60;
+      if (grappled(b, s)) e -= sg * 30;
+      var best = 9;
+      for (var x = 0; x < NN; x++) { v = b[x]; if (v && colorOf(v) === c && typeOf(v) !== HOST) { var dd = cheb(x, s); if (dd < best) best = dd; } }
+      e -= sg * best * 14;
+      // guards: enemy pieces next to the hostage block rescues and escapes
+      for (var d = 0; d < 8; d++) { var n = STEP[s * 8 + d]; if (n >= 0 && b[n] && colorOf(b[n]) !== c && typeOf(b[n]) !== HOST) e -= sg * 8; }
+    }
+    return st.turn === 1 ? e : -e;
+  }
+
+  /* ---------- search ---------- */
+  var nodes = 0, deadline = 0, aborted = false, path = null, HISTH = new Int32Array(TURN0 + NN * 8), killers = [];
+  function now() { return (typeof performance !== 'undefined' ? performance : Date).now(); }
+  function moveScore(st, m) {
+    if (m >= TURN0) return 0;
+    var b = st.b, f = (m / NN) | 0, t = m % NN, w = b[t], p = b[f];
+    if (w) return typeOf(w) === HOST ? 1e8 : 100000 + VAL[typeOf(w)] * 10 - VAL[typeOf(p)];
+    if (typeOf(p) === HOST) return ((t / N) | 0) === goalRank(colorOf(p)) ? 1e8 : 3000;
+    return 1000;
+  }
+  function orderMoves(st, moves, ply, first) {
+    var sc = new Array(moves.length), j;
+    for (j = 0; j < moves.length; j++) {
+      var m = moves[j], s = moveScore(st, m) + (HISTH[m] >> 2);
+      if (m === first) s += 1e9;
+      if (killers[ply] && (killers[ply][0] === m || killers[ply][1] === m)) s += 50000;
+      sc[j] = s;
+    }
+    var idx = moves.map(function (_, j2) { return j2; });
+    idx.sort(function (x, y) { return sc[y] - sc[x]; });
+    return idx.map(function (j2) { return moves[j2]; });
+  }
+  function repeats(st) {
+    var n = 0;
+    for (var j = path.length - 1; j >= 0; j--) if (path[j][0] === st.lo && path[j][1] === st.hi) n++;
+    return n;
+  }
+  function qs(st, alpha, beta, ply, qd) {
+    nodes++;
+    if (st.winner) return -(WIN - ply);
+    var stand = evaluate(st);
+    if (qd <= 0) return stand;
+    if (stand >= beta) return stand;
+    if (stand > alpha) alpha = stand;
+    var moves = orderMoves(st, genMoves(st, [], true), ply, 0);
+    for (var j = 0; j < moves.length; j++) {
+      var u = make(st, moves[j]);
+      var sc = -qs(st, -beta, -alpha, ply + 1, qd - 1);
+      unmake(st, u);
+      if (sc > stand) stand = sc;
+      if (sc > alpha) alpha = sc;
+      if (alpha >= beta) break;
+    }
+    return stand;
+  }
+  function ab(st, depth, alpha, beta, ply) {
+    nodes++;
+    if ((nodes & 1023) === 0 && deadline && now() > deadline) aborted = true;
+    if (aborted) return 0;
+    if (st.winner) return -(WIN - ply); // the side that just moved won
+    if (repeats(st) >= 2) return 0;
+    if (st.ply >= MAXPLY) return 0;
+    if (depth <= 0) return qs(st, alpha, beta, ply, 4);
+    var moves = genMoves(st);
+    if (!moves.length) return -(WIN - ply);
+    moves = orderMoves(st, moves, ply, 0);
+    var best = -Infinity;
+    for (var j = 0; j < moves.length; j++) {
+      var u = make(st, moves[j]);
+      path.push([st.lo, st.hi]);
+      var sc = -ab(st, depth - 1, -beta, -alpha, ply + 1);
+      path.pop();
+      unmake(st, u);
+      if (aborted) return 0;
+      if (sc > best) best = sc;
+      if (sc > alpha) alpha = sc;
+      if (alpha >= beta) {
+        var m = moves[j];
+        if (moveScore(st, m) < 3000) {
+          HISTH[m] += depth * depth;
+          if (!killers[ply]) killers[ply] = [0, 0];
+          if (killers[ply][0] !== m) { killers[ply][1] = killers[ply][0]; killers[ply][0] = m; }
+        }
+        break;
+      }
+    }
+    return best;
+  }
+  // opt: {depth, time (ms), noise}. hist: [[lo,hi],...] including the current position.
+  function think(st0, hist, opt) {
+    var st = clone(st0);
+    opt = opt || {};
+    var maxD = opt.depth || 2, noise = opt.noise || 0;
+    nodes = 0; aborted = false; HISTH = new Int32Array(TURN0 + NN * 8); killers = [];
+    deadline = opt.time ? now() + opt.time : 0;
+    path = (hist || []).slice();
+    var moves = genMoves(st);
+    if (!moves.length) return -1;
+    if (moves.length === 1) return moves[0];
+    var bestMove = moves[0], scores = {};
+    for (var d = 1; d <= maxD; d++) {
+      moves = orderMoves(st, moves, 0, bestMove);
+      var alpha = -Infinity, cur = {}, curBest = moves[0], curScore = -Infinity, done = 0;
+      for (var j = 0; j < moves.length; j++) {
+        var u = make(st, moves[j]);
+        path.push([st.lo, st.hi]);
+        var sc = noise ? -ab(st, d - 1, -Infinity, Infinity, 1) : -ab(st, d - 1, -Infinity, -alpha, 1);
+        path.pop();
+        unmake(st, u);
+        if (aborted) break;
+        cur[moves[j]] = sc; done++;
+        if (sc > curScore) { curScore = sc; curBest = moves[j]; }
+        if (sc > alpha) alpha = sc;
+      }
+      if (aborted && done === 0) break;
+      if (!aborted || cur[bestMove] === undefined || curScore >= cur[bestMove]) { bestMove = curBest; scores = cur; }
+      if (aborted) break;
+      if (curScore >= WIN - 50) break;
+      if (opt.time && now() > deadline - (opt.time * 0.6)) break;
+    }
+    if (noise) {
+      var pick = bestMove, top = -Infinity;
+      for (var key in scores) {
+        var s = scores[key];
+        if (s < WIN - 1000 && s > -(WIN - 1000)) s += Math.random() * noise;
+        else s += s > 0 ? 1e6 : 0;
+        if (s > top) { top = s; pick = +key; }
+      }
+      bestMove = pick;
+    }
+    return bestMove;
+  }
+
+  return {
+    N: N, NN: NN, TURN0: TURN0, FIGHTER: FIGHTER, ROGUE: ROGUE, BARB: BARB, HOST: HOST, DIRS: DIRS, STEP: STEP, MAXPLY: MAXPLY,
+    enc: enc, typeOf: typeOf, colorOf: colorOf, faceOf: faceOf, goalRank: goalRank,
+    newGame: newGame, clone: clone, fromData: fromData, toData: toData, rehash: rehash, genMoves: genMoves, make: make, unmake: unmake,
+    status: status, grappled: grappled, grappledBy: grappledBy, isTurn: isTurn, think: think, evaluate: evaluate, sqName: sqName, sq: sq,
+    lastNodes: function () { return nodes; }
+  };
+})();
+if (typeof self !== 'undefined' && typeof window === 'undefined' && typeof importScripts === 'function') {
+  self.onmessage = function (e) {
+    var d = e.data, st = BS.fromData(d.state);
+    var m = BS.think(st, d.hist, d.opt);
+    self.postMessage({ id: d.id, move: m });
+  };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = BS;
+</script>
+<script>
+var SFX = (function () {
+  var ctx = null, muted = false;
+  function getCtx() {
+    if (ctx) return ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC(); return ctx;
+  }
+  function knock(freq, len, amp) {
+    var c = getCtx(); if (!c) return;
+    var t0 = c.currentTime, o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq, t0); o.frequency.exponentialRampToValueAtTime(freq * 0.45, t0 + len);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(amp, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + len + 0.02);
+  }
+  return {
+    play: function (k) {
+      if (muted) return;
+      try {
+        if (k === 'move') knock(220, 0.12, 0.25);
+        else if (k === 'capture') { knock(330, 0.18, 0.3); setTimeout(function () { knock(140, 0.2, 0.3); }, 60); }
+        else if (k === 'win') { knock(392, 0.25, 0.25); setTimeout(function () { knock(523, 0.35, 0.25); }, 140); }
+        else if (k === 'lose') { knock(196, 0.3, 0.25); setTimeout(function () { knock(147, 0.4, 0.25); }, 160); }
+      } catch (e) { }
+    },
+    setMuted: function (m) { muted = !!m; }
+  };
+})();
+</script>
+<script>
+(function () {
+  'use strict';
+  var LEVELS = [
+    { name: 'Easy', depth: 1, noise: 1000, note: 'Makes mostly random moves, but takes a win it can see. Good for learning.' },
+    { name: 'Medium', depth: 2, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
+    { name: 'Hard', depth: 3, noise: 100, time: 1000, note: 'Sees short tactics but still slips now and then.' },
+    { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
+    { name: 'Expert', depth: 6, noise: 0, time: 3000, note: 'Searches up to six actions deep. Thinks for up to 3 seconds per move.' }
+  ];
+  var KEY = 'backstab.v1';
+  var NAMES = ['Fighter', 'Rogue', 'Barbarian', 'Hostage'], LET = 'FRBH', ICO = ['i-fighter', 'i-rogue', 'i-barb', 'i-host'];
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = { mode: 'ai', side: 1, level: 1, sound: true };
+  var st, moves = [], texts = [], hist = [], stat = null, legal = [];
+  var sel = -1, targets = {}, turns = [], flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
+  var NN = BS.NN, cells = new Array(NN);
+
+  /* ---------- storage ---------- */
+  function store() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped })); } catch (e) { }
+  }
+  function restore() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY));
+      if (!o || !o.cfg) return null;
+      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p') cfg.mode = o.cfg.mode;
+      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
+      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
+      cfg.sound = o.cfg.sound !== false;
+      flipped = !!o.flipped;
+      return Array.isArray(o.moves) ? o.moves : null;
+    } catch (e) { return null; }
+  }
+
+  /* ---------- game state ---------- */
+  function moveText(m) {
+    if (BS.isTurn(m)) {
+      var s = (m - BS.TURN0) >> 3, d = (m - BS.TURN0) & 7;
+      return LET.charAt(BS.typeOf(st.b[s])) + BS.sqName(s) + '>' + BS.DIRS[d];
+    }
+    var f = (m / NN) | 0, t = m % NN;
+    return LET.charAt(BS.typeOf(st.b[f])) + BS.sqName(f) + (st.b[t] ? 'x' : '-') + BS.sqName(t);
+  }
+  function push(m) {
+    var txt = moveText(m);
+    var u = BS.make(st, m);
+    hist.push([st.lo, st.hi]);
+    legal = BS.genMoves(st); stat = BS.status(st, hist);
+    if (stat.over && stat.winner) txt += '#';
+    moves.push(m); texts.push(txt);
+    return u;
+  }
+  function replay(list) {
+    st = BS.newGame(); moves = []; texts = []; hist = [[st.lo, st.hi]];
+    legal = BS.genMoves(st); stat = BS.status(st, hist);
+    for (var i = 0; i < list.length; i++) {
+      if (stat.over || legal.indexOf(list[i]) < 0) break;
+      push(list[i]);
+    }
+  }
+  function sideWord(s) { return s > 0 ? 'Gold' : 'Scarlet'; }
+  function colorSide(c) { return c === 0 ? 1 : -1; }
+  function myColor() { return st.turn === 1 ? 0 : 1; }
+  function humanTurn() { return cfg.mode === '2p' || st.turn === cfg.side; }
+
+  /* ---------- DOM ---------- */
+  function angleOf(face) { return face * 45 + (flipped ? 180 : 0); }
+  function pieceEl(v) {
+    var d = document.createElement('div'), t = BS.typeOf(v), c = BS.colorOf(v);
+    d.className = 'piece c' + c + (t === BS.HOST ? ' host cap' + (1 - c) : '');
+    d.innerHTML = '<svg class="ico" viewBox="0 0 24 24"><use href="#' + ICO[t] + '"/></svg>' + (t === BS.HOST ? '' : '<span class="dir"></span>') +
+      '<span class="chain"><svg viewBox="0 0 24 24"><use href="#i-chain"/></svg></span>';
+    d._v = v;
+    return d;
+  }
+  function setDir(el, v, instant) {
+    var dir = el.querySelector('.dir');
+    if (!dir) return;
+    var want = angleOf(BS.faceOf(v));
+    if (el._ang === undefined || instant) el._ang = want;
+    else { var dlt = ((want - el._ang) % 360 + 540) % 360 - 180; el._ang += dlt; }
+    dir.style.transform = 'rotate(' + el._ang + 'deg)';
+  }
+  function buildBoard() {
+    var root = $('board'); root.innerHTML = '';
+    for (var row = 0; row < 5; row++) for (var col = 0; col < 5; col++) {
+      var r = flipped ? row : 4 - row, f = flipped ? 4 - col : col, s = r * 5 + f;
+      var c = document.createElement('div');
+      c.className = 'cell' + ((r + f) % 2 ? ' alt' : '') + (r === 0 ? ' home0' : r === 4 ? ' home1' : '');
+      c.setAttribute('data-sq', s);
+      if (col === 0) c.innerHTML += '<span class="coord r">' + (r + 1) + '</span>';
+      if (row === 4) c.innerHTML += '<span class="coord f">' + 'abcde'.charAt(f) + '</span>';
+      cells[s] = c; root.appendChild(c);
+    }
+    for (var i = 0; i < NN; i++) if (st.b[i]) { var el = pieceEl(st.b[i]); cells[i].appendChild(el); setDir(el, st.b[i], true); }
+  }
+  function pieceIn(s) { return cells[s].querySelector('.piece:not(.dying)'); }
+  function syncPieces() {
+    for (var s = 0; s < NN; s++) {
+      var v = st.b[s], el = pieceIn(s);
+      if (!v) { if (el) el.parentNode.removeChild(el); continue; }
+      if (!el || BS.typeOf(el._v) !== BS.typeOf(v) || BS.colorOf(el._v) !== BS.colorOf(v)) {
+        if (el) el.parentNode.removeChild(el);
+        el = pieceEl(v); cells[s].appendChild(el); setDir(el, v, true);
+      } else if (el._v !== v) { el._v = v; setDir(el, v, false); }
+      el.classList.toggle('held', BS.grappled(st.b, s));
+    }
+  }
+  function refreshMarks() {
+    var i;
+    syncPieces();
+    var old = $('board').querySelectorAll('.turnbtn');
+    for (i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+    for (i = 0; i < NN; i++) cells[i].classList.remove('sel', 'tgt', 'kills', 'win', 'last');
+    if (moves.length) {
+      var lm = moves[moves.length - 1];
+      if (BS.isTurn(lm)) cells[(lm - BS.TURN0) >> 3].classList.add('last');
+      else { cells[(lm / NN) | 0].classList.add('last'); cells[lm % NN].classList.add('last'); }
+    }
+    if (sel >= 0) {
+      cells[sel].classList.add('sel');
+      for (var t in targets) { cells[t].classList.add('tgt'); if (targets[t].win) cells[t].classList.add('win'); else if (targets[t].kills) cells[t].classList.add('kills'); }
+      turns.forEach(function (d) {
+        var a = angleOf(d), rad = a * Math.PI / 180, b = document.createElement('div');
+        b.className = 'turnbtn'; b.setAttribute('data-turn', d); b.title = 'Turn to face ' + BS.DIRS[d];
+        b.style.left = (50 + 40 * Math.sin(rad)) + '%'; b.style.top = (50 - 40 * Math.cos(rad)) + '%';
+        b.innerHTML = '<i style="transform:rotate(' + a + 'deg)"></i>';
+        cells[sel].appendChild(b);
+      });
+    }
+  }
+  function hostLine(c) {
+    for (var s = 0; s < NN; s++) {
+      var v = st.b[s];
+      if (v && BS.typeOf(v) === BS.HOST && BS.colorOf(v) === c) {
+        var dist = Math.abs(((s / 5) | 0) - BS.goalRank(c));
+        return '<div class="caps"><span class="mini"><div class="piece c' + c + ' host cap' + (1 - c) + '"><svg class="ico" viewBox="0 0 24 24"><use href="#i-host"/></svg></div></span>' +
+          '<span style="margin-left:4px">' + sideWord(colorSide(c)) + "'s hostage on " + BS.sqName(s) + ', ' + dist + ' row' + (dist === 1 ? '' : 's') + ' from home' +
+          (BS.grappled(st.b, s) ? ', <b>held</b>' : ', free') + '</span></div>';
+      }
+    }
+    return '<div class="caps">' + sideWord(colorSide(c)) + "'s hostage is rescued</div>";
+  }
+  function refreshPanel() {
+    var over = stat.over;
+    $('turnTok').className = st.turn > 0 ? 'g0' : 'g1';
+    var txt;
+    if (over) txt = stat.winner ? sideWord(stat.winner) + ' wins' : 'Draw';
+    else if (cfg.mode === 'ai') txt = humanTurn() ? 'Your move (' + sideWord(st.turn) + ')' : LEVELS[cfg.level].name + ' bot is thinking';
+    else txt = sideWord(st.turn) + ' to move';
+    $('statusText').textContent = txt;
+    $('spin').hidden = !busy;
+    $('matchup').innerHTML = cfg.mode === 'ai'
+      ? 'You: ' + sideWord(cfg.side) + '<small>Computer: ' + LEVELS[cfg.level].name + ' (' + sideWord(-cfg.side) + ')</small>'
+      : 'Two players<small>Gold moves first</small>';
+    $('hostInfo').innerHTML = hostLine(0) + hostLine(1);
+    var cnt = [[0, 0, 0], [0, 0, 0]], full = [5, 2, 2];
+    for (var i = 0; i < NN; i++) { var v = st.b[i]; if (v && BS.typeOf(v) !== BS.HOST) cnt[BS.colorOf(v)][BS.typeOf(v)]++; }
+    [0, 1].forEach(function (c) {
+      var h = '', n = 0;
+      for (var t = 0; t < 3; t++) for (var j = cnt[c][t]; j < full[t]; j++) {
+        n++; h += '<span class="mini" title="' + NAMES[t] + '"><div class="piece c' + c + '"><svg class="ico" viewBox="0 0 24 24"><use href="#' + ICO[t] + '"/></svg></div></span>';
+      }
+      $('cap' + c).innerHTML = h + '<span style="margin-left:4px">' + sideWord(colorSide(c)) + ' lost: ' + n + '</span>';
+    });
+    var ml = $('movelist'), hh = '';
+    for (var k = 0; k < texts.length; k += 2) {
+      hh += '<li class="n">' + (k / 2 + 1) + '.</li><li class="mv' + (k === texts.length - 1 ? ' cur' : '') + '" title="' + texts[k] + '">' + texts[k] + '</li>' +
+        '<li class="mv' + (k + 1 === texts.length - 1 ? ' cur' : '') + '" title="' + (texts[k + 1] || '') + '">' + (texts[k + 1] || '') + '</li>';
+    }
+    ml.innerHTML = hh; ml.scrollTop = ml.scrollHeight;
+    $('bUndo').disabled = moves.length === 0;
+    $('bSound').classList.toggle('off', !cfg.sound);
+  }
+  function layout() {
+    var w = window.innerWidth, h = window.innerHeight;
+    var wide = w >= 860;
+    document.body.classList.toggle('wide', wide);
+    var aw = wide ? w - 380 : w - 30, ah = h - 120;
+    var size = Math.floor(Math.min(aw, wide ? ah : Math.max(ah, 300)) / 5);
+    size = Math.max(52, Math.min(112, size));
+    document.documentElement.style.setProperty('--cell', size + 'px');
+  }
+
+  /* ---------- interaction ---------- */
+  function deselect() { sel = -1; targets = {}; turns = []; }
+  function describe(s) {
+    var v = st.b[s], t = BS.typeOf(v), c = BS.colorOf(v);
+    var h = '<b>' + sideWord(colorSide(c)) + ' ' + NAMES[t] + '</b> on ' + BS.sqName(s);
+    if (t !== BS.HOST) h += ', facing ' + BS.DIRS[BS.faceOf(v)];
+    var g = BS.grappledBy(st.b, s);
+    if (g.length) h += '. Grappled by ' + g.map(BS.sqName).join(', ');
+    return h;
+  }
+  function select(s) {
+    sel = s; targets = {}; turns = [];
+    for (var i = 0; i < legal.length; i++) {
+      var m = legal[i];
+      if (BS.isTurn(m)) { if (((m - BS.TURN0) >> 3) === s) turns.push((m - BS.TURN0) & 7); continue; }
+      if (((m / NN) | 0) !== s) continue;
+      var t = m % NN, w = st.b[t], p = st.b[s];
+      var win = (w && BS.typeOf(w) === BS.HOST) || (BS.typeOf(p) === BS.HOST && ((t / 5) | 0) === BS.goalRank(BS.colorOf(p)));
+      targets[t] = { m: m, kills: !!w, win: win };
+    }
+    var n = Object.keys(targets).length;
+    $('info').innerHTML = describe(s) + ': ' + (n ? n + ' move' + (n === 1 ? '' : 's') : 'no moves') + (turns.length ? ', or tap an arrow to turn.' : '.');
+  }
+  function onCell(s) {
+    if (stat.over || busy || !humanTurn()) return;
+    if (sel >= 0 && targets[s]) { var m = targets[s].m; deselect(); doMove(m); return; }
+    var v = st.b[s];
+    if (v && BS.colorOf(v) === myColor() && s !== sel) {
+      if (BS.grappled(st.b, s)) { deselect(); $('info').innerHTML = describe(s) + ', so it can\u2019t act.'; }
+      else select(s);
+    } else {
+      deselect();
+      $('info').innerHTML = v ? describe(s) + '.' : 'Tap a piece to see its moves and turns.';
+    }
+    refreshMarks();
+  }
+  function onTurn(d) {
+    if (stat.over || busy || !humanTurn() || sel < 0) return;
+    var m = BS.TURN0 + sel * 8 + d;
+    if (legal.indexOf(m) < 0) return;
+    deselect(); doMove(m);
+  }
+  function animate(u) {
+    if (BS.isTurn(u.m)) return;
+    var capEl = u.cap ? pieceIn(u.t) : null;
+    if (capEl) {
+      capEl.classList.add('dying'); capEl.style.animationDelay = '.2s';
+      setTimeout(function () { cells[u.t].classList.add('hit'); }, 200);
+      setTimeout(function () { if (capEl.parentNode) capEl.parentNode.removeChild(capEl); cells[u.t].classList.remove('hit'); }, 540);
+    }
+    var el = pieceIn(u.f);
+    if (el) {
+      var fr = cells[u.f].getBoundingClientRect(), tr = cells[u.t].getBoundingClientRect();
+      cells[u.t].appendChild(el);
+      el.style.transition = 'none';
+      el.style.transform = 'translate(' + (fr.left - tr.left) + 'px,' + (fr.top - tr.top) + 'px)';
+      el.classList.add('moving');
+      void el.offsetWidth;
+      el.style.transition = '';
+      el.style.transform = '';
+      setTimeout(function () { el.classList.remove('moving'); }, 320);
+    }
+  }
+  function doMove(m) {
+    var u = push(m);
+    animate(u);
+    SFX.play(u.cap ? 'capture' : 'move');
+    $('info').textContent = texts[texts.length - 1];
+    refreshMarks(); refreshPanel(); store();
+    if (stat.over) { setTimeout(function () { SFX.play(cfg.mode === '2p' || stat.winner === cfg.side ? 'win' : 'lose'); showOver(); }, 650); return; }
+    if (!humanTurn()) setTimeout(askAI, 330);
+  }
+
+  /* ---------- AI ---------- */
+  function getWorker() {
+    if (worker || !useWorker) return worker;
+    try {
+      var src = $('engine-src').textContent;
+      worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      worker.onmessage = onAI;
+      worker.onerror = function () { useWorker = false; worker = null; if (busy) runLocal(); };
+    } catch (e) { useWorker = false; worker = null; }
+    return worker;
+  }
+  var lastReq = null;
+  function askAI() {
+    if (stat.over || humanTurn() || busy) return;
+    busy = true; refreshPanel();
+    var L = LEVELS[cfg.level];
+    reqId++; reqAt = Date.now();
+    lastReq = { id: reqId, state: BS.toData(st), hist: hist.slice(), opt: { depth: L.depth, time: L.time || 0, noise: L.noise || 0 } };
+    var w = getWorker();
+    if (w) w.postMessage(lastReq); else setTimeout(runLocal, 30);
+  }
+  function runLocal() {
+    if (!lastReq) return;
+    var o = lastReq.opt, st2 = BS.fromData(lastReq.state);
+    var m = BS.think(st2, lastReq.hist, { depth: Math.min(o.depth, 4), time: Math.min(o.time || 1200, 1200), noise: o.noise });
+    onAI({ data: { id: lastReq.id, move: m } });
+  }
+  function onAI(e) {
+    var d = e.data;
+    if (!busy || d.id !== reqId) return;
+    var wait = Math.max(0, 350 - (Date.now() - reqAt));
+    setTimeout(function () {
+      if (!busy || d.id !== reqId) return;
+      busy = false;
+      if (legal.indexOf(d.move) < 0) { refreshPanel(); return; }
+      doMove(d.move);
+    }, wait);
+  }
+  function cancelAI() {
+    reqId++;
+    if (busy && worker) { worker.terminate(); worker = null; }
+    busy = false;
+  }
+
+  /* ---------- dialogs ---------- */
+  function overTitle() {
+    if (!stat.winner) return 'Draw';
+    if (cfg.mode === 'ai') return stat.winner === cfg.side ? 'You win!' : 'You lose';
+    return sideWord(stat.winner) + ' wins';
+  }
+  function why() {
+    var w = sideWord(stat.winner);
+    switch (stat.result) {
+      case 'rescue': return w + ' rescued their hostage.';
+      case 'escape': return w + "'s hostage escaped to " + w + "'s back row.";
+      case 'repetition': return 'The same position occurred a third time.';
+      case 'maxply': return 'No winner after ' + BS.MAXPLY + ' actions.';
+      case 'nomoves': return sideWord(-stat.winner) + ' had no legal action.';
+    }
+    return '';
+  }
+  function showOver() {
+    if (!stat.over) return;
+    $('overTitle').textContent = overTitle();
+    $('overText').textContent = why();
+    $('dlgOver').hidden = false;
+  }
+  var pend = { mode: 'ai', side: 1, level: 1 };
+  function markOpts() {
+    var set = function (id, v) {
+      var bs = $(id).children;
+      for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-v') === String(v));
+    };
+    set('optMode', pend.mode); set('optSide', pend.side); set('optLevel', pend.level);
+    $('aiOpts').style.display = pend.mode === 'ai' ? '' : 'none';
+    $('levelNote').textContent = LEVELS[pend.level].note;
+  }
+  function openNew() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    pend = { mode: cfg.mode, side: cfg.side, level: cfg.level };
+    markOpts(); $('dlgOver').hidden = true; $('dlgNew').hidden = false;
+  }
+  function startNew() {
+    cancelAI();
+    cfg.mode = pend.mode; cfg.level = pend.level;
+    cfg.side = pend.side === 0 ? (Math.random() < 0.5 ? 1 : -1) : pend.side;
+    flipped = cfg.mode === 'ai' && cfg.side === -1;
+    replay([]); deselect();
+    $('dlgNew').hidden = true; $('dlgOver').hidden = true;
+    $('info').textContent = 'Tap a piece to see its moves and turns.';
+    buildBoard(); refreshMarks(); refreshPanel(); store();
+    if (!humanTurn()) setTimeout(askAI, 300);
+  }
+  function undo() {
+    if (window.VaultOnce && window.VaultOnce.active()) return;
+    if (!moves.length) return;
+    cancelAI();
+    var list = moves.slice(0, -1);
+    if (cfg.mode === 'ai' && list.length && (list.length % 2 === 0 ? 1 : -1) !== cfg.side) list.pop();
+    replay(list); deselect();
+    $('dlgOver').hidden = true;
+    buildBoard(); refreshMarks(); refreshPanel(); store();
+    if (!stat.over && !humanTurn()) askAI();
+  }
+
+  /* ---------- wiring ---------- */
+  function init() {
+    var onceLink = false;
+    try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
+    var saved = onceLink ? null : restore();
+    replay(saved || []);
+    SFX.setMuted(!cfg.sound);
+    LEVELS.forEach(function (L, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
+      $('optLevel').appendChild(b);
+    });
+    layout(); buildBoard(); refreshMarks(); refreshPanel();
+    $('board').addEventListener('click', function (e) {
+      var tb = e.target.closest ? e.target.closest('.turnbtn') : null;
+      if (tb) { e.stopPropagation(); onTurn(+tb.getAttribute('data-turn')); return; }
+      var c = e.target.closest ? e.target.closest('.cell') : null;
+      if (c) onCell(+c.getAttribute('data-sq'));
+    });
+    ['optMode', 'optSide', 'optLevel'].forEach(function (id) {
+      $(id).addEventListener('click', function (e) {
+        var v = e.target.getAttribute && e.target.getAttribute('data-v');
+        if (v === null || v === undefined) return;
+        if (id === 'optMode') pend.mode = v; else if (id === 'optSide') pend.side = +v; else pend.level = +v;
+        markOpts();
+      });
+    });
+    $('bNew').onclick = openNew;
+    $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
+    $('newStart').onclick = startNew;
+    $('bUndo').onclick = undo;
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoard(); refreshMarks(); store(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
+    $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
+    $('overClose').onclick = function () { $('dlgOver').hidden = true; };
+    $('overNew').onclick = openNew;
+    var mods = document.querySelectorAll('.modal');
+    for (var i = 0; i < mods.length; i++) mods[i].addEventListener('click', function (e) { if (e.target === this && this.id !== 'dlgNew') this.hidden = true; });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { $('dlgGuide').hidden = true; $('dlgOver').hidden = true; if (moves.length) $('dlgNew').hidden = true; deselect(); refreshMarks(); }
+    });
+    window.addEventListener('resize', layout);
+    window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+    if (onceLink) { /* VaultOnce boots the pinned AI game through BackstabUI.startOnce. */ }
+    else if (!saved) openNew();
+    else if (stat.over) showOver();
+    else if (!humanTurn()) askAI();
+  }
+  window.BackstabUI = {
+    startOnce: function (opts) {
+      opts = opts || {};
+      var level = opts.level;
+      if (!(level >= 0 && level < LEVELS.length)) level = 1;
+      var s = opts.side === -1 || opts.side === 'scarlet' ? -1 : 1;
+      pend = { mode: 'ai', side: s, level: level };
+      startNew();
+    },
+    result: function () {
+      if (!stat || !stat.over) return { over: false };
+      var draw = !stat.winner, success = !draw && stat.winner === cfg.side;
+      var summary = (success ? 'You won. ' : draw ? 'Draw. ' : 'You lost. ') + why();
+      return { over: true, success: success, draw: draw, summary: summary, result: stat.result, winner: stat.winner };
+    },
+    isOver: function () { return !!(stat && stat.over); },
+    // test hooks
+    _state: function () { return { st: st, moves: moves.slice(), texts: texts.slice(), stat: stat, legal: legal.slice(), cfg: cfg, busy: busy }; },
+    _load: function (list) { cancelAI(); replay(list); deselect(); buildBoard(); refreshMarks(); refreshPanel(); }
+  };
+  init();
+})();
+</script>
+</body>
+</html>

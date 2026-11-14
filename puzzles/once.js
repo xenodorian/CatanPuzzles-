@@ -125,7 +125,16 @@
         { key: '3', label: 'Very Hard' },
         { key: '4', label: 'Expert' }
       ],
-      hasSide: true, sideLabels: ['Attackers (move first)', 'Defenders'] }
+      hasSide: true, sideLabels: ['Attackers (move first)', 'Defenders'] },
+    { id: 'backstab', file: 'backstab.html', name: 'Backstab',
+      diffs: [
+        { key: '0', label: 'Easy' },
+        { key: '1', label: 'Medium' },
+        { key: '2', label: 'Hard' },
+        { key: '3', label: 'Very Hard' },
+        { key: '4', label: 'Expert' }
+      ],
+      hasSide: true, sideLabels: ['Gold (moves first)', 'Scarlet'] }
   ];
 
   var HIDE = [
@@ -703,7 +712,7 @@
   }
 
   function bootDragon() {
-    var ui = gameId === 'hnefatafl' ? root.HnefataflUI : root.DragonChessUI;
+    var ui = gameId === 'hnefatafl' ? root.HnefataflUI : gameId === 'backstab' ? root.BackstabUI : root.DragonChessUI;
     if (!ui || typeof ui.startOnce !== 'function') return;
     hideNewDialog();
     var level = parseInt(params.d, 10);
@@ -732,7 +741,7 @@
       else if (gameId === 'knight') bootKnight();
       else if (gameId === 'allfall') bootAllfall();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 
