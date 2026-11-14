@@ -75,10 +75,7 @@
       hasSeed: true },
     { id: 'runecube', file: 'runecube.html', name: 'Rune Cube',
       diffs: [
-        { key: 'easy', label: 'Easy (4 turns)' },
-        { key: 'medium', label: 'Medium (8 turns)' },
-        { key: 'hard', label: 'Hard (14 turns)' },
-        { key: 'expert', label: 'Expert (random position)' }
+        { key: 'easy', label: '4-turn scramble' }
       ],
       hasSeed: true },
     { id: 'chess-in-one', file: 'chess-in-one.html', name: 'Chess in One',
@@ -706,7 +703,7 @@
 
   function bootRuneCube() {
     if (root.RuneCube && typeof root.RuneCube.setLevel === 'function') {
-      withSeed(function () { root.RuneCube.setLevel(params.d || 'easy'); });
+      withSeed(function () { root.RuneCube.setLevel('easy'); });
     }
   }
 

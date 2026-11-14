@@ -6,12 +6,8 @@
   'use strict';
   var E = window.RuneCubeEngine;
   var KEY = 'runecube.v1';
-  var LEVELS = [
-    { key: 'easy', label: 'Easy', moves: 4, note: '4 random turns' },
-    { key: 'medium', label: 'Medium', moves: 8, note: '8 random turns' },
-    { key: 'hard', label: 'Hard', moves: 14, note: '14 random turns' },
-    { key: 'expert', label: 'Expert', moves: 0, note: 'a uniformly random position' }
-  ];
+  // There are no difficulty levels: every scramble is 4 random turns.
+  var SCRAMBLE_TURNS = 4;
   // Rune glyphs drawn as strokes (viewBox 0 0 40 60) so no runic font is needed.
   var GLYPH = [
     'M20 6V54M20 24L8 8M20 24L32 8',                 // Algiz (U)
@@ -26,15 +22,25 @@
   }
   var STYLE = [
     '.rc-wrap { display: flex; flex-direction: column; align-items: center; width: 100%; min-width: 0; }',
-    '.rc-diff .btn { font-size: 0.66rem; padding: 0.5rem 0.9rem; }',
     '.rc-stats { display: flex; gap: 1.5rem; justify-content: center; font-family: "Cinzel", serif; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--parchment-dark); margin-bottom: 0.25rem; }',
     '.rc-stats b { color: var(--gold-bright); font-weight: 600; }',
-    '.rc-stage { --c: 96px; position: relative; width: min(100%, 360px); aspect-ratio: 1 / 1; perspective: 900px; touch-action: none; cursor: grab;',
+    '.rc-views { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 1rem; width: 100%; }',
+    '.rc-pane { display: flex; flex-direction: column; align-items: center; min-width: 0; }',
+    '.rc-pane-main { width: min(100%, 360px); }',
+    '.rc-stage { --c: 96px; position: relative; width: 100%; aspect-ratio: 1 / 1; perspective: 900px; touch-action: none;',
     '  background: radial-gradient(circle at 50% 45%, rgba(201,148,58,0.10), transparent 65%); user-select: none; -webkit-user-select: none; overflow: hidden; }',
-    '.rc-stage.rc-orbit { cursor: grabbing; }',
+    '.rc-arrows { position: absolute; inset: 0; pointer-events: none; z-index: 5; }',
+    '.rc-arrow { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; pointer-events: auto; cursor: pointer; touch-action: none;',
+    '  background: rgba(26,22,16,0.88); border: 1.5px solid var(--gold); box-shadow: 0 0 8px rgba(0,0,0,0.7); transition: background 0.1s, transform 0.1s, border-color 0.1s; }',
+    '.rc-arrow svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; fill: var(--gold-bright); }',
+    '.rc-arrow.rc-arrow-on { background: rgba(126,207,192,0.35); border-color: var(--rune); transform: scale(1.18); }',
+    '.rc-arrow.rc-arrow-on svg { fill: #e8fffb; }',
+    '.rc-sticker { cursor: pointer; }',
+    '.rc-sticker.rc-grab { box-shadow: inset 0 0 0 2px var(--rune), inset 0 0 14px rgba(126,207,192,0.5); }',
+    '.rc-cubie.rc-layer .rc-sticker { box-shadow: inset 0 0 0 2px var(--rune), inset 0 0 12px rgba(0,0,0,0.6); }',
     '.rc-view { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }',
-    '.rc-cubie { position: absolute; left: calc(var(--c) / -2); top: calc(var(--c) / -2); width: var(--c); height: var(--c); transform-style: preserve-3d; }',
-    '.rc-face { position: absolute; inset: 0; background: #0b0906; border: 1px solid #000; backface-visibility: hidden; }',
+    '.rc-cubie { position: absolute; left: calc(var(--c) / -2); top: calc(var(--c) / -2); width: var(--c); height: var(--c); transform-style: preserve-3d; pointer-events: none; }',
+    '.rc-face { position: absolute; inset: 0; background: #0b0906; border: 1px solid #000; backface-visibility: hidden; pointer-events: auto; }',
     '.rc-sticker { position: absolute; inset: 5%; border-radius: 9%; cursor: pointer; display: flex; align-items: center; justify-content: center;',
     '  background: radial-gradient(circle at 35% 30%, #4a3c2a, #2d241a 70%); box-shadow: inset 0 0 0 1px rgba(201,148,58,0.55), inset 0 0 12px rgba(0,0,0,0.6); }',
     '.rc-glyph { width: 46%; height: 70%; fill: none; stroke: var(--gold-bright); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;',
@@ -57,18 +63,18 @@
     '  <div class="corner corner-bl"></div><div class="corner corner-br"></div>',
     '  <p class="flavor-text">"Eight stones of the old vault, each carved on three sides. Twist the layers until every face',
     '  bears a single rune, and the lock remembers its shape."</p>',
-    '  <div class="btn-row diff-row rc-diff" data-rc-diff></div>',
     '  <div class="rc-wrap">',
     '    <div class="rc-stats"><span>Moves <b data-rc="moves">0</b></span><span>Time <b data-rc="time">0:00</b></span></div>',
-    '    <div class="rc-stage" data-rc="stage"><div class="rc-view" data-rc="view"></div></div>',
+    '    <div class="rc-views">',
+    '      <div class="rc-pane rc-pane-main"><div class="rc-stage" data-rc="stage0"><div class="rc-view" data-rc="view0"></div><div class="rc-arrows" data-rc="arrows0"></div></div>',
+    '      </div>',
+    '    </div>',
     '    <div class="rc-moves" data-rc="movebtns"></div>',
     '  </div>',
-    '  <div class="status-msg info" data-rc="status">Drag a rune to turn its layer. Drag empty space to look around.</div>',
+    '  <div class="status-msg info" data-rc="status">Press a rune, then drag (or tap) an arrow to turn its layer.</div>',
     '  <div class="btn-row">',
     '    <button type="button" class="btn" data-rc="undo">Undo</button>',
     '    <button type="button" class="btn" data-rc="hint">Hint</button>',
-    '    <button type="button" class="btn" data-rc="view-front">Reset view</button>',
-    '    <button type="button" class="btn" data-rc="view-back">View back</button>',
     '    <button type="button" class="btn btn-primary" data-rc="new">New Scramble</button>',
     '  </div>',
     '  <div class="rc-legend" data-rc="legend"></div>',
@@ -77,7 +83,8 @@
     '    <ul>',
     '      <li>A 2&times;2&times;2 cube. Each face of the solved cube carries one rune; there are no colours to go by.</li>',
     '      <li>Solve it by making every face show a single rune. A 2&times;2 has no fixed centres, so any face may end up on top.</li>',
-    '      <li>Turn a layer by dragging one of its runes in the direction you want it to go, or use the buttons. Drag empty space to look around.</li>',
+    '      <li>The cube stays still: it never spins around, only its layers turn.</li>',
+    '      <li>Press any rune on the cube: four arrows appear, two for its row and two for its column. Drag toward an arrow to turn that layer that way (the layer lights up as you go), or tap the rune and then tap an arrow. Tap elsewhere to hide the arrows. The buttons below the cube work too.</li>',
     '      <li>Keys: <kbd>U</kbd> <kbd>D</kbd> <kbd>L</kbd> <kbd>R</kbd> <kbd>F</kbd> <kbd>B</kbd> turn a face clockwise (as seen from that face); hold <kbd>Shift</kbd> for the prime (anticlockwise) turn. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.</li>',
     '      <li>Hint shows the next turn of a shortest solution. A 2&times;2 never needs more than 14 quarter turns.</li>',
     '    </ul>',
@@ -86,7 +93,9 @@
   ].join('\n');
 
   var root, els = {}, cube, cubieEls = [], level = 'easy', scr = [], hist = [], startAt = 0, elapsed = 0, timerId = 0, solved = false,
-    view = { x: -28, y: -38 }, queue = [], animating = false, hintMove = -1, cubeSize = 96;
+    queue = [], animating = false, hintMove = -1;
+  // The cube is shown from one fixed standard 3/4 view; it never orbits.
+  var VIEWS = [{ x: -28, y: -38, size: 96, els: [] }];
   var once = function () { return !!(window.VaultOnce && window.VaultOnce.active && window.VaultOnce.active()); };
 
   /* ---------- 3D transforms ---------- */
@@ -96,14 +105,16 @@
     for (var r = 0; r < 3; r++) for (var c = 0; c < 3; c++) M[r * 3 + c] = s[r] * O[r * 3 + c] * s[c];
     return 'matrix3d(' + [M[0], M[3], M[6], 0, M[1], M[4], M[7], 0, M[2], M[5], M[8], 0, 0, 0, 0, 1].join(',') + ')';
   }
-  function cubieTransform(q, rot) {
-    var h = cubeSize / 2;
+  function cubieTransform(q, rot, V) {
+    var h = V.size / 2;
     return (rot || 'rotate3d(1,0,0,0deg)') + ' translate3d(' + q.pos[0] * h + 'px,' + (-q.pos[1] * h) + 'px,' + q.pos[2] * h + 'px) ' + cssMatrix(q.O);
   }
   var FACE_CSS = ['rotateX(90deg)', 'rotateX(-90deg)', 'rotateY(-90deg)', 'rotateY(90deg)', 'rotateY(0deg)', 'rotateY(180deg)'];
-  function buildCube() {
-    els.view.innerHTML = '';
-    cubieEls = [];
+  function buildCube() { VIEWS.forEach(function (V, vi) { buildView(V, vi); }); hideArrows(); }
+  function buildView(V, vi) {
+    var host = els['view' + vi], cubeSize = V.size;
+    host.innerHTML = '';
+    V.els = [];
     cube.forEach(function (q) {
       var d = document.createElement('div');
       d.className = 'rc-cubie';
@@ -111,25 +122,28 @@
       for (var f = 0; f < 6; f++) {
         var n = E.FACES[f].n, outward = q.p0[0] * n[0] + q.p0[1] * n[1] + q.p0[2] * n[2] > 0;
         h += '<div class="rc-face" style="transform:' + FACE_CSS[f] + ' translateZ(' + (cubeSize / 2) + 'px)">' +
-          (outward ? '<div class="rc-sticker" data-cubie="' + q.id + '" data-face="' + f + '">' + runeSvg(f) + '</div>' : '') + '</div>';
+          (outward ? '<div class="rc-sticker" data-view="' + vi + '" data-cubie="' + q.id + '" data-face="' + f + '">' + runeSvg(f) + '</div>' : '') + '</div>';
       }
       d.innerHTML = h;
-      d.style.transform = cubieTransform(q);
-      els.view.appendChild(d);
-      cubieEls[q.id] = d;
+      d.style.transform = cubieTransform(q, null, V);
+      host.appendChild(d);
+      V.els[q.id] = d;
     });
-    applyView();
+    host.style.transform = 'rotateX(' + V.x + 'deg) rotateY(' + V.y + 'deg)';
   }
-  function applyView() { els.view.style.transform = 'rotateX(' + view.x + 'deg) rotateY(' + view.y + 'deg)'; }
   function layout() {
-    var w = els.stage.clientWidth || 300;
-    var c = Math.max(56, Math.min(110, Math.round(w * 0.27)));
-    if (c !== cubeSize) { cubeSize = c; els.stage.style.setProperty('--c', c + 'px'); buildCube(); }
+    var changed = false;
+    VIEWS.forEach(function (V, vi) {
+      var w = els['stage' + vi].clientWidth || 300;
+      var c = Math.max(56, Math.min(110, Math.round(w * 0.27)));
+      if (c !== V.size) { V.size = c; els['stage' + vi].style.setProperty('--c', c + 'px'); changed = true; }
+    });
+    if (changed && cube) buildCube();
   }
   // Screen direction (x right, y down) of a model-space vector under the current view.
-  function screenVec(v) {
+  function screenVec(v, V) {
     var x = v[0], y = -v[1], z = v[2];
-    var ay = view.y * Math.PI / 180, ax = view.x * Math.PI / 180;
+    var ay = V.y * Math.PI / 180, ax = V.x * Math.PI / 180;
     var x1 = Math.cos(ay) * x + Math.sin(ay) * z, z1 = -Math.sin(ay) * x + Math.cos(ay) * z;
     var y2 = Math.cos(ax) * y - Math.sin(ax) * z1;
     return [x1, y2];
@@ -152,20 +166,25 @@
     var a = mi.angleAboutNormal, axis = n[0] + ',' + (-n[1]) + ',' + n[2];
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var dur = reduce || document.hidden ? 0 : 200;
-    layer.forEach(function (q) {
-      var el = cubieEls[q.id];
-      el.style.transition = 'none';
-      el.style.transform = cubieTransform(q, 'rotate3d(' + axis + ',0deg)');
+    hideArrows();
+    VIEWS.forEach(function (V) {
+      layer.forEach(function (q) {
+        var el = V.els[q.id];
+        el.style.transition = 'none';
+        el.style.transform = cubieTransform(q, 'rotate3d(' + axis + ',0deg)', V);
+      });
     });
-    if (dur) void els.view.offsetWidth;
-    layer.forEach(function (q) {
-      var el = cubieEls[q.id];
-      el.style.transition = dur ? 'transform ' + dur + 'ms ease-in-out' : 'none';
-      el.style.transform = cubieTransform(q, 'rotate3d(' + axis + ',' + (-a) + 'deg)');
+    if (dur) void els.view0.offsetWidth;
+    VIEWS.forEach(function (V) {
+      layer.forEach(function (q) {
+        var el = V.els[q.id];
+        el.style.transition = dur ? 'transform ' + dur + 'ms ease-in-out' : 'none';
+        el.style.transform = cubieTransform(q, 'rotate3d(' + axis + ',' + (-a) + 'deg)', V);
+      });
     });
     E.applyMove(cube, job.m);
     var done = function () {
-      layer.forEach(function (q) { var el = cubieEls[q.id]; el.style.transition = 'none'; el.style.transform = cubieTransform(q); });
+      VIEWS.forEach(function (V) { layer.forEach(function (q) { var el = V.els[q.id]; el.style.transition = 'none'; el.style.transform = cubieTransform(q, null, V); }); });
       afterMove(job);
       next();
     };
@@ -201,35 +220,19 @@
     els.moves.textContent = hist.length;
     showTime();
     els.undo.disabled = !hist.length || solved;
-    var bs = els.diff.querySelectorAll('[data-level]');
-    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('active', bs[i].getAttribute('data-level') === level);
   }
 
   /* ---------- game ---------- */
-  function levelOf(k) { for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].key === k) return LEVELS[i]; return LEVELS[0]; }
-  function makeScramble(L) {
-    if (L.moves) return E.scramble(L.moves);
-    // Expert: a uniformly random reachable position, scrambled by the inverse of its optimal solution.
-    for (var t = 0; t < 20; t++) {
-      var c = E.solvedCube();
-      E.applyMoves(c, E.scramble(60));
-      var sol = E.solve(c);
-      if (sol.length >= 9) return sol.slice().reverse().map(E.inverse);
-    }
-    return E.scramble(20);
-  }
-  function setLevel(k) {
-    level = levelOf(k).key;
-    newGame();
-  }
+  // Kept for one-time links and old callers; any level name gives the same 4-turn scramble.
+  function setLevel() { level = 'easy'; newGame(); }
   function newGame(fixed) {
     queue = []; animating = false;
-    scr = fixed || makeScramble(levelOf(level));
+    scr = fixed || E.scramble(SCRAMBLE_TURNS);
     cube = E.applyMoves(E.solvedCube(), scr);
     if (E.isSolved(cube)) { scr = E.scramble(4); cube = E.applyMoves(E.solvedCube(), scr); }
     hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); hintMove = -1;
     buildCube(); refresh(); markHint();
-    setStatus(levelOf(level).label + ': scrambled with ' + levelOf(level).note + '. Drag a rune to turn its layer.');
+    setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer.');
     save();
   }
   function undo() {
@@ -254,7 +257,7 @@
   /* ---------- storage ---------- */
   function save() {
     if (once()) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ level: level, scr: scr, hist: hist, elapsed: startAt ? Date.now() - startAt : elapsed, solved: solved, view: view })); } catch (e) { }
+    try { localStorage.setItem(KEY, JSON.stringify({ level: level, scr: scr, hist: hist, elapsed: startAt ? Date.now() - startAt : elapsed, solved: solved })); } catch (e) { }
   }
   function restore() {
     try {
@@ -262,11 +265,11 @@
       if (!o || !Array.isArray(o.scr) || !Array.isArray(o.hist)) return false;
       var ok = function (m) { return m === (m | 0) && m >= 0 && m < 12; };
       if (!o.scr.every(ok) || !o.hist.every(ok)) return false;
-      level = levelOf(o.level).key; scr = o.scr; hist = o.hist.slice();
+      if (o.level && o.level !== 'easy') return false; // saves from the old Medium/Hard/Expert levels start a fresh cube
+      level = 'easy'; scr = o.scr; hist = o.hist.slice();
       cube = E.applyMoves(E.applyMoves(E.solvedCube(), scr), hist);
       solved = !!o.solved && E.isSolved(cube);
       elapsed = +o.elapsed || 0;
-      if (o.view && isFinite(o.view.x) && isFinite(o.view.y)) view = { x: +o.view.x, y: +o.view.y };
       buildCube(); refresh();
       if (solved) setStatus('Solved in ' + hist.length + ' moves and ' + fmt(elapsed) + '. Press New Scramble to play again.', 'success');
       else if (hist.length) { startTimer(); setStatus('Welcome back. Your cube is as you left it.'); }
@@ -274,54 +277,108 @@
     } catch (e) { return false; }
   }
 
-  /* ---------- input ---------- */
-  var drag = null;
-  function onDown(e) {
-    if (e.button !== undefined && e.button !== 0) return;
-    var st = e.target.closest ? e.target.closest('.rc-sticker') : null;
-    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sticker: st, moved: false };
-    try { els.stage.setPointerCapture(e.pointerId); } catch (err) { }
-    if (!st) els.stage.classList.add('rc-orbit');
-    e.preventDefault();
-  }
-  function onMove(e) {
-    if (!drag || e.pointerId !== drag.id) return;
-    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.sticker) {
-      view.y += dx * 0.5; view.x = Math.max(-85, Math.min(85, view.x - dy * 0.5));
-      drag.x = e.clientX; drag.y = e.clientY; applyView(); return;
-    }
-    if (drag.moved || Math.hypot(dx, dy) < 12) return;
-    drag.moved = true;
-    var m = moveFromDrag(+drag.sticker.getAttribute('data-cubie'), +drag.sticker.getAttribute('data-face'), dx, dy);
-    if (m >= 0) turn(m);
-  }
-  function onUp(e) {
-    if (!drag || e.pointerId !== drag.id) return;
-    drag = null; els.stage.classList.remove('rc-orbit'); save();
-  }
-  // Pick the layer turn whose motion at the grabbed sticker best matches the drag.
-  function moveFromDrag(id, homeFace, dx, dy) {
-    var q = cube.filter(function (c) { return c.id === id; })[0];
+  /* ---------- input: press a rune, then drag toward (or tap) an arrow ---------- */
+  var drag = null, arrows = null;
+  var DRAG_PICK = 10, DRAG_TURN = 28;
+  // The four turns available from a sticker: for each in-plane axis, both senses. dir is the unit
+  // screen direction (x right, y down) in which the grabbed sticker travels for that turn.
+  function stickerOptions(vi, id, homeFace) {
+    var V = VIEWS[vi], q = cube.filter(function (c) { return c.id === id; })[0];
     var I = E._internal, nWorld = I.mulMV(q.O, E.FACES[homeFace].n);
     var p = [q.pos[0] + nWorld[0], q.pos[1] + nWorld[1], q.pos[2] + nWorld[2]]; // a point on the sticker
-    var best = null, len = Math.hypot(dx, dy);
+    var out = [];
     for (var a = 0; a < 3; a++) {
       if (nWorld[a]) continue;
       var ax = [0, 0, 0]; ax[a] = 1;
-      var t = [ax[1] * p[2] - ax[2] * p[1], ax[2] * p[0] - ax[0] * p[2], ax[0] * p[1] - ax[1] * p[0]]; // a x p
-      var sv = screenVec(t), sl = Math.hypot(sv[0], sv[1]);
-      if (sl < 1e-6) continue;
-      var d = (sv[0] * dx + sv[1] * dy) / (sl * len);
-      if (!best || Math.abs(d) > Math.abs(best.d)) best = { a: a, d: d };
+      var t = [ax[1] * p[2] - ax[2] * p[1], ax[2] * p[0] - ax[0] * p[2], ax[0] * p[1] - ax[1] * p[0]]; // velocity for +90 about +axis
+      for (var k = 0; k < 3; k++) if (nWorld[k]) t[k] = 0; // keep the in-face part, so arrows follow the face's grid lines
+      var sv = screenVec(t, V), sl = Math.hypot(sv[0], sv[1]) || 1;
+      var s = q.pos[a] > 0 ? 1 : -1, n = [0, 0, 0]; n[a] = s;
+      var face = -1;
+      for (var f = 0; f < 6; f++) { var fn = E.FACES[f].n; if (fn[0] === n[0] && fn[1] === n[1] && fn[2] === n[2]) face = f; }
+      for (var sign = 1; sign >= -1; sign -= 2) {
+        // +90 about +axis is anticlockwise (prime) seen from the +axis face, clockwise seen from the -axis face.
+        // reach: screen pixels from the sticker centre to its edge along this direction
+        out.push({ m: face * 2 + (sign * s > 0 ? 1 : 0), dir: [sign * sv[0] / sl, sign * sv[1] / sl], reach: sl / Math.hypot(t[0], t[1], t[2]) * V.size / 2 * 0.9 });
+      }
     }
-    if (!best || Math.abs(best.d) < 0.45) return -1;
-    var s = q.pos[best.a] > 0 ? 1 : -1, sign = best.d > 0 ? 1 : -1; // rotate +90 about +axis when sign>0
-    var n = [0, 0, 0]; n[best.a] = s;
-    var face = -1; for (var f = 0; f < 6; f++) { var fn = E.FACES[f].n; if (fn[0] === n[0] && fn[1] === n[1] && fn[2] === n[2]) face = f; }
-    // +90 about +axis is +90 about the face normal when s > 0 (prime), clockwise when s < 0.
-    var prime = sign * s > 0 ? 1 : 0;
-    return face * 2 + prime;
+    return out;
+  }
+  function showArrows(vi, st) {
+    hideArrows();
+    if (solved) return;
+    var id = +st.getAttribute('data-cubie'), face = +st.getAttribute('data-face');
+    var opts = stickerOptions(vi, id, face), box = els['arrows' + vi];
+    var sb = els['stage' + vi].getBoundingClientRect(), r = st.getBoundingClientRect();
+    var cx = r.left + r.width / 2 - sb.left, cy = r.top + r.height / 2 - sb.top;
+
+    opts.forEach(function (o, k) {
+      var b = document.createElement('div');
+      b.className = 'rc-arrow'; b.setAttribute('data-arrow', k); b.setAttribute('data-move', o.m); b.setAttribute('role', 'button');
+      b.setAttribute('aria-label', 'Turn ' + E.MOVE_NAMES[o.m]); b.title = E.MOVE_NAMES[o.m];
+      b.setAttribute('data-dx', o.dir[0].toFixed(4)); b.setAttribute('data-dy', o.dir[1].toFixed(4));
+      var x = Math.max(15, Math.min(sb.width - 15, cx + o.dir[0] * (o.reach + 22))), y = Math.max(15, Math.min(sb.height - 15, cy + o.dir[1] * (o.reach + 22)));
+      b.style.left = x + 'px'; b.style.top = y + 'px';
+      b.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path transform="rotate(' + (Math.atan2(o.dir[1], o.dir[0]) * 180 / Math.PI).toFixed(1) + ')" d="M7.5,0 L0.5,-6.5 L0.5,-2.4 L-7,-2.4 L-7,2.4 L0.5,2.4 L0.5,6.5 Z"/></svg>';
+      box.appendChild(b); o.el = b;
+    });
+    st.classList.add('rc-grab');
+    arrows = { view: vi, cubie: id, face: face, opts: opts };
+  }
+  function hideArrows() {
+    if (!els.arrows0) return;
+    els.arrows0.innerHTML = '';
+    var g = root.querySelectorAll('.rc-grab'); for (var i = 0; i < g.length; i++) g[i].classList.remove('rc-grab');
+    highlight(null);
+    arrows = null;
+  }
+  function highlight(o) {
+    if (arrows) arrows.opts.forEach(function (x) { x.el.classList.toggle('rc-arrow-on', x === o); });
+    var mi = o ? E.moveInfo(o.m) : null;
+    VIEWS.forEach(function (V) {
+      cube.forEach(function (q) {
+        var on = !!mi && q.pos[0] * mi.n[0] + q.pos[1] * mi.n[1] + q.pos[2] * mi.n[2] > 0;
+        if (V.els[q.id]) V.els[q.id].classList.toggle('rc-layer', on);
+      });
+    });
+  }
+  function bestOption(dx, dy) {
+    var len = Math.hypot(dx, dy), best = null, bd = -2;
+    if (!arrows || !len) return null;
+    arrows.opts.forEach(function (o) { var d = (o.dir[0] * dx + o.dir[1] * dy) / len; if (d > bd) { bd = d; best = o; } });
+    return bd > 0.6 ? best : null;
+  }
+  function onDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest && e.target.closest('.rc-arrow')) return; // tapping an arrow is handled on click
+    var st = e.target.closest ? e.target.closest('.rc-sticker') : null;
+    if (!st) { hideArrows(); return; } // empty space does nothing
+    e.preventDefault();
+    if (solved) return;
+    var vi = +st.getAttribute('data-view');
+    showArrows(vi, st);
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, stage: els['stage' + vi] };
+    try { drag.stage.setPointerCapture(e.pointerId); } catch (err) { }
+  }
+  function onMove(e) {
+    if (!drag || e.pointerId !== drag.id || !arrows) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y, len = Math.hypot(dx, dy);
+    var o = len >= DRAG_PICK ? bestOption(dx, dy) : null;
+    highlight(o);
+    if (o && len >= DRAG_TURN) { drag = null; turn(o.m); }
+  }
+  function onUp(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
+    drag = null;
+    if (moved < DRAG_PICK) highlight(null); // a tap: leave the arrows up so one can be tapped
+    else hideArrows(); // released before the turn threshold: cancel
+  }
+  function onDocDown(e) {
+    if (!arrows || drag) return;
+    var t = e.target;
+    if (t.closest && (t.closest('.rc-arrow') || t.closest('.rc-sticker'))) return;
+    hideArrows(); // tapping anywhere else hides the arrows
   }
   function onKey(e) {
     if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
@@ -333,16 +390,13 @@
     e.preventDefault();
   }
   function onClick(e) {
-    var el = e.target.closest ? e.target.closest('[data-rc],[data-level],[data-move]') : null;
+    var el = e.target.closest ? e.target.closest('[data-rc],[data-move]') : null;
     if (!el || !root.contains(el)) return;
-    if (el.hasAttribute('data-level')) { if (!once()) setLevel(el.getAttribute('data-level')); return; }
     if (el.hasAttribute('data-move')) { turn(+el.getAttribute('data-move')); return; }
     var act = el.getAttribute('data-rc');
     if (act === 'undo') undo();
     else if (act === 'hint') hint();
     else if (act === 'new') { if (!once()) newGame(); }
-    else if (act === 'view-front') { view = { x: -28, y: -38 }; applyView(); save(); }
-    else if (act === 'view-back') { view = { x: 28, y: 142 }; applyView(); save(); }
   }
 
   function init() {
@@ -350,9 +404,7 @@
     if (!root || !E) return;
     var st = document.createElement('style'); st.textContent = STYLE; document.head.appendChild(st);
     root.innerHTML = MARKUP;
-    ['stage', 'view', 'movebtns', 'status', 'moves', 'time', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
-    els.diff = root.querySelector('[data-rc-diff]');
-    els.diff.innerHTML = LEVELS.map(function (L) { return '<button type="button" class="btn" data-level="' + L.key + '">' + L.label + '</button>'; }).join('');
+    ['stage0', 'view0', 'arrows0', 'movebtns', 'status', 'moves', 'time', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
     var mb = '';
     for (var f = 0; f < 6; f++) mb += '<button type="button" class="btn" data-move="' + (f * 2) + '" title="' + E.FACES[f].key + ' clockwise">' + E.MOVE_NAMES[f * 2] + '</button>';
     for (f = 0; f < 6; f++) mb += '<button type="button" class="btn" data-move="' + (f * 2 + 1) + '" title="' + E.FACES[f].key + ' anticlockwise">' + E.MOVE_NAMES[f * 2 + 1] + '</button>';
@@ -360,10 +412,13 @@
     els.legend.innerHTML = E.FACES.map(function (F, i) {
       return '<span>' + runeSvg(i, 'rc-mini') + E.RUNES[i].name + ' <small>(' + F.key + ')</small></span>';
     }).join('');
-    els.stage.addEventListener('pointerdown', onDown);
-    els.stage.addEventListener('pointermove', onMove);
-    els.stage.addEventListener('pointerup', onUp);
-    els.stage.addEventListener('pointercancel', onUp);
+    [els.stage0].forEach(function (stg) {
+      stg.addEventListener('pointerdown', onDown);
+      stg.addEventListener('pointermove', onMove);
+      stg.addEventListener('pointerup', onUp);
+      stg.addEventListener('pointercancel', onUp);
+    });
+    document.addEventListener('pointerdown', onDocDown, true);
     root.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
     window.addEventListener('resize', layout);
@@ -379,8 +434,10 @@
     newGame: function () { newGame(); },
     turn: function (m) { turn(typeof m === 'string' ? E.parseMove(m) : m); },
     state: function () { return { level: level, scramble: scr.slice(), history: hist.slice(), solved: solved, isSolved: E.isSolved(cube), busy: animating || queue.length > 0, moves: hist.length }; },
-    _moveFromDrag: function (id, face, dx, dy) { return moveFromDrag(id, face, dx, dy); },
-    _view: function (v) { if (v) { view = v; applyView(); } return view; }
+    _options: function (vi, id, face) { return stickerOptions(vi, id, face).map(function (o) { return { m: o.m, name: E.MOVE_NAMES[o.m], dir: o.dir }; }); },
+    _load: function (list) { scr = []; queue = []; animating = false; cube = E.applyMoves(E.solvedCube(), list || []); hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); buildCube(); refresh(); },
+    _cube: function () { return cube; },
+    _views: VIEWS
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
