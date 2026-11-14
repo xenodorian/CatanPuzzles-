@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="2a37a9a1ac";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="bc4ae0ec56";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <!-- cache bump 2026-11-14 -->
-<script src="puzzles/once.js?v=2a37a9a1ac"></script>
+<script src="puzzles/once.js?v=bc4ae0ec56"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -341,7 +341,15 @@ var BS = (function () {
     if (typeOf(w) === HOST) return colorOf(w) === color; // a Ranger may rescue its own hostage by shooting it; captors can't
     return colorOf(w) !== color;
   }
-  function genMoves(st, out, capsOnly) {
+  // Would turning the piece on s to face d be pointless? (off the board, or straight into a friendly piece that blocks it)
+  function badFacing(b, s, d, color) {
+    var n = STEP[s * 8 + d];
+    if (n < 0) return true;
+    var w = b[n];
+    return !!w && colorOf(w) === color && typeOf(w) !== HOST;
+  }
+  // prune: bot-only generation that drops pointless turns (they stay legal for humans).
+  function genMoves(st, out, capsOnly, prune) {
     out = out || [];
     if (st.winner) return out;
     var b = st.b, color = colorOfTurn(st.turn), s, v, t, f, n, w, d;
@@ -359,7 +367,7 @@ var BS = (function () {
         continue;
       }
       f = faceOf(v);
-      if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f) out.push(TURN0 + s * 8 + d);
+      if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f && !(prune && badFacing(b, s, d, color))) out.push(TURN0 + s * 8 + d);
       if (t === RANGER) {
         // Rangers act only along their facing: step 1 forward onto an empty square, or shoot down that ray.
         n = STEP[s * 8 + f];
@@ -439,6 +447,37 @@ var BS = (function () {
 
   /* ---------- evaluation (from the side to move) ---------- */
   function cheb(a, b2) { return Math.max(Math.abs(((a / N) | 0) - ((b2 / N) | 0)), Math.abs(a % N - b2 % N)); }
+  // Cheap facing terms for one piece (from its owner's point of view).
+  function facingScore(b, s, t, c, f) {
+    var sc = 0, fwd = STEP[s * 8 + f], adv = DR[f] * (c === 0 ? 1 : -1), w, n, k;
+    if (fwd < 0) return -45;                                      // facing off the board
+    w = b[fwd];
+    if (w && colorOf(w) === c && typeOf(w) !== HOST) sc -= 30;     // facing straight into a friend
+    sc += adv * 10;                                                // facing toward the enemy side
+    if (STEP[fwd * 8 + f] < 0 && !w) sc -= 6;                      // looking at the edge one step away
+    if (t === FIGHTER || t === BARB) {
+      if (w && (typeOf(w) === HOST ? colorOf(w) === c : colorOf(w) !== c)) sc += typeOf(w) === HOST ? 120 : 18 + (VAL[typeOf(w)] >> 3);
+    } else {
+      // Rogues and Rangers: look down the ray
+      n = fwd; k = 1;
+      while (n >= 0 && !b[n]) { n = STEP[n * 8 + f]; k++; }
+      sc += (k - 1) * 3;                                           // open line
+      if (n >= 0) {
+        w = b[n];
+        if (typeOf(w) === HOST) { if (colorOf(w) === c && (t === ROGUE || k >= 2)) sc += 120; }
+        else if (colorOf(w) !== c) {
+          if (t === ROGUE) sc += faceOf(w) === f ? 22 + (VAL[typeOf(w)] >> 3) : 4;
+          else if (k >= 2) sc += 22 + (VAL[typeOf(w)] >> 3);       // Ranger has a shot
+          else sc += 2;
+        }
+      }
+    }
+    // guard the back against Rogues sliding in from behind
+    n = STEP[s * 8 + ((f + 4) & 7)];
+    while (n >= 0 && !b[n]) n = STEP[n * 8 + ((f + 4) & 7)];
+    if (n >= 0 && colorOf(b[n]) !== c && typeOf(b[n]) === ROGUE && faceOf(b[n]) === f) sc -= 25 + (VAL[t] >> 3);
+    return sc;
+  }
   function evaluate(st) {
     var b = st.b, e = 0, s, v, sg, t, c, host = [-1, -1];
     for (s = 0; s < NN; s++) {
@@ -450,6 +489,7 @@ var BS = (function () {
       // exposed back: an enemy right behind us is dangerous
       var f = faceOf(v), bk = STEP[s * 8 + ((f + 4) & 7)];
       if (bk >= 0 && b[bk] && colorOf(b[bk]) !== c && typeOf(b[bk]) !== HOST) e -= sg * 20;
+      e += sg * facingScore(b, s, t, c, f);
     }
     for (c = 0; c < 2; c++) {
       s = host[c]; if (s < 0) continue;
@@ -473,7 +513,12 @@ var BS = (function () {
   function moveScore(st, m) {
     var b = st.b;
     if (m >= SHOT0) { var sw = b[(m - SHOT0) % NN]; return typeOf(sw) === HOST ? 1e8 : 100000 + VAL[typeOf(sw)] * 10; }
-    if (m >= TURN0) return 0;
+    if (m >= TURN0) {
+      var ts = (m - TURN0) >> 3, td = (m - TURN0) & 7, tv = b[ts];
+      if (badFacing(b, ts, td, colorOf(tv))) return -5000;
+      var tn = STEP[ts * 8 + td], tw = tn >= 0 ? b[tn] : 0;
+      return tw && colorOf(tw) !== colorOf(tv) ? 2000 : 0;
+    }
     var f = (m / NN) | 0, t = m % NN, w = b[t], p = b[f];
     if (w) return typeOf(w) === HOST ? 1e8 : 100000 + VAL[typeOf(w)] * 10 - VAL[typeOf(p)];
     if (typeOf(p) === HOST) return ((t / N) | 0) === goalRank(colorOf(p)) ? 1e8 : 3000;
@@ -522,8 +567,8 @@ var BS = (function () {
     if (repeats(st) >= 2) return 0;
     if (st.ply >= MAXPLY) return 0;
     if (depth <= 0) return qs(st, alpha, beta, ply, 4);
-    var moves = genMoves(st);
-    if (!moves.length) return -(WIN - ply);
+    var moves = genMoves(st, [], false, true);
+    if (!moves.length) { moves = genMoves(st); if (!moves.length) return -(WIN - ply); }
     moves = orderMoves(st, moves, ply, 0);
     var best = -Infinity;
     for (var j = 0; j < moves.length; j++) {
@@ -555,7 +600,8 @@ var BS = (function () {
     nodes = 0; aborted = false; HISTH = new Int32Array(MTOT); killers = [];
     deadline = opt.time ? now() + opt.time : 0;
     path = (hist || []).slice();
-    var moves = genMoves(st);
+    var moves = genMoves(st, [], false, true);
+    if (!moves.length) moves = genMoves(st);
     if (!moves.length) return -1;
     if (moves.length === 1) return moves[0];
     var bestMove = moves[0], scores = {};
@@ -643,10 +689,10 @@ var SFX = (function () {
 (function () {
   'use strict';
   var LEVELS = [
-    { name: 'Easy', depth: 1, noise: 1000, note: 'Makes mostly random moves, but takes a win it can see. Good for learning.' },
-    { name: 'Medium', depth: 2, noise: 300, note: 'Sees simple captures but makes frequent mistakes.' },
-    { name: 'Hard', depth: 3, noise: 100, time: 1000, note: 'Sees short tactics but still slips now and then.' },
-    { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
+    { name: 'Easy', depth: 1, noise: 400, note: 'Looks one action ahead with lots of randomness. Grabs a win it can see, but leaves pieces hanging. Good for learning.' },
+    { name: 'Medium', depth: 2, noise: 90, note: 'Looks two actions ahead: aims its pieces, takes free captures and avoids simple traps, but misses longer plans.' },
+    { name: 'Hard', depth: 3, noise: 40, time: 1000, note: 'Sees short tactics and backstab threats; still slips now and then.' },
+    { name: 'Very Hard', depth: 4, noise: 15, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 6, noise: 0, time: 3000, note: 'Searches up to six actions deep. Thinks for up to 3 seconds per move.' }
   ];
   var KEY = 'backstab.v3';
