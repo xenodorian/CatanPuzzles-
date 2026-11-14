@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="25daa50d95";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="4562daa8c7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <!-- cache bump 2026-11-14 -->
-<script src="puzzles/once.js?v=25daa50d95"></script>
+<script src="puzzles/once.js?v=4562daa8c7"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -350,11 +350,52 @@ var BS = (function () {
     var w = b[n];
     return !!w && colorOf(w) === color && typeOf(w) !== HOST;
   }
-  // prune: bot-only generation that drops pointless turns (they stay legal for humans).
+  // Does a piece of type t and colour c on s, facing `face`, threaten something (capture, backstab, shot, rescue)?
+  function threatAt(b, s, t, c, face) {
+    var n = STEP[s * 8 + face], w;
+    if (n < 0) return false;
+    if (t === FIGHTER || t === BARB) { w = b[n]; return !!w && canTake(w, c, face, false); }
+    if (t === RANGER) {
+      if (b[n]) return false;
+      n = STEP[n * 8 + face];
+      while (n >= 0 && !b[n]) n = STEP[n * 8 + face];
+      return n >= 0 && canShoot(b[n], c);
+    }
+    while (n >= 0 && !b[n]) n = STEP[n * 8 + face];
+    return n >= 0 && canTake(b[n], c, face, true);
+  }
+  // Could an enemy Rogue strike the piece on s if it faced `face`?
+  function rogueThreat(b, s, c, face) {
+    for (var a = 0; a < 8; a++) {
+      var n = STEP[s * 8 + a];
+      while (n >= 0 && !b[n]) n = STEP[n * 8 + a];
+      if (n < 0) continue;
+      var w = b[n], tr = (a + 4) & 7;
+      if (typeOf(w) === ROGUE && colorOf(w) !== c && faceOf(w) === tr && rogueOk(face, tr)) return true;
+    }
+    return false;
+  }
+  // Bot-only test: is turning the piece on s from facing fo to d purposeful?
+  function purposeful(b, s, t, c, fo, d, host) {
+    if (badFacing(b, s, d, c)) return false;
+    if (threatAt(b, s, t, c, d)) return true;                       // creates or keeps a real threat
+    var n = STEP[s * 8 + d], sg = c === 0 ? 1 : -1;
+    if (!b[n]) {
+      if (DR[d] * sg === 1 && DR[fo] * sg < 1) return true;         // turns forward / forward-diagonal from sideways or back
+      if (host >= 0) {                                                // turns toward its own hostage (the rescue goal)
+        var d0 = cheb(s, host), fn = STEP[s * 8 + fo];
+        if (cheb(n, host) < d0 && !(fn >= 0 && !b[fn] && cheb(fn, host) < d0)) return true;
+      }
+    }
+    if (rogueThreat(b, s, c, fo) && !rogueThreat(b, s, c, d)) return true; // escapes a backstab
+    return false;
+  }
+  // prune: bot-only generation that offers only purposeful turns (all turns stay legal for humans).
   function genMoves(st, out, capsOnly, prune) {
     out = out || [];
     if (st.winner) return out;
-    var b = st.b, color = colorOfTurn(st.turn), s, v, t, f, n, w, d;
+    var b = st.b, color = colorOfTurn(st.turn), s, v, t, f, n, w, d, host = -1;
+    if (prune) for (s = 0; s < NN; s++) if (b[s] && typeOf(b[s]) === HOST && colorOf(b[s]) === color) host = s;
     for (s = 0; s < NN; s++) {
       v = b[s]; if (!v || colorOf(v) !== color) continue;
       if (grappled(b, s)) continue;
@@ -369,7 +410,7 @@ var BS = (function () {
         continue;
       }
       f = faceOf(v);
-      if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f && !(prune && badFacing(b, s, d, color))) out.push(TURN0 + s * 8 + d);
+      if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f && !(prune && !purposeful(b, s, t, color, f, d, host))) out.push(TURN0 + s * 8 + d);
       if (t === RANGER) {
         // Rangers act only along their facing: step 1 forward onto an empty square, or shoot down that ray.
         n = STEP[s * 8 + f];
@@ -647,7 +688,7 @@ var BS = (function () {
     N: N, NN: NN, TURN0: TURN0, SHOT0: SHOT0, RANGER: RANGER, isShot: isShot, FIGHTER: FIGHTER, ROGUE: ROGUE, BARB: BARB, HOST: HOST, DIRS: DIRS, STEP: STEP, MAXPLY: MAXPLY,
     enc: enc, typeOf: typeOf, colorOf: colorOf, faceOf: faceOf, goalRank: goalRank,
     newGame: newGame, clone: clone, fromData: fromData, toData: toData, rehash: rehash, genMoves: genMoves, make: make, unmake: unmake,
-    status: status, grappled: grappled, grappledBy: grappledBy, isTurn: isTurn, think: think, evaluate: evaluate, sqName: sqName, sq: sq,
+    status: status, purposeful: purposeful, threatAt: threatAt, grappled: grappled, grappledBy: grappledBy, isTurn: isTurn, think: think, evaluate: evaluate, sqName: sqName, sq: sq,
     lastNodes: function () { return nodes; }
   };
 })();
@@ -694,8 +735,8 @@ var SFX = (function () {
 (function () {
   'use strict';
   var LEVELS = [
-    { name: 'Easy', depth: 1, noise: 400, note: 'Looks one action ahead with lots of randomness. Grabs a win it can see, but leaves pieces hanging. Good for learning.' },
-    { name: 'Medium', depth: 2, noise: 90, note: 'Looks two actions ahead: aims its pieces, takes free captures and avoids simple traps, but misses longer plans.' },
+    { name: 'Easy', depth: 1, noise: 400, note: 'Looks one action ahead with lots of randomness. Grabs a win it can see, but leaves pieces hanging. Every turn it makes still has a purpose. Good for learning.' },
+    { name: 'Medium', depth: 1, noise: 180, note: 'Looks one action ahead with some randomness: aims its pieces sensibly and takes captures, but walks into traps and misses plans.' },
     { name: 'Hard', depth: 3, noise: 40, time: 1000, note: 'Sees short tactics and backstab threats; still slips now and then.' },
     { name: 'Very Hard', depth: 4, noise: 15, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 6, noise: 0, time: 3000, note: 'Searches up to six actions deep. Thinks for up to 3 seconds per move.' }
