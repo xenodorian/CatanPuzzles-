@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="90fc7259de";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="f4c6db28dc";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Allfall - The Puzzle Vault</title>
-<link rel="stylesheet" href="vault.css?v=90fc7259de">
-<script src="puzzles/once.js?v=90fc7259de"></script>
+<link rel="stylesheet" href="vault.css?v=f4c6db28dc">
+<script src="puzzles/once.js?v=f4c6db28dc"></script>
 <style>
+  #allfall .puzzle-frame { container-type: inline-size; }
   .af-board {
     --gap: 6px;
-    --tile: min(4.6rem, calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+    /* 100% here resolved against height for vertical props (auto parent) -> 0px rows; use container width instead */
+    --tile: min(4.6rem, calc((100cqi - (var(--cols) - 1) * var(--gap)) / var(--cols)));
     position: relative;
     width: min(100%, calc(var(--cols) * var(--tile) + (var(--cols) - 1) * var(--gap)));
     height: calc(var(--rows) * var(--tile) + (var(--rows) - 1) * var(--gap));
@@ -137,6 +139,6 @@ function showWin(msg) {
   document.getElementById('win-overlay').classList.add('show');
 }
 </script>
-<script src="puzzles/allfall.js?v=90fc7259de"></script>
+<script src="puzzles/allfall.js?v=f4c6db28dc"></script>
 </body>
 </html>
