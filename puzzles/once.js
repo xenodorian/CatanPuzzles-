@@ -50,6 +50,21 @@
         { key: '7', label: 'Very Hard 7' }
       ],
       hasSeed: true },
+    { id: 'allfall', file: 'allfall.html', name: 'Allfall',
+      diffs: [
+        { key: '1', label: '1 · Loose Thread' },
+        { key: '2', label: '2 · Hairline' },
+        { key: '3', label: '3 · Second Crack' },
+        { key: '4', label: '4 · The Seam' },
+        { key: '5', label: '5 · Fault Line' },
+        { key: '6', label: '6 · Keystone' },
+        { key: '7', label: '7 · Load-Bearing' },
+        { key: '8', label: '8 · Quiet Joint' },
+        { key: '9', label: '9 · Shear' },
+        { key: '10', label: '10 · Underpin' },
+        { key: '11', label: '11 · Total Collapse' },
+        { key: '12', label: '12 · Allfall' }
+      ] },
     { id: 'knight', file: 'knight.html', name: "Knight's Tour",
       diffs: [
         { key: 'easy', label: 'Easy 5x5' },
@@ -151,6 +166,9 @@
     'html.vault-once #levelNote,',
     'html.vault-once #pipe-new,',
     'html.vault-once button[onclick="initPipe()"],',
+    'html.vault-once #allfall-nav,',
+    'html.vault-once #allfall-hint,',
+    'html.vault-once #allfall-retry,',
     'html.vault-once #overClose,',
     'html.vault-once #dlgOver{display:none!important}',
     'html.vault-once #win-overlay{display:none!important}',
@@ -669,6 +687,14 @@
     }
   }
 
+  function bootAllfall() {
+    if (!root.Allfall || typeof root.Allfall.load !== 'function') return;
+    var n = parseInt(params.p, 10);
+    if (!isFinite(n)) n = parseInt(params.d, 10);
+    if (!isFinite(n)) n = 1;
+    root.Allfall.load(n);
+  }
+
   function bootChessInOne() {
     if (!root.ChessInOne) return;
     var CIO = root.ChessInOne;
@@ -704,6 +730,7 @@
       else if (gameId === 'pipe') bootPipe();
       else if (gameId === 'bridges') bootBridges();
       else if (gameId === 'knight') bootKnight();
+      else if (gameId === 'allfall') bootAllfall();
       else if (gameId === 'chess-in-one') bootChessInOne();
       else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }

@@ -29,3 +29,7 @@ This site includes three games imported from other projects. Each entry lists th
 - Page: `lock.html`
 - An original puzzle inspired by the lockpicking mechanic in Fallout 4, and by Evan Kurtz's Lockpicking Mechanic Recreation (https://evankurtzart.itch.io/lockpicking-project). No code or assets from that project were used. Fallout is a trademark of Bethesda Softworks; this is an unofficial fan puzzle and is not affiliated with Bethesda or ZeniMax.
 
+## Allfall
+
+- Page: `allfall.html`
+- An original one-swap tile mosaic. No third-party code or assets.
