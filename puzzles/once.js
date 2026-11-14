@@ -139,7 +139,16 @@
         { key: '3', label: 'Very Hard' },
         { key: '4', label: 'Expert' }
       ],
-      hasSide: true, sideLabels: ['Gold (moves first)', 'Scarlet'] }
+      hasSide: true, sideLabels: ['Gold (moves first)', 'Scarlet'] },
+    { id: 'roadblock', file: 'roadblock.html', name: 'Roadblock',
+      diffs: [
+        { key: '0', label: 'Easy' },
+        { key: '1', label: 'Medium' },
+        { key: '2', label: 'Hard' },
+        { key: '3', label: 'Very Hard' },
+        { key: '4', label: 'Expert' }
+      ],
+      hasSide: true, sideLabels: ['Gold (builds first)', 'Scarlet'] }
   ];
 
   var HIDE = [
@@ -729,7 +738,7 @@
   }
 
   function bootDragon() {
-    var ui = gameId === 'hnefatafl' ? root.HnefataflUI : gameId === 'backstab' ? root.BackstabUI : root.DragonChessUI;
+    var ui = gameId === 'hnefatafl' ? root.HnefataflUI : gameId === 'backstab' ? root.BackstabUI : gameId === 'roadblock' ? root.RoadblockUI : root.DragonChessUI;
     if (!ui || typeof ui.startOnce !== 'function') return;
     hideNewDialog();
     var level = parseInt(params.d, 10);
@@ -759,7 +768,7 @@
       else if (gameId === 'runecube') bootRuneCube();
       else if (gameId === 'allfall') bootAllfall();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab' || gameId === 'roadblock') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 
