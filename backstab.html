@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="e39a8de39f";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="1a0fec43e8";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <!-- cache bump 2026-11-14 -->
-<script src="puzzles/once.js?v=e39a8de39f"></script>
+<script src="puzzles/once.js?v=1a0fec43e8"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -188,12 +188,12 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
       <div id="cap1" class="caps"></div>
       <h2>Rules</h2>
       <ul id="rules">
-        <li>Every piece faces one of 8 directions (the pointer). An action is a <b>move</b> or a <b>turn</b>.</li>
+        <li>Every piece faces one of 8 directions (the pointer) and moves and captures only that way. An action is a <b>move</b> or a <b>turn</b>.</li>
         <li><b>Fighters</b> and <b>Barbarians</b> step 1 square forward and capture whatever enemy is there.</li>
         <li><b>Rogues</b> slide any distance forward, but capture only from behind: moving the same way the target faces.</li>
-        <li><b>Rangers</b> step 1 square any way, never melee, and shoot an enemy 2+ squares away along a clear straight or diagonal line.</li>
+        <li><b>Rangers</b> step 1 square forward, never melee, and shoot the first enemy 2+ squares ahead along a clear line in the direction they face.</li>
         <li><b>Barbarians</b> grapple enemies they stand directly behind or beside: a grappled piece can't act.</li>
-        <li>You move the <b>hostage</b> in the enemy's back row (your colour). Win by walking it home to your back row, or by capturing it with one of your own pieces (a rescue).</li>
+        <li>You move the <b>hostage</b> in the enemy's back row (your colour). It has no facing: it steps 1 square any way and never captures. Win by walking it home to your back row, or by capturing it with one of your own pieces (a rescue).</li>
       </ul>
       <h2>Moves</h2>
       <ol id="movelist"></ol>
@@ -246,16 +246,16 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
     <div id="guideBody">
       <p>Backstab is a small tactics game on a 7 by 7 board. Each player has two rows: seven <b>Fighters</b> in front and, behind them, <b>Rogue, Ranger, Barbarian, Hostage, Barbarian, Ranger, Rogue</b>. The three middle rows start empty. Gold moves first.</p>
       <ul>
-        <li><b>Facing.</b> Every piece except the Hostage faces one of 8 directions (straight or diagonal), shown by its pointer. Everything starts facing the enemy.</li>
+        <li><b>Facing.</b> Every piece except the Hostage faces one of 8 directions (straight or diagonal), shown by its pointer, and can move and capture <b>only in that direction</b>. Everything starts facing the enemy.</li>
         <li><b>Your turn.</b> Do one action with one piece: <b>move</b> it, or <b>turn</b> it to face any other direction (turning uses the whole turn). Moving never changes facing.</li>
         <li><b>Fighters</b> move one square in the direction they face. If an enemy is on that square, it is captured, whichever way the enemy faces.</li>
         <li><b>Rogues</b> slide any number of empty squares in the direction they face, like a queen limited to one line. A Rogue can capture only by a <b>backstab</b>: it may end its slide on an enemy only when it is moving the same way that enemy faces, so it arrives from directly behind. Any other piece in the way just blocks it.</li>
-        <li><b>Rangers</b> move one square in <i>any</i> of the 8 directions onto an empty square, whatever way they face (facing stays the same). They never capture by moving. Instead, a Ranger may <b>shoot</b>: it removes an enemy piece on one of its 8 straight or diagonal lines that is at least 2 squares away, with every square in between empty. The Ranger stays where it is. A piece right next to a Ranger can't be shot. Rangers still have a facing, so they can be backstabbed and grappled, and a grappled Ranger can't shoot. Turning a Ranger also uses the turn.</li>
+        <li><b>Rangers</b> move one square in the direction they face, onto an empty square only. They never capture by moving. Instead, a Ranger may <b>shoot</b> straight ahead: it removes the first enemy piece along its facing line, if that piece is at least 2 squares away and every square in between is empty. The Ranger stays where it is. A piece right in front of a Ranger can't be shot (and blocks both its step and its shot). Turning a Ranger uses the turn, so aiming takes a move. Rangers can be backstabbed and grappled, and a grappled Ranger can't shoot.</li>
         <li><b>Barbarians</b> move and capture like Fighters. They also <b>grapple</b>: an enemy piece with a Barbarian <b>directly behind</b> it (the square opposite its facing) or <b>directly beside</b> it (the two squares at right angles to its facing) can't move, turn or capture. A Barbarian in front of a piece or on any diagonal of its facing does not grapple it. For a piece facing NE, behind is SW and the sides are NW and SE. Grappled pieces show a chain and hatching. (Hostages are different: any captor Barbarian on one of the 8 squares around a hostage holds it.) A grappled piece can still be captured.</li>
         <li><b>Hostages.</b> The middle of each back row holds the <i>enemy's</i> hostage. It is drawn in its controller's colour, ringed in its captors' colour. You move the hostage sitting in your opponent's back row: one square in any of 8 directions, onto an empty square only. It never captures, and moving it is your whole turn.</li>
         <li><b>Held hostages.</b> A hostage can't move while any enemy (captor) Barbarian is next to it. At the start both captor Barbarians stand beside it, so both must leave or be captured first.</li>
-        <li><b>Winning.</b> You win when your hostage reaches your own back row (the far side from where it started), or when one of your pieces captures your hostage, which rescues it. A Rogue may rescue from any direction, since a hostage has no facing, but a Ranger can't rescue by shooting: hostages can't be shot by anyone and block lines of sight like any piece. Captors can't capture the hostage; it just blocks them.</li>
-        <li><b>Other endings.</b> A player with no legal action loses. The game is a draw if the same position occurs three times, or after 200 actions without a winner.</li>
+        <li><b>Winning.</b> You win when your hostage reaches your own back row (the far side from where it started), or when one of your pieces captures your hostage, which rescues it. A Rogue (moving along its facing) may rescue a hostage arriving from any side, since a hostage has no facing, but a Ranger can't rescue by shooting: hostages can't be shot by anyone and block lines of sight like any piece. Captors can't capture the hostage; it just blocks them.</li>
+        <li><b>Other endings.</b> A player with no legal action loses. The game is a draw if the same position occurs three times, or after 300 actions without a winner.</li>
         <li>Tap one of your pieces: green dots are moves, orange rings are captures, red crosshairs are Ranger shots, and anything bright green wins the game. The small arrows around the piece turn it.</li>
         <li>Notation: files a to g from the left, ranks 1 to 7 from Gold's side. F Fighter, R Rogue, A Ranger, B Barbarian, H Hostage. "x" is a capture, "*" a Ranger shot (the Ranger stays put) and "&gt;NE" a turn.</li>
       </ul>
@@ -360,14 +360,13 @@ var BS = (function () {
       f = faceOf(v);
       if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f) out.push(TURN0 + s * 8 + d);
       if (t === RANGER) {
-        for (d = 0; d < 8; d++) {
-          n = STEP[s * 8 + d];
-          if (n < 0) continue;
-          if (!b[n]) { if (!capsOnly) out.push(s * NN + n); }
-          else continue; // adjacent pieces can't be shot (no melee)
-          n = STEP[n * 8 + d];
-          while (n >= 0 && !b[n]) n = STEP[n * 8 + d];
-          if (n >= 0 && canShoot(b[n], color)) out.push(SHOT0 + s * NN + n);
+        // Rangers act only along their facing: step 1 forward onto an empty square, or shoot down that ray.
+        n = STEP[s * 8 + f];
+        if (n >= 0 && !b[n]) {
+          if (!capsOnly) out.push(s * NN + n);
+          n = STEP[n * 8 + f];
+          while (n >= 0 && !b[n]) n = STEP[n * 8 + f];
+          if (n >= 0 && canShoot(b[n], color)) out.push(SHOT0 + s * NN + n); // distance >= 2, clear line
         }
         continue;
       }
@@ -424,7 +423,7 @@ var BS = (function () {
     else { setSq(st, u.t, u.cap); setSq(st, u.f, u.p); }
     st.winner = u.winner; st.how = u.how;
   }
-  var MAXPLY = 200;
+  var MAXPLY = 300;
   function status(st, hist) {
     if (st.winner) return { over: true, winner: st.winner, result: st.how };
     if (hist) {
@@ -649,7 +648,7 @@ var SFX = (function () {
     { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 6, noise: 0, time: 3000, note: 'Searches up to six actions deep. Thinks for up to 3 seconds per move.' }
   ];
-  var KEY = 'backstab.v2';
+  var KEY = 'backstab.v3';
   var NAMES = ['Fighter', 'Rogue', 'Barbarian', 'Hostage', 'Ranger'], LET = 'FRBHA', ICO = ['i-fighter', 'i-rogue', 'i-barb', 'i-host', 'i-ranger'];
   var N = BS.N, FILES = 'abcdefg';
   var $ = function (id) { return document.getElementById(id); };
