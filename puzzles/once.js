@@ -73,6 +73,14 @@
         { key: 'veryhard', label: 'Very Hard 8x8' }
       ],
       hasSeed: true },
+    { id: 'runecube', file: 'runecube.html', name: 'Rune Cube',
+      diffs: [
+        { key: 'easy', label: 'Easy (4 turns)' },
+        { key: 'medium', label: 'Medium (8 turns)' },
+        { key: 'hard', label: 'Hard (14 turns)' },
+        { key: 'expert', label: 'Expert (random position)' }
+      ],
+      hasSeed: true },
     { id: 'chess-in-one', file: 'chess-in-one.html', name: 'Chess in One',
       diffs: [
         { key: '1', label: 'Warm-up' },
@@ -154,6 +162,10 @@
     'html.vault-once [data-cv-act="new"],',
     'html.vault-once [data-rb-diff],',
     'html.vault-once [data-rb-act],',
+    'html.vault-once [data-rc="undo"],',
+    'html.vault-once [data-rc="hint"],',
+    'html.vault-once [data-rc="new"],',
+    'html.vault-once [data-rc-diff],',
     'html.vault-once [data-kt="undo"],',
     'html.vault-once [data-kt="restart"],',
     'html.vault-once [data-kt="new"],',
@@ -581,6 +593,8 @@
   function disableUndoAndReveal() {
     var sels = [
       '[data-cv-act="undo"]',
+      '[data-rc="undo"]',
+      '[data-rc="hint"]',
       '[data-kt="undo"]',
       '#bUndo',
       '#reveal',
@@ -690,6 +704,12 @@
     }
   }
 
+  function bootRuneCube() {
+    if (root.RuneCube && typeof root.RuneCube.setLevel === 'function') {
+      withSeed(function () { root.RuneCube.setLevel(params.d || 'easy'); });
+    }
+  }
+
   function bootKnight() {
     if (root.KnightTour && typeof root.KnightTour.setLevel === 'function') {
       withSeed(function () { root.KnightTour.setLevel(params.d || 'easy'); });
@@ -739,6 +759,7 @@
       else if (gameId === 'pipe') bootPipe();
       else if (gameId === 'bridges') bootBridges();
       else if (gameId === 'knight') bootKnight();
+      else if (gameId === 'runecube') bootRuneCube();
       else if (gameId === 'allfall') bootAllfall();
       else if (gameId === 'chess-in-one') bootChessInOne();
       else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab') bootDragon();
