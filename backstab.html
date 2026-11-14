@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="5211869ddd";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=5211869ddd"></script>
+<!--vault-version--><script>(function(){var V="36f07f0c0b";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=36f07f0c0b"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -44,11 +44,11 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
 #spin{width:14px;height:14px;border-radius:50%;border:2px solid #56648c;border-top-color:var(--gold);animation:spin .8s linear infinite}
 #spin[hidden]{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-#info{height:20px;max-width:calc(var(--cell)*5 + 8px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+#info{height:20px;max-width:calc(var(--cell)*7 + 8px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
 #info b{color:var(--ink)}
 
 
-.board{display:grid;grid-template-columns:repeat(5,var(--cell));grid-auto-rows:var(--cell);border:5px solid #2a2f3d;border-radius:8px;position:relative;
+.board{display:grid;grid-template-columns:repeat(7,var(--cell));grid-auto-rows:var(--cell);border:5px solid #2a2f3d;border-radius:8px;position:relative;
   box-shadow:0 0 0 1px #0b0d14,0 8px 26px rgba(0,0,0,.55);background:#1b1f2a}
 .cell{position:relative;width:var(--cell);height:var(--cell);background:#6d7487;box-shadow:inset 0 0 0 1px rgba(10,12,20,.35)}
 .cell.alt{background:#5a6074}
@@ -91,6 +91,15 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
   background:#27e08a;box-shadow:0 0 0 2px rgba(0,40,20,.75),0 0 8px #27e08a}
 .cell.tgt.kills::before{left:30%;top:30%;width:40%;height:40%;background:rgba(255,154,31,.35);border:3px solid #ff9a1f;box-shadow:0 0 10px #ff6a00}
 .cell.tgt.win::before{left:28%;top:28%;width:44%;height:44%;background:rgba(80,255,170,.3);border:3px solid #3dffa8;box-shadow:0 0 12px #3dffa8}
+.cell.tgt.shot::before{left:22%;top:22%;width:56%;height:56%;background:transparent;border:2.5px solid #ff3b5c;box-shadow:0 0 10px #ff3b5c}
+.cell.tgt.shot.win::before{border-color:#3dffa8;box-shadow:0 0 12px #3dffa8}
+.cell.tgt.shot::after{content:"";position:absolute;left:14%;top:14%;width:72%;height:72%;z-index:4;pointer-events:none;
+  background:linear-gradient(#ff3b5c,#ff3b5c) center/2.5px 100% no-repeat,linear-gradient(#ff3b5c,#ff3b5c) center/100% 2.5px no-repeat;
+  -webkit-mask:radial-gradient(circle,transparent 18%,#000 19%);mask:radial-gradient(circle,transparent 18%,#000 19%)}
+.cell.tgt.shot.win::after{background:linear-gradient(#3dffa8,#3dffa8) center/2.5px 100% no-repeat,linear-gradient(#3dffa8,#3dffa8) center/100% 2.5px no-repeat}
+.bolt{position:absolute;left:0;top:0;height:3px;border-radius:2px;z-index:70;pointer-events:none;transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(255,255,255,0),#fff2c0 60%,#fff);box-shadow:0 0 6px #ffe08a}
+.bolt::after{content:"";position:absolute;right:-6px;top:-4px;border-left:8px solid #fff;border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
 .turnbtn{position:absolute;width:calc(var(--cell)*.27);height:calc(var(--cell)*.27);margin:calc(var(--cell)*-.135) 0 0 calc(var(--cell)*-.135);border-radius:50%;
   z-index:8;background:rgba(20,26,44,.92);border:1.5px solid #8fe8b8;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6)}
 .turnbtn:hover{background:#2f6b4c}
@@ -98,7 +107,7 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
 .turnbtn i::before{content:"";position:absolute;left:50%;top:18%;transform:translateX(-50%);width:0;height:0;
   border-left:calc(var(--cell)*.055) solid transparent;border-right:calc(var(--cell)*.055) solid transparent;border-bottom:calc(var(--cell)*.11) solid #8fe8b8}
 
-#panel{width:100%;max-width:calc(var(--cell)*5 + 10px);min-width:min(100%,320px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
+#panel{width:100%;max-width:calc(var(--cell)*7 + 10px);min-width:min(100%,320px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
 body.wide #panel{width:320px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
 #panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 #matchup{font-weight:600}
@@ -116,7 +125,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 #movelist .mv{padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #movelist .mv.cur{background:#35446f;color:#fff}
 #hostInfo .caps{flex-wrap:nowrap;margin:2px 0}#hostInfo .caps .mini{flex:none}
-#info{max-width:none;width:calc(var(--cell)*5 + 10px)}
+#info{max-width:none;width:calc(var(--cell)*7 + 10px)}
 .modal{position:fixed;inset:0;z-index:100;background:rgba(4,7,14,.72);display:flex;align-items:center;justify-content:center;padding:14px;
   -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fade .18s}
 .modal[hidden]{display:none}
@@ -148,6 +157,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 <symbol id="i-fighter" viewBox="0 0 24 24"><path d="M12 2.5l7.5 2.8v6.1c0 4.6-3.1 8.3-7.5 10.1-4.4-1.8-7.5-5.5-7.5-10.1V5.3z"/></symbol>
 <symbol id="i-rogue" viewBox="0 0 24 24"><path d="M12 1.5l2.2 12.3H9.8z M6.5 14.2h11v2.3h-11z M10.8 16.5h2.4v4.3h-2.4z M12 20.2a1.7 1.7 0 1 1 0 3.3 1.7 1.7 0 1 1 0-3.3z"/></symbol>
 <symbol id="i-barb" viewBox="0 0 24 24"><path d="M10.9 2h2.2v20.5h-2.2z M13.4 3.5c5 .3 8.1 3.3 8.1 7.2 0 1.9-.8 3.2-1.9 3.9-1.4-1.8-3.4-2.6-6.2-2.6z M10.6 3.5c-5 .3-8.1 3.3-8.1 7.2 0 1.9.8 3.2 1.9 3.9 1.4-1.8 3.4-2.6 6.2-2.6z"/></symbol>
+<symbol id="i-ranger" viewBox="0 0 24 24"><path d="M6 2.2c6.4 2.1 9.8 5.9 9.8 9.8S12.4 19.7 6 21.8l-.7-2c5.2-1.8 8.2-4.6 8.2-7.8S10.5 6 5.3 4.2z M6.6 4.6h1.4v14.8H6.6z M3.5 11.1h13.7l-2.2-2 1.1-1.1 4.4 4-4.4 4-1.1-1.1 2.2-2H3.5z"/></symbol>
 <symbol id="i-host" viewBox="0 0 24 24"><path d="M12 2.5a4 4 0 1 1 0 8 4 4 0 1 1 0-8z M4.5 21.5v-3.2c0-3.6 3.4-6.3 7.5-6.3s7.5 2.7 7.5 6.3v3.2z"/></symbol>
 <symbol id="i-chain" viewBox="0 0 24 24"><path d="M9.2 7.1l1.6-1.6a4.6 4.6 0 0 1 6.5 0l1.2 1.2a4.6 4.6 0 0 1 0 6.5l-1.6 1.6-1.9-1.9 1.6-1.6a1.9 1.9 0 0 0 0-2.7l-1.2-1.2a1.9 1.9 0 0 0-2.7 0L11.1 9z M14.8 16.9l-1.6 1.6a4.6 4.6 0 0 1-6.5 0l-1.2-1.2a4.6 4.6 0 0 1 0-6.5l1.6-1.6 1.9 1.9-1.6 1.6a1.9 1.9 0 0 0 0 2.7l1.2 1.2a1.9 1.9 0 0 0 2.7 0l1.6-1.6z M8.6 13.5l4.9-4.9 1.9 1.9-4.9 4.9z"/></symbol>
 </defs></svg>
@@ -180,7 +190,8 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
         <li>Every piece faces one of 8 directions (the pointer). An action is a <b>move</b> or a <b>turn</b>.</li>
         <li><b>Fighters</b> and <b>Barbarians</b> step 1 square forward and capture whatever enemy is there.</li>
         <li><b>Rogues</b> slide any distance forward, but capture only from behind: moving the same way the target faces.</li>
-        <li><b>Barbarians</b> grapple enemies beside or behind them: a grappled piece can't act.</li>
+        <li><b>Rangers</b> step 1 square any way, never melee, and shoot an enemy 2+ squares away along a clear straight or diagonal line.</li>
+        <li><b>Barbarians</b> grapple enemies they stand directly behind or beside: a grappled piece can't act.</li>
         <li>You move the <b>hostage</b> in the enemy's back row (your colour). Win by walking it home to your back row, or by capturing it with one of your own pieces (a rescue).</li>
       </ul>
       <h2>Moves</h2>
@@ -232,19 +243,20 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
   <div class="card wide">
     <div class="row between"><h2>How to play</h2><button type="button" id="guideClose" class="ghost">Close</button></div>
     <div id="guideBody">
-      <p>Backstab is a small tactics game on a 5 by 5 board. Each player has two rows: five <b>Fighters</b> in front and, behind them, <b>Rogue, Barbarian, Hostage, Barbarian, Rogue</b>. Gold moves first.</p>
+      <p>Backstab is a small tactics game on a 7 by 7 board. Each player has two rows: seven <b>Fighters</b> in front and, behind them, <b>Rogue, Ranger, Barbarian, Hostage, Barbarian, Ranger, Rogue</b>. The three middle rows start empty. Gold moves first.</p>
       <ul>
         <li><b>Facing.</b> Every piece except the Hostage faces one of 8 directions (straight or diagonal), shown by its pointer. Everything starts facing the enemy.</li>
         <li><b>Your turn.</b> Do one action with one piece: <b>move</b> it, or <b>turn</b> it to face any other direction (turning uses the whole turn). Moving never changes facing.</li>
         <li><b>Fighters</b> move one square in the direction they face. If an enemy is on that square, it is captured, whichever way the enemy faces.</li>
         <li><b>Rogues</b> slide any number of empty squares in the direction they face, like a queen limited to one line. A Rogue can capture only by a <b>backstab</b>: it may end its slide on an enemy only when it is moving the same way that enemy faces, so it arrives from directly behind. Any other piece in the way just blocks it.</li>
-        <li><b>Barbarians</b> move and capture like Fighters. They also <b>grapple</b>: an enemy piece with a Barbarian on any adjacent square except its front three (straight ahead and the two forward diagonals) can't move, turn or capture. Grappled pieces show a chain and hatching. A grappled piece can still be captured.</li>
+        <li><b>Rangers</b> move one square in <i>any</i> of the 8 directions onto an empty square, whatever way they face (facing stays the same). They never capture by moving. Instead, a Ranger may <b>shoot</b>: it removes an enemy piece on one of its 8 straight or diagonal lines that is at least 2 squares away, with every square in between empty. The Ranger stays where it is. A piece right next to a Ranger can't be shot. Rangers still have a facing, so they can be backstabbed and grappled, and a grappled Ranger can't shoot. Turning a Ranger also uses the turn.</li>
+        <li><b>Barbarians</b> move and capture like Fighters. They also <b>grapple</b>: an enemy piece with a Barbarian <b>directly behind</b> it (the square opposite its facing) or <b>directly beside</b> it (the two squares at right angles to its facing) can't move, turn or capture. A Barbarian in front of a piece or on any diagonal of its facing does not grapple it. For a piece facing NE, behind is SW and the sides are NW and SE. Grappled pieces show a chain and hatching. (Hostages are different: any captor Barbarian on one of the 8 squares around a hostage holds it.) A grappled piece can still be captured.</li>
         <li><b>Hostages.</b> The middle of each back row holds the <i>enemy's</i> hostage. It is drawn in its controller's colour, ringed in its captors' colour. You move the hostage sitting in your opponent's back row: one square in any of 8 directions, onto an empty square only. It never captures, and moving it is your whole turn.</li>
         <li><b>Held hostages.</b> A hostage can't move while any enemy (captor) Barbarian is next to it. At the start both captor Barbarians stand beside it, so both must leave or be captured first.</li>
-        <li><b>Winning.</b> You win when your hostage reaches your own back row (the far side from where it started), or when one of your pieces captures your hostage, which rescues it. A Rogue may rescue from any direction, since a hostage has no facing. Captors can't capture the hostage; it just blocks them.</li>
+        <li><b>Winning.</b> You win when your hostage reaches your own back row (the far side from where it started), or when one of your pieces captures your hostage, which rescues it. A Rogue may rescue from any direction, since a hostage has no facing, but a Ranger can't rescue by shooting: hostages can't be shot by anyone and block lines of sight like any piece. Captors can't capture the hostage; it just blocks them.</li>
         <li><b>Other endings.</b> A player with no legal action loses. The game is a draw if the same position occurs three times, or after 200 actions without a winner.</li>
-        <li>Tap one of your pieces: green dots are moves, orange rings are captures, a bright green ring wins the game. The small arrows around the piece turn it.</li>
-        <li>Notation: files a to e from the left, ranks 1 to 5 from Gold's side. F Fighter, R Rogue, B Barbarian, H Hostage. "x" is a capture and "&gt;NE" a turn.</li>
+        <li>Tap one of your pieces: green dots are moves, orange rings are captures, red crosshairs are Ranger shots, and anything bright green wins the game. The small arrows around the piece turn it.</li>
+        <li>Notation: files a to g from the left, ranks 1 to 7 from Gold's side. F Fighter, R Rogue, A Ranger, B Barbarian, H Hostage. "x" is a capture, "*" a Ranger shot (the Ranger stays put) and "&gt;NE" a turn.</li>
       </ul>
       <p class="credits">Backstab is an original game designed for the Puzzle Vault.</p>
     </div>
@@ -255,8 +267,8 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 /* Backstab 5x5 rules engine and AI. Runs in the page and in a Web Worker. */
 var BS = (function () {
   'use strict';
-  var N = 5, NN = 25, WIN = 100000, TURN0 = 1000;
-  var FIGHTER = 0, ROGUE = 1, BARB = 2, HOST = 3;
+  var N = 7, NN = 49, WIN = 100000, TURN0 = NN * NN, SHOT0 = TURN0 + NN * 8, MTOT = SHOT0 + NN * NN;
+  var FIGHTER = 0, ROGUE = 1, BARB = 2, HOST = 3, RANGER = 4;
   var DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   var DR = [1, 1, 0, -1, -1, -1, 0, 1], DC = [0, 1, 1, 1, 0, -1, -1, -1];
   var STEP = new Int8Array(NN * 8), i, k;
@@ -270,16 +282,16 @@ var BS = (function () {
   function faceOf(v) { return (v - 1) & 7; }
   function colorOfTurn(t) { return t === 1 ? 0 : 1; }
   function goalRank(color) { return color === 0 ? 0 : N - 1; } // a hostage of colour c escapes to c's own back row
-  var VAL = [100, 230, 160, 0];
+  var VAL = [100, 230, 160, 0, 200];
 
   var seed = 0x1B873593;
   function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed | 0; }
-  var ZL = new Int32Array(65 * NN), ZH = new Int32Array(65 * NN);
-  for (i = 0; i < 65 * NN; i++) { ZL[i] = rnd(); ZH[i] = rnd(); }
+  var ZL = new Int32Array(81 * NN), ZH = new Int32Array(81 * NN);
+  for (i = 0; i < 81 * NN; i++) { ZL[i] = rnd(); ZH[i] = rnd(); }
   var ZTL = rnd(), ZTH = rnd();
 
   function sq(rank, file) { return rank * N + file; }
-  function sqName(s) { return 'abcde'.charAt(s % N) + (((s / N) | 0) + 1); }
+  function sqName(s) { return 'abcdefg'.charAt(s % N) + (((s / N) | 0) + 1); }
   function rehash(st) {
     var lo = 0, hi = 0, b = st.b;
     for (var s = 0; s < NN; s++) if (b[s]) { lo ^= ZL[b[s] * NN + s]; hi ^= ZH[b[s] * NN + s]; }
@@ -288,13 +300,13 @@ var BS = (function () {
   }
   function newGame() {
     var b = new Int8Array(NN), f;
-    var back = [ROGUE, BARB, HOST, BARB, ROGUE];
+    var back = [ROGUE, RANGER, BARB, HOST, BARB, RANGER, ROGUE];
     for (f = 0; f < N; f++) {
       // Gold (colour 0) on ranks 1-2 facing N; its back row holds Scarlet's hostage (colour 1).
       b[sq(0, f)] = back[f] === HOST ? enc(HOST, 1, 0) : enc(back[f], 0, 0);
       b[sq(1, f)] = enc(FIGHTER, 0, 0);
-      b[sq(4, f)] = back[f] === HOST ? enc(HOST, 0, 0) : enc(back[f], 1, 4);
-      b[sq(3, f)] = enc(FIGHTER, 1, 4);
+      b[sq(N - 1, f)] = back[f] === HOST ? enc(HOST, 0, 0) : enc(back[f], 1, 4);
+      b[sq(N - 2, f)] = enc(FIGHTER, 1, 4);
     }
     return rehash({ b: b, turn: 1, winner: 0, how: '', ply: 0, lo: 0, hi: 0 });
   }
@@ -311,7 +323,7 @@ var BS = (function () {
       var n = STEP[s * 8 + d]; if (n < 0) continue;
       var w = b[n];
       if (!w || typeOf(w) !== BARB || colorOf(w) === c) continue;
-      if (t !== HOST) { var df = (d - f + 8) & 7; if (df === 0 || df === 1 || df === 7) continue; }
+      if (t !== HOST) { var df = (d - f + 8) & 7; if (df !== 2 && df !== 4 && df !== 6) continue; } // only directly behind or beside
       out.push(n);
     }
     return out;
@@ -322,6 +334,10 @@ var BS = (function () {
     if (typeOf(w) === HOST) return colorOf(w) === color; // only the hostage's own side can rescue it
     if (colorOf(w) === color) return false;
     return rogue ? faceOf(w) === dir : true;
+  }
+  function canShoot(w, color) {
+    if (typeOf(w) === HOST) return false; // hostages can't be shot (no sniping rescues); they block the line
+    return colorOf(w) !== color;
   }
   function genMoves(st, out, capsOnly) {
     out = out || [];
@@ -342,6 +358,18 @@ var BS = (function () {
       }
       f = faceOf(v);
       if (!capsOnly) for (d = 0; d < 8; d++) if (d !== f) out.push(TURN0 + s * 8 + d);
+      if (t === RANGER) {
+        for (d = 0; d < 8; d++) {
+          n = STEP[s * 8 + d];
+          if (n < 0) continue;
+          if (!b[n]) { if (!capsOnly) out.push(s * NN + n); }
+          else continue; // adjacent pieces can't be shot (no melee)
+          n = STEP[n * 8 + d];
+          while (n >= 0 && !b[n]) n = STEP[n * 8 + d];
+          if (n >= 0 && canShoot(b[n], color)) out.push(SHOT0 + s * NN + n);
+        }
+        continue;
+      }
       n = STEP[s * 8 + f];
       if (t === ROGUE) {
         while (n >= 0) {
@@ -358,7 +386,8 @@ var BS = (function () {
     }
     return out;
   }
-  function isTurn(m) { return m >= TURN0; }
+  function isTurn(m) { return m >= TURN0 && m < SHOT0; }
+  function isShot(m) { return m >= SHOT0; }
   function setSq(st, s, v) {
     var o = st.b[s];
     if (o) { st.lo ^= ZL[o * NN + s]; st.hi ^= ZH[o * NN + s]; }
@@ -368,7 +397,12 @@ var BS = (function () {
   // Applies an action. Returns undo info.
   function make(st, m) {
     var u = { m: m, f: -1, t: -1, p: 0, cap: 0, winner: st.winner, how: st.how };
-    if (m >= TURN0) {
+    if (m >= SHOT0) {
+      var a = ((m - SHOT0) / NN) | 0, z = (m - SHOT0) % NN, cz = st.b[z];
+      u.f = a; u.t = z; u.p = st.b[a]; u.cap = cz;
+      setSq(st, z, 0);
+      if (typeOf(cz) === HOST) { st.winner = st.turn; st.how = 'rescue'; }
+    } else if (m >= TURN0) {
       var s = (m - TURN0) >> 3, d = (m - TURN0) & 7, v = st.b[s];
       u.f = u.t = s; u.p = v;
       setSq(st, s, enc(typeOf(v), colorOf(v), d));
@@ -384,7 +418,8 @@ var BS = (function () {
   }
   function unmake(st, u) {
     st.turn = -st.turn; st.lo ^= ZTL; st.hi ^= ZTH; st.ply--;
-    if (u.m >= TURN0) setSq(st, u.f, u.p);
+    if (u.m >= SHOT0) setSq(st, u.t, u.cap);
+    else if (u.m >= TURN0) setSq(st, u.f, u.p);
     else { setSq(st, u.t, u.cap); setSq(st, u.f, u.p); }
     st.winner = u.winner; st.how = u.how;
   }
@@ -419,7 +454,7 @@ var BS = (function () {
       s = host[c]; if (s < 0) continue;
       sg = c === 0 ? 1 : -1;
       var dist = Math.abs(((s / N) | 0) - goalRank(c));
-      e += sg * (4 - dist) * 45;
+      e += sg * (N - 1 - dist) * 40;
       if (dist === 1) e += sg * 60;
       if (grappled(b, s)) e -= sg * 30;
       var best = 9;
@@ -432,11 +467,13 @@ var BS = (function () {
   }
 
   /* ---------- search ---------- */
-  var nodes = 0, deadline = 0, aborted = false, path = null, HISTH = new Int32Array(TURN0 + NN * 8), killers = [];
+  var nodes = 0, deadline = 0, aborted = false, path = null, HISTH = new Int32Array(MTOT), killers = [];
   function now() { return (typeof performance !== 'undefined' ? performance : Date).now(); }
   function moveScore(st, m) {
+    var b = st.b;
+    if (m >= SHOT0) { var sw = b[(m - SHOT0) % NN]; return typeOf(sw) === HOST ? 1e8 : 100000 + VAL[typeOf(sw)] * 10; }
     if (m >= TURN0) return 0;
-    var b = st.b, f = (m / NN) | 0, t = m % NN, w = b[t], p = b[f];
+    var f = (m / NN) | 0, t = m % NN, w = b[t], p = b[f];
     if (w) return typeOf(w) === HOST ? 1e8 : 100000 + VAL[typeOf(w)] * 10 - VAL[typeOf(p)];
     if (typeOf(p) === HOST) return ((t / N) | 0) === goalRank(colorOf(p)) ? 1e8 : 3000;
     return 1000;
@@ -514,7 +551,7 @@ var BS = (function () {
     var st = clone(st0);
     opt = opt || {};
     var maxD = opt.depth || 2, noise = opt.noise || 0;
-    nodes = 0; aborted = false; HISTH = new Int32Array(TURN0 + NN * 8); killers = [];
+    nodes = 0; aborted = false; HISTH = new Int32Array(MTOT); killers = [];
     deadline = opt.time ? now() + opt.time : 0;
     path = (hist || []).slice();
     var moves = genMoves(st);
@@ -555,7 +592,7 @@ var BS = (function () {
   }
 
   return {
-    N: N, NN: NN, TURN0: TURN0, FIGHTER: FIGHTER, ROGUE: ROGUE, BARB: BARB, HOST: HOST, DIRS: DIRS, STEP: STEP, MAXPLY: MAXPLY,
+    N: N, NN: NN, TURN0: TURN0, SHOT0: SHOT0, RANGER: RANGER, isShot: isShot, FIGHTER: FIGHTER, ROGUE: ROGUE, BARB: BARB, HOST: HOST, DIRS: DIRS, STEP: STEP, MAXPLY: MAXPLY,
     enc: enc, typeOf: typeOf, colorOf: colorOf, faceOf: faceOf, goalRank: goalRank,
     newGame: newGame, clone: clone, fromData: fromData, toData: toData, rehash: rehash, genMoves: genMoves, make: make, unmake: unmake,
     status: status, grappled: grappled, grappledBy: grappledBy, isTurn: isTurn, think: think, evaluate: evaluate, sqName: sqName, sq: sq,
@@ -611,8 +648,9 @@ var SFX = (function () {
     { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four actions deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 6, noise: 0, time: 3000, note: 'Searches up to six actions deep. Thinks for up to 3 seconds per move.' }
   ];
-  var KEY = 'backstab.v1';
-  var NAMES = ['Fighter', 'Rogue', 'Barbarian', 'Hostage'], LET = 'FRBH', ICO = ['i-fighter', 'i-rogue', 'i-barb', 'i-host'];
+  var KEY = 'backstab.v2';
+  var NAMES = ['Fighter', 'Rogue', 'Barbarian', 'Hostage', 'Ranger'], LET = 'FRBHA', ICO = ['i-fighter', 'i-rogue', 'i-barb', 'i-host', 'i-ranger'];
+  var N = BS.N, FILES = 'abcdefg';
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, sound: true };
   var st, moves = [], texts = [], hist = [], stat = null, legal = [];
@@ -639,6 +677,10 @@ var SFX = (function () {
 
   /* ---------- game state ---------- */
   function moveText(m) {
+    if (BS.isShot(m)) {
+      var a = ((m - BS.SHOT0) / NN) | 0, z = (m - BS.SHOT0) % NN;
+      return 'A' + BS.sqName(a) + '*' + BS.sqName(z);
+    }
     if (BS.isTurn(m)) {
       var s = (m - BS.TURN0) >> 3, d = (m - BS.TURN0) & 7;
       return LET.charAt(BS.typeOf(st.b[s])) + BS.sqName(s) + '>' + BS.DIRS[d];
@@ -688,13 +730,13 @@ var SFX = (function () {
   }
   function buildBoard() {
     var root = $('board'); root.innerHTML = '';
-    for (var row = 0; row < 5; row++) for (var col = 0; col < 5; col++) {
-      var r = flipped ? row : 4 - row, f = flipped ? 4 - col : col, s = r * 5 + f;
+    for (var row = 0; row < N; row++) for (var col = 0; col < N; col++) {
+      var r = flipped ? row : N - 1 - row, f = flipped ? N - 1 - col : col, s = r * N + f;
       var c = document.createElement('div');
-      c.className = 'cell' + ((r + f) % 2 ? ' alt' : '') + (r === 0 ? ' home0' : r === 4 ? ' home1' : '');
+      c.className = 'cell' + ((r + f) % 2 ? ' alt' : '') + (r === 0 ? ' home0' : r === N - 1 ? ' home1' : '');
       c.setAttribute('data-sq', s);
       if (col === 0) c.innerHTML += '<span class="coord r">' + (r + 1) + '</span>';
-      if (row === 4) c.innerHTML += '<span class="coord f">' + 'abcde'.charAt(f) + '</span>';
+      if (row === N - 1) c.innerHTML += '<span class="coord f">' + FILES.charAt(f) + '</span>';
       cells[s] = c; root.appendChild(c);
     }
     for (var i = 0; i < NN; i++) if (st.b[i]) { var el = pieceEl(st.b[i]); cells[i].appendChild(el); setDir(el, st.b[i], true); }
@@ -716,15 +758,16 @@ var SFX = (function () {
     syncPieces();
     var old = $('board').querySelectorAll('.turnbtn');
     for (i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
-    for (i = 0; i < NN; i++) cells[i].classList.remove('sel', 'tgt', 'kills', 'win', 'last');
+    for (i = 0; i < NN; i++) cells[i].classList.remove('sel', 'tgt', 'kills', 'win', 'last', 'shot');
     if (moves.length) {
       var lm = moves[moves.length - 1];
-      if (BS.isTurn(lm)) cells[(lm - BS.TURN0) >> 3].classList.add('last');
+      if (BS.isShot(lm)) { cells[((lm - BS.SHOT0) / NN) | 0].classList.add('last'); cells[(lm - BS.SHOT0) % NN].classList.add('last'); }
+      else if (BS.isTurn(lm)) cells[(lm - BS.TURN0) >> 3].classList.add('last');
       else { cells[(lm / NN) | 0].classList.add('last'); cells[lm % NN].classList.add('last'); }
     }
     if (sel >= 0) {
       cells[sel].classList.add('sel');
-      for (var t in targets) { cells[t].classList.add('tgt'); if (targets[t].win) cells[t].classList.add('win'); else if (targets[t].kills) cells[t].classList.add('kills'); }
+      for (var t in targets) { cells[t].classList.add('tgt'); if (targets[t].shot) cells[t].classList.add('shot'); if (targets[t].win) cells[t].classList.add('win'); else if (targets[t].kills) cells[t].classList.add('kills'); }
       turns.forEach(function (d) {
         var a = angleOf(d), rad = a * Math.PI / 180, b = document.createElement('div');
         b.className = 'turnbtn'; b.setAttribute('data-turn', d); b.title = 'Turn to face ' + BS.DIRS[d];
@@ -738,7 +781,7 @@ var SFX = (function () {
     for (var s = 0; s < NN; s++) {
       var v = st.b[s];
       if (v && BS.typeOf(v) === BS.HOST && BS.colorOf(v) === c) {
-        var dist = Math.abs(((s / 5) | 0) - BS.goalRank(c));
+        var dist = Math.abs(((s / N) | 0) - BS.goalRank(c));
         return '<div class="caps"><span class="mini"><div class="piece c' + c + ' host cap' + (1 - c) + '"><svg class="ico" viewBox="0 0 24 24"><use href="#i-host"/></svg></div></span>' +
           '<span style="margin-left:4px">' + sideWord(colorSide(c)) + "'s hostage on " + BS.sqName(s) + ', ' + dist + ' row' + (dist === 1 ? '' : 's') + ' from home' +
           (BS.grappled(st.b, s) ? ', <b>held</b>' : ', free') + '</span></div>';
@@ -759,13 +802,13 @@ var SFX = (function () {
       ? 'You: ' + sideWord(cfg.side) + '<small>Computer: ' + LEVELS[cfg.level].name + ' (' + sideWord(-cfg.side) + ')</small>'
       : 'Two players<small>Gold moves first</small>';
     $('hostInfo').innerHTML = hostLine(0) + hostLine(1);
-    var cnt = [[0, 0, 0], [0, 0, 0]], full = [5, 2, 2];
+    var cnt = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], full = [N, 2, 2, 0, 2];
     for (var i = 0; i < NN; i++) { var v = st.b[i]; if (v && BS.typeOf(v) !== BS.HOST) cnt[BS.colorOf(v)][BS.typeOf(v)]++; }
     [0, 1].forEach(function (c) {
       var h = '', n = 0;
-      for (var t = 0; t < 3; t++) for (var j = cnt[c][t]; j < full[t]; j++) {
+      [0, 4, 1, 2].forEach(function (t) { for (var j = cnt[c][t]; j < full[t]; j++) {
         n++; h += '<span class="mini" title="' + NAMES[t] + '"><div class="piece c' + c + '"><svg class="ico" viewBox="0 0 24 24"><use href="#' + ICO[t] + '"/></svg></div></span>';
-      }
+      } });
       $('cap' + c).innerHTML = h + '<span style="margin-left:4px">' + sideWord(colorSide(c)) + ' lost: ' + n + '</span>';
     });
     var ml = $('movelist'), hh = '';
@@ -782,8 +825,8 @@ var SFX = (function () {
     var wide = w >= 860;
     document.body.classList.toggle('wide', wide);
     var aw = wide ? w - 380 : w - 30, ah = h - 120;
-    var size = Math.floor(Math.min(aw, wide ? ah : Math.max(ah, 300)) / 5);
-    size = Math.max(52, Math.min(112, size));
+    var size = Math.floor(Math.min(aw, wide ? ah : Math.max(ah, 300)) / N);
+    size = Math.max(36, Math.min(92, size));
     document.documentElement.style.setProperty('--cell', size + 'px');
   }
 
@@ -801,14 +844,21 @@ var SFX = (function () {
     sel = s; targets = {}; turns = [];
     for (var i = 0; i < legal.length; i++) {
       var m = legal[i];
+      if (BS.isShot(m)) {
+        if ((((m - BS.SHOT0) / NN) | 0) !== s) continue;
+        var z = (m - BS.SHOT0) % NN;
+        targets[z] = { m: m, kills: true, shot: true, win: BS.typeOf(st.b[z]) === BS.HOST };
+        continue;
+      }
       if (BS.isTurn(m)) { if (((m - BS.TURN0) >> 3) === s) turns.push((m - BS.TURN0) & 7); continue; }
       if (((m / NN) | 0) !== s) continue;
       var t = m % NN, w = st.b[t], p = st.b[s];
-      var win = (w && BS.typeOf(w) === BS.HOST) || (BS.typeOf(p) === BS.HOST && ((t / 5) | 0) === BS.goalRank(BS.colorOf(p)));
+      var win = (w && BS.typeOf(w) === BS.HOST) || (BS.typeOf(p) === BS.HOST && ((t / N) | 0) === BS.goalRank(BS.colorOf(p)));
       targets[t] = { m: m, kills: !!w, win: win };
     }
-    var n = Object.keys(targets).length;
-    $('info').innerHTML = describe(s) + ': ' + (n ? n + ' move' + (n === 1 ? '' : 's') : 'no moves') + (turns.length ? ', or tap an arrow to turn.' : '.');
+    var n = 0, nShot = 0;
+    for (var k in targets) { if (targets[k].shot) nShot++; else n++; }
+    $('info').innerHTML = describe(s) + ': ' + (n ? n + ' move' + (n === 1 ? '' : 's') : 'no moves') + (nShot ? ', ' + nShot + ' shot' + (nShot === 1 ? '' : 's') : '') + (turns.length ? ', or tap an arrow to turn.' : '.');
   }
   function onCell(s) {
     if (stat.over || busy || !humanTurn()) return;
@@ -830,6 +880,30 @@ var SFX = (function () {
     deselect(); doMove(m);
   }
   function animate(u) {
+    if (BS.isShot(u.m)) {
+      var br = $('board').getBoundingClientRect(), a = cells[u.f].getBoundingClientRect(), z = cells[u.t].getBoundingClientRect();
+      var x0 = a.left + a.width / 2 - br.left, y0 = a.top + a.height / 2 - br.top, x1 = z.left + z.width / 2 - br.left, y1 = z.top + z.height / 2 - br.top;
+      var len = Math.hypot(x1 - x0, y1 - y0) - z.width * 0.3, ang = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI;
+      var bolt = document.createElement('div'); bolt.className = 'bolt';
+      var bl = Math.min(len, z.width * 0.7);
+      bolt.style.width = bl + 'px';
+      bolt.style.transform = 'translate(' + x0 + 'px,' + (y0 - 1.5) + 'px) rotate(' + ang + 'deg)';
+      $('board').appendChild(bolt);
+      var t0 = null, dur = 220;
+      (function step(ts) {
+        if (t0 === null) t0 = ts;
+        var k = Math.min(1, (ts - t0) / dur), d = (len - bl) * k;
+        bolt.style.transform = 'translate(' + (x0 + Math.cos(ang * Math.PI / 180) * d) + 'px,' + (y0 - 1.5 + Math.sin(ang * Math.PI / 180) * d) + 'px) rotate(' + ang + 'deg)';
+        if (k < 1) requestAnimationFrame(step); else if (bolt.parentNode) bolt.parentNode.removeChild(bolt);
+      })(performance.now());
+      var tgtEl = pieceIn(u.t);
+      if (tgtEl) {
+        tgtEl.classList.add('dying'); tgtEl.style.animationDelay = '.2s';
+        setTimeout(function () { cells[u.t].classList.add('hit'); }, 200);
+        setTimeout(function () { if (tgtEl.parentNode) tgtEl.parentNode.removeChild(tgtEl); cells[u.t].classList.remove('hit'); }, 540);
+      }
+      return;
+    }
     if (BS.isTurn(u.m)) return;
     var capEl = u.cap ? pieceIn(u.t) : null;
     if (capEl) {
