@@ -381,8 +381,27 @@
     var S = SPACING, P = PAD, R = RADIUS;
     var state = {
       diff: 8, puzzle: null, edges: [], index: {}, counts: [], target: [],
-      sel: -1, solved: false
+      sel: -1, solved: false, lost: false
     };
+
+    function isOnceMode() {
+      return !!(window.VaultOnce && typeof window.VaultOnce.active === 'function' && window.VaultOnce.active());
+    }
+
+    function anyStoneOver() {
+      if (!state.puzzle) return false;
+      var isl = state.puzzle.islands, deg = [], i;
+      for (i = 0; i < isl.length; i++) deg.push(0);
+      for (i = 0; i < state.edges.length; i++) {
+        var c = state.counts[i];
+        if (c > 0) {
+          deg[state.edges[i].a] += c;
+          deg[state.edges[i].b] += c;
+        }
+      }
+      for (i = 0; i < isl.length; i++) if (deg[i] > isl[i].n) return true;
+      return false;
+    }
 
     function setStatus(msg, cls) {
       statusEl.className = 'status-msg rb-status' + (cls ? ' ' + cls : '');
@@ -468,10 +487,25 @@
         if (typeof window.showWin === 'function') {
           window.showWin('The Rune Bridges are complete! Every stone is satisfied and the span is whole.');
         }
+        return;
+      }
+      // One-time links: going over a stone's required count (red rune) is an immediate loss.
+      if (isOnceMode() && !state.lost && anyStoneOver()) {
+        state.lost = true;
+        state.sel = -1;
+        setStatus('Too many bridges on a stone — game over', 'fail');
+        render();
+        if (window.VaultOnce && typeof window.VaultOnce.fail === 'function') {
+          window.VaultOnce.fail({
+            summary: 'Too many bridges on a stone — game over',
+            reason: 'overflow'
+          });
+        }
       }
     }
 
     function cycle(e) {
+      if (state.solved || state.lost) return;
       var cur = state.counts[e];
       if (cur === 0 && crossesExisting(e)) {
         setStatus('That bridge would cross an existing bridge.', 'fail');
@@ -484,7 +518,7 @@
     }
 
     function onIslandClick(i) {
-      if (state.solved) return;
+      if (state.solved || state.lost) return;
       if (state.sel < 0) {
         state.sel = i;
         setStatus('Now tap a stone in a straight, clear line.', 'info');
@@ -525,11 +559,13 @@
       });
       state.sel = -1;
       state.solved = false;
+      state.lost = false;
       setStatus('A new span of ' + p.islands.length + ' stones awaits, with up to ' + (p.max || 2) + ' bridges between two stones. Tap two stones in line to bridge them.', '');
       render();
     }
 
     function clearAll() {
+      if (state.lost && isOnceMode()) return;
       for (var i = 0; i < state.counts.length; i++) state.counts[i] = 0;
       state.sel = -1;
       setStatus('The bridges are cleared.', '');
@@ -551,12 +587,12 @@
     board.addEventListener('click', function (ev) {
       var t = ev.target;
       if (!t || !t.closest) return;
+      if (state.solved || state.lost) return;
       var stone = t.closest('[data-i]');
       var hit = t.closest('[data-e]');
       if (stone) {
         onIslandClick(Number(stone.getAttribute('data-i')));
       } else if (hit) {
-        if (state.solved) return;
         state.sel = -1;
         cycle(Number(hit.getAttribute('data-e')));
       }
