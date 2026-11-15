@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="c3ad38bef9";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=c3ad38bef9"></script>
+<!--vault-version--><script>(function(){var V="e54f27981b";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=e54f27981b"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -34,8 +34,11 @@ button.off{opacity:.55}
 #top nav{display:flex;gap:6px}
 #top nav button{padding:6px 10px;font-size:13px}
 
-#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
-body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#app{min-height:100%;min-height:100dvh;display:flex;flex-direction:column}
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px;flex:1;width:100%;min-width:0}
+body.wide #main{display:grid;grid-template-columns:auto 300px;grid-template-rows:auto auto;
+  grid-template-areas:"play panel" "play giveup";justify-content:center;align-content:start;align-items:start;gap:12px 18px}
+body.wide #play{grid-area:play}
 #play{display:flex;flex-direction:column;align-items:center;min-width:0}
 #status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
 #turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
@@ -84,7 +87,10 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
 .cell.tgt.kills::before{background:#ff9a1f;box-shadow:0 0 0 2px rgba(60,20,0,.75),0 0 10px #ff6a00}
 
 #panel{width:100%;max-width:calc(var(--cell)*11 + 8px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
-body.wide #panel{width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+body.wide #panel{grid-area:panel;width:300px;max-width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100dvh - var(--chrome-h, 110px) - 34px - var(--giveup-h, 0px));overflow:auto;min-height:0}
+#once-giveup{margin:12px auto 0;width:100%;max-width:calc(var(--cell)*11 + 8px)}
+body.wide #once-giveup{grid-area:giveup;margin:0;width:300px;max-width:300px;justify-self:stretch}
+html.vault-once #once-banner{width:100%;max-width:none;margin:0;border-left:0;border-right:0;border-radius:0}
 #panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 #matchup{font-weight:600}
 #matchup small{display:block;color:var(--dim);font-weight:400}
@@ -742,9 +748,37 @@ var SFX = (function () {
     var w = window.innerWidth, h = window.innerHeight;
     var wide = w >= 860;
     document.body.classList.toggle('wide', wide);
-    var aw = wide ? w - 360 : w - 24, ah = h - 120;
-    var size = Math.floor(Math.min(aw, wide ? ah : Math.max(ah, 300)) / 11) - 0;
-    size = Math.max(24, Math.min(60, size));
+    var main = $('main'), topEl = $('top'), banner = document.getElementById('once-banner');
+    var status = $('status'), info = $('info');
+    var padX = 16, padY = 22;
+    if (main) {
+      var cs = getComputedStyle(main);
+      padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    }
+    var topH = topEl ? topEl.getBoundingClientRect().height : 40;
+    var once = document.documentElement.classList.contains('vault-once');
+    var banH = banner ? banner.getBoundingClientRect().height : (once ? 44 : 0);
+    var stH = status ? status.getBoundingClientRect().height : 30;
+    var infoH = 24;
+    if (info) {
+      var im = getComputedStyle(info);
+      infoH = info.getBoundingClientRect().height + (parseFloat(im.marginTop) || 0) + (parseFloat(im.marginBottom) || 0);
+    }
+    var chrome = topH + banH + padY;
+    document.documentElement.style.setProperty('--chrome-h', chrome + 'px');
+    var give = document.getElementById('once-giveup');
+    var giveH = 0;
+    if (give) {
+      giveH = give.getBoundingClientRect().height + 12;
+    } else if (once) {
+      giveH = 50;
+    }
+    document.documentElement.style.setProperty('--giveup-h', giveH + 'px');
+    var panelW = wide ? 318 : 0;
+    var aw = w - padX - panelW, ah = h - chrome - stH - infoH - 4;
+    var size = Math.floor((Math.min(aw, ah) - 8) / 11);
+    size = Math.max(24, size);
     document.documentElement.style.setProperty('--cell', size + 'px');
   }
 
@@ -956,6 +990,7 @@ var SFX = (function () {
       var s = opts.side === -1 || opts.side === 'defenders' || opts.side === 'scarlet' ? -1 : 1;
       pend = { mode: 'ai', side: s, level: level };
       startNew();
+      layout();
     },
     result: function () {
       if (!stat || !stat.over) return { over: false };
