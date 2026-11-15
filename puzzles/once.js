@@ -18,6 +18,36 @@
   var CODE_SUM = 3;
   var CODE_LEN = CODE_BODY + CODE_SUM;
 
+  /* Clear leftover game saves, stats and settings from earlier versions.
+     Never touch one-time-link records or once-mode timer start keys. */
+  var LEGACY_KEYS = [
+    'vault-allfall', 'vault-lockpick', 'vault-once-links',
+    'runecube.v1',
+    'conjurerchess.v1', 'conjurer.v1', 'conjurer.v2',
+    'wyvern.v1', 'wyvern.v2', 'wyvern.v3', 'wyvern.v4',
+    'dragonchess.v1',
+    'hnefatafl.v1',
+    'backstab.v1', 'backstab.v2', 'backstab.v3',
+    'onitama.v1', 'roadblock.v1'
+  ];
+  function keepOnceKey(k) {
+    return k.indexOf('vault-once:') === 0 ||
+           k.indexOf('runecube.once.start:') === 0 ||
+           k.indexOf('crate.once.start:') === 0;
+  }
+  function clearLegacySaves() {
+    try {
+      var remove = [], i, k;
+      for (i = 0; i < localStorage.length; i++) {
+        k = localStorage.key(i);
+        if (!k || keepOnceKey(k)) continue;
+        if (LEGACY_KEYS.indexOf(k) >= 0 || k.indexOf('c1m_') === 0) remove.push(k);
+      }
+      for (i = 0; i < remove.length; i++) localStorage.removeItem(remove[i]);
+    } catch (e) { /* private mode */ }
+  }
+  clearLegacySaves();
+
   var GAMES = [
     { id: 'lock', file: 'lock.html', name: 'Lockpick',
       diffs: [

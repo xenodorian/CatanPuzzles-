@@ -4,7 +4,6 @@
   'use strict';
 
   var LEVELS = null;
-  var SAVE = 'vault-allfall';
   var GEMS = [
     { name: 'Coral disc', fill: '#c4503a', ink: '#1a1610' },
     { name: 'Brass diamond', fill: '#c9943a', ink: '#1a1610' },
@@ -28,24 +27,6 @@
 
   function onceOn() {
     return !!(root.VaultOnce && root.VaultOnce.active && root.VaultOnce.active());
-  }
-
-  function loadSave() {
-    try {
-      var raw = localStorage.getItem(SAVE);
-      if (!raw) return;
-      var o = JSON.parse(raw);
-      if (o && typeof o === 'object') {
-        save.cleared = Array.isArray(o.cleared) ? o.cleared : [];
-        save.flawless = Array.isArray(o.flawless) ? o.flawless : [];
-        save.level = o.level || 1;
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  function writeSave() {
-    if (onceOn()) return;
-    try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) { /* ignore */ }
   }
 
   function findMatches(grid) {
@@ -176,9 +157,8 @@
     var html = '';
     for (var i = 0; i < LEVELS.length; i++) {
       var done = save.cleared.indexOf(LEVELS[i].id) >= 0;
-      var open = i === 0 || save.cleared.indexOf(LEVELS[i].id) >= 0 || save.cleared.indexOf(LEVELS[i - 1].id) >= 0;
-      html += '<button type="button" class="btn' + (i === levelIndex ? ' active' : '') + '" data-af-level="' + (i + 1) + '"' +
-        (open ? '' : ' disabled') + '>' + (i + 1) + (done ? ' ✓' : '') + '</button>';
+      html += '<button type="button" class="btn' + (i === levelIndex ? ' active' : '') + '" data-af-level="' + (i + 1) + '">' +
+        (i + 1) + (done ? ' ✓' : '') + '</button>';
     }
     nav.innerHTML = html;
   }
@@ -248,8 +228,6 @@
     var flawless = attempt === 1 && !hinted;
     if (save.cleared.indexOf(level.id) < 0) save.cleared.push(level.id);
     if (flawless && save.flawless.indexOf(level.id) < 0) save.flawless.push(level.id);
-    save.level = Math.min(LEVELS.length, level.id + 1);
-    writeSave();
     var msg = 'Cleared in ' + waves + (waves === 1 ? ' wave.' : ' waves.');
     if (flawless) msg += ' Flawless.';
     setStatus('The board is clear.', 'success');
@@ -333,13 +311,7 @@
 
   function load(n) {
     var idx = Math.max(1, Math.min(LEVELS.length, n | 0)) - 1;
-    if (!onceOn()) {
-      var open = idx === 0 || save.cleared.indexOf(LEVELS[idx].id) >= 0 || save.cleared.indexOf(LEVELS[idx].id - 1) >= 0;
-      if (!open) idx = 0;
-    }
     levelIndex = idx;
-    save.level = LEVELS[idx].id;
-    writeSave();
     reset(false);
   }
 
@@ -408,13 +380,12 @@
       var p = root.VaultOnce.params();
       n = parseInt(p.p || p.d, 10);
     }
-    if (!isFinite(n)) n = save.level || 1;
+    if (!isFinite(n)) n = 1;
     load(n);
   }
 
   function boot(data) {
     LEVELS = data;
-    loadSave();
     bind();
     startLevelFromUrl();
   }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="5db08147a7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="ef21a914f3";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -162,7 +162,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 #choice button{font-size:13px;text-align:left}
 
 </style>
-<script src="puzzles/once.js?v=5db08147a7"></script>
+<script src="puzzles/once.js?v=ef21a914f3"></script>
 </head>
 <body>
 
@@ -1009,7 +1009,6 @@ var SFX = (function () {
     { name: 'Very Hard', depth: 3, noise: 40, time: 1500, note: 'Searches three moves deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 4, noise: 0, time: 3000, note: 'Searches four moves deep. Thinks for up to 3 seconds per move.' }
   ];
-  var KEY = 'conjurerchess.v1';
   var GLYPH = { 1: { w: '\u2659', b: '\u265F' }, 2: { w: '\u2658', b: '\u265E' }, 3: { w: '\u2657', b: '\u265D' },
                 4: { w: '\u2656', b: '\u265C' }, 5: { w: '\u2655', b: '\u265B' }, 6: { w: '\u2654', b: '\u265A' } };
   var $ = function (id) { return document.getElementById(id); };
@@ -1019,23 +1018,6 @@ var SFX = (function () {
   var sel = -1, targets = {}, flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var mode = null; // 'summon' | 'illusion' | 'reveal'
   var cells = new Array(64);
-
-  function store() {
-    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped })); } catch (e) { }
-  }
-  function restore() {
-    try {
-      var o = JSON.parse(localStorage.getItem(KEY));
-      if (!o || !o.cfg) return null;
-      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p' || o.cfg.mode === 'sim') cfg.mode = o.cfg.mode;
-      ['simG', 'simS'].forEach(function (k) { if (o.cfg[k] >= 0 && o.cfg[k] < LEVELS.length) cfg[k] = o.cfg[k] | 0; });
-      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
-      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
-      cfg.sound = o.cfg.sound !== false;
-      flipped = !!o.flipped;
-      return Array.isArray(o.moves) ? o.moves : null;
-    } catch (e) { return null; }
-  }
 
   function colorName(side) { return side > 0 ? 'White' : 'Black'; }
   function unitName(st, s) {
@@ -1549,7 +1531,7 @@ var SFX = (function () {
       else if (o.capture || o.ep) SFX.play('capture');
       else SFX.play('move');
     }
-    refreshMarks(); refreshPanel(); store();
+    refreshMarks(); refreshPanel();
     var delay = wasIll ? 400 : ((o.summon || o.illusionAct) ? 600 : 400);
     if (stat.over) afterAnim(700, showOver);
     else if (!humanTurn()) afterAnim(delay, function () { if (!stat.over) askAI(); });
@@ -1662,7 +1644,7 @@ var SFX = (function () {
     $('dlgNew').hidden = true;
     $('info').textContent = 'Tap a piece to see where it can go, or use Summon, Illusion or Reveal.';
     layout();
-    buildBoards(); refreshMarks(); refreshPanel(); store();
+    buildBoards(); refreshMarks(); refreshPanel();
     if (!humanTurn()) askAI();
   }
   function undo() {
@@ -1673,7 +1655,7 @@ var SFX = (function () {
     if (cfg.mode === 'ai' && list.length % 2 !== (cfg.side > 0 ? 0 : 1) && list.length) list.pop();
     replay(list); deselect(); clearMode();
     $('dlgOver').hidden = true;
-    buildBoards(); refreshMarks(); refreshPanel(); store();
+    buildBoards(); refreshMarks(); refreshPanel();
     if (!stat.over && !humanTurn()) askAI();
   }
   function buildGuide() {
@@ -1698,8 +1680,7 @@ var SFX = (function () {
   function init() {
     var onceLink = false;
     try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
-    var saved = onceLink ? null : restore();
-    replay(saved || []);
+    replay([]);
     SFX.setMuted(!cfg.sound);
     LEVELS.forEach(function (L, i) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
@@ -1722,8 +1703,8 @@ var SFX = (function () {
     $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
     $('newStart').onclick = startNew;
     $('bUndo').onclick = undo;
-    $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); store(); };
-    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); if (cfg.sound) SFX.play('move'); };
     $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
     $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
     $('overClose').onclick = function () { $('dlgOver').hidden = true; };
@@ -1744,9 +1725,7 @@ var SFX = (function () {
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
     window.addEventListener('load', function () { setTimeout(layout, 0); setTimeout(layout, 50); });
     if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
-    else if (!saved) openNew();
-    else if (stat.over) showOver();
-    else if (!humanTurn()) askAI();
+    else openNew();
   }
 
   function typOf(t) {

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="5db08147a7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=5db08147a7"></script>
+<!--vault-version--><script>(function(){var V="ef21a914f3";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=ef21a914f3"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -612,31 +612,12 @@ var SFX = (function () {
     { name: 'Very Hard', depth: 4, noise: 30, time: 1500, note: 'Searches four moves deep. Thinks for up to 1.5 seconds.' },
     { name: 'Expert', depth: 5, noise: 0, time: 3000, note: 'Searches up to five moves deep. Thinks for up to 3 seconds per move.' }
   ];
-  var KEY = 'hnefatafl.v1';
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, sound: true };
   var st, moves = [], texts = [], hist = [], stat = null, legal = [];
   var sel = -1, targets = {}, flipped = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var cells = new Array(121);
   var NN = HN.NN;
-
-  /* ---------- storage ---------- */
-  function store() {
-    if (window.VaultOnce && window.VaultOnce.active()) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped })); } catch (e) { }
-  }
-  function restore() {
-    try {
-      var o = JSON.parse(localStorage.getItem(KEY));
-      if (!o || !o.cfg) return null;
-      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p') cfg.mode = o.cfg.mode;
-      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
-      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
-      cfg.sound = o.cfg.sound !== false;
-      flipped = !!o.flipped;
-      return Array.isArray(o.moves) ? o.moves : null;
-    } catch (e) { return null; }
-  }
 
   /* ---------- game state ---------- */
   function push(m) {
@@ -830,7 +811,7 @@ var SFX = (function () {
     animate(u);
     SFX.play(u.caps.length ? 'capture' : 'move');
     $('info').textContent = texts[texts.length - 1];
-    refreshMarks(); refreshPanel(); store();
+    refreshMarks(); refreshPanel();
     if (stat.over) { setTimeout(function () { SFX.play(cfg.mode === '2p' || stat.winner === cfg.side ? 'win' : 'lose'); showOver(); }, 650); return; }
     if (!humanTurn()) setTimeout(askAI, 330);
   }
@@ -921,7 +902,7 @@ var SFX = (function () {
     replay([]); deselect();
     $('dlgNew').hidden = true; $('dlgOver').hidden = true;
     $('info').textContent = 'Tap a piece to see where it can go.';
-    buildBoard(); refreshMarks(); refreshPanel(); store();
+    buildBoard(); refreshMarks(); refreshPanel();
     if (!humanTurn()) setTimeout(askAI, 300);
   }
   function undo() {
@@ -932,7 +913,7 @@ var SFX = (function () {
     if (cfg.mode === 'ai' && list.length && (list.length % 2 === 0 ? 1 : -1) !== cfg.side) list.pop();
     replay(list); deselect();
     $('dlgOver').hidden = true;
-    buildBoard(); refreshMarks(); refreshPanel(); store();
+    buildBoard(); refreshMarks(); refreshPanel();
     if (!stat.over && !humanTurn()) askAI();
   }
 
@@ -940,8 +921,7 @@ var SFX = (function () {
   function init() {
     var onceLink = false;
     try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
-    var saved = onceLink ? null : restore();
-    replay(saved || []);
+    replay([]);
     SFX.setMuted(!cfg.sound);
     LEVELS.forEach(function (L, i) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
@@ -964,8 +944,8 @@ var SFX = (function () {
     $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
     $('newStart').onclick = startNew;
     $('bUndo').onclick = undo;
-    $('bFlip').onclick = function () { flipped = !flipped; buildBoard(); refreshMarks(); store(); };
-    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoard(); refreshMarks(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); if (cfg.sound) SFX.play('move'); };
     $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
     $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
     $('overClose').onclick = function () { $('dlgOver').hidden = true; };
@@ -978,9 +958,7 @@ var SFX = (function () {
     window.addEventListener('resize', layout);
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
     if (onceLink) { /* VaultOnce boots the pinned AI game through HnefataflUI.startOnce. */ }
-    else if (!saved) openNew();
-    else if (stat.over) showOver();
-    else if (!humanTurn()) askAI();
+    else openNew();
   }
   window.HnefataflUI = {
     startOnce: function (opts) {

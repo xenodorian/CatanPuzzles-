@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="5db08147a7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="ef21a914f3";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>One-time links - The Puzzle Vault</title>
-<link rel="stylesheet" href="vault.css?v=5db08147a7">
-<script src="puzzles/once.js?v=5db08147a7"></script>
-<script src="puzzles/cio-catalog.js?v=5db08147a7"></script>
+<link rel="stylesheet" href="vault.css?v=ef21a914f3">
+<script src="puzzles/once.js?v=ef21a914f3"></script>
+<script src="puzzles/cio-catalog.js?v=ef21a914f3"></script>
 <style>
   .links-wrap{max-width:720px;margin:0 auto;padding:0 1rem 3rem}
   .links-note{
@@ -121,7 +121,7 @@
 
 <script>
 (function () {
-  var HIST = 'vault-once-links';
+  var hist = [];
   var gameSel = document.getElementById('game');
   var diffSel = document.getElementById('diff');
   var puzzleSel = document.getElementById('puzzle');
@@ -200,16 +200,8 @@
     catch (e) { return rel; }
   }
 
-  function loadHist() {
-    try { return JSON.parse(localStorage.getItem(HIST) || '[]'); }
-    catch (e) { return []; }
-  }
-  function saveHist(list) {
-    try { localStorage.setItem(HIST, JSON.stringify(list.slice(0, 40))); } catch (e) { /* ignore */ }
-  }
-
   function renderHistory() {
-    var list = loadHist();
+    var list = hist;
     var wrap = document.getElementById('history-wrap');
     var host = document.getElementById('history');
     if (!list.length) { wrap.hidden = true; return; }
@@ -296,7 +288,7 @@
     }).join('');
     document.getElementById('batch').hidden = false;
 
-    var list = loadHist();
+    var list = hist;
     list.unshift({
       at: new Date().toISOString(),
       game: g.id,
@@ -305,7 +297,7 @@
       diffLabel: window.VaultOnce.diffLabel(g.id, optsBase.d),
       urls: urls.map(function (u) { return u.url; })
     });
-    saveHist(list);
+    hist = list.slice(0, 40);
     renderHistory();
   });
 

@@ -5,7 +5,6 @@
 (function () {
   'use strict';
   var E = window.RuneCubeEngine;
-  var KEY = 'runecube.v1';
   // There are no difficulty levels: every scramble is 4 random turns.
   var SCRAMBLE_TURNS = 4;
   // Rune glyphs drawn as strokes (viewBox 0 0 40 60) so no runic font is needed.
@@ -255,7 +254,7 @@
     if (dur) setTimeout(done, dur + 20); else done();
   }
   function afterMove(job) {
-    if (job.rot) { save(); return; } // reorientation: not a move, not in Undo
+    if (job.rot) { return; } // reorientation: not a move, not in Undo
     if (job.record) {
       if (job.undo) hist.pop(); else hist.push(mapMove(job.m, E._internal.transpose(G))); // history in the original frame
       var nowSolved = E.isSolved(cube);
@@ -263,7 +262,6 @@
       if (!once() && !startAt && !solved && !nowSolved && hist.length) startTimer();
       refresh();
       if (nowSolved && !solved && (scr.length || hist.length)) win();
-      save();
     }
   }
   function startTimer() {
@@ -325,7 +323,7 @@
     solved = true; stopTimer(); stopOnceTimer();
     var msg = 'Every face bears a single rune. Solved in ' + hist.length + ' move' + (hist.length === 1 ? '' : 's') + ' and ' + fmt(elapsed) + '.';
     setStatus(msg, 'success');
-    refresh(); save();
+    refresh();
     if (once()) { queue = []; if (typeof window.showWin === 'function') window.showWin(msg); return; } // one-time link: the challenge is complete
     showWinBar(msg); // not blocking: Undo, Keep turning or New scramble
   }
@@ -361,47 +359,10 @@
       onceDeadline = 0; stopOnceTimer();
       setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer; W A S D rotate the whole cube.');
     }
-    save();
   }
   function undo() {
     if (once() || !hist.length || animating || queue.length) return;
     turn(mapMove(E.inverse(hist[hist.length - 1]), G), { undo: true });
-  }
-
-  /* ---------- storage ---------- */
-  function save() {
-    if (once()) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ level: level, scr: scr, hist: hist, elapsed: startAt ? Date.now() - startAt : elapsed, solved: solved, winOpen: !!(els.winbar && !els.winbar.hidden), orient: G })); } catch (e) { }
-  }
-  function validOrient(M) { // a whole-cube rotation: 9 entries of -1/0/1, rows orthonormal, determinant +1
-    if (!Array.isArray(M) || M.length !== 9 || !M.every(function (x) { return x === -1 || x === 0 || x === 1; })) return false;
-    var MMt = E._internal.mulMM(M, E._internal.transpose(M));
-    for (var i = 0; i < 9; i++) if (MMt[i] !== IDENT[i]) return false;
-    var det = M[0] * (M[4] * M[8] - M[5] * M[7]) - M[1] * (M[3] * M[8] - M[5] * M[6]) + M[2] * (M[3] * M[7] - M[4] * M[6]);
-    return det === 1;
-  }
-  function restore() {
-    try {
-      var o = JSON.parse(localStorage.getItem(KEY));
-      if (!o || !Array.isArray(o.scr) || !Array.isArray(o.hist)) return false;
-      var ok = function (m) { return m === (m | 0) && m >= 0 && m < 12; };
-      if (!o.scr.every(ok) || !o.hist.every(ok)) return false;
-      if (o.level && o.level !== 'easy') return false; // saves from the old Medium/Hard/Expert levels start a fresh cube
-      level = 'easy'; scr = o.scr; hist = o.hist.slice();
-      G = validOrient(o.orient) ? o.orient.slice() : IDENT.slice();
-      cube = rotateAll(E.applyMoves(E.applyMoves(E.solvedCube(), scr), hist), G);
-      solved = !!o.solved && E.isSolved(cube);
-      elapsed = +o.elapsed || 0;
-      buildCube(); refresh();
-      hideWinBar();
-      if (solved) {
-        var wm = 'Every face bears a single rune. Solved in ' + hist.length + ' move' + (hist.length === 1 ? '' : 's') + ' and ' + fmt(elapsed) + '.';
-        setStatus(wm, 'success');
-        if (o.winOpen !== false) showWinBar(wm);
-      }
-      else if (hist.length) { startTimer(); setStatus('Welcome back. Your cube is as you left it.'); }
-      return true;
-    } catch (e) { return false; }
   }
 
   /* ---------- input: press a rune, then drag toward (or tap) an arrow ---------- */
@@ -532,7 +493,7 @@
     if (act === 'undo') undo();
     else if (act === 'new' || act === 'win-new') { if (!once()) newGame(); }
     else if (act === 'win-undo') { hideWinBar(); undo(); }
-    else if (act === 'win-keep') { hideWinBar(); save(); setStatus('Keep turning: scramble it by hand. Every turn counts as a move, Undo walks back through them, and solving it again counts as a new win.', 'success'); }
+    else if (act === 'win-keep') { hideWinBar(); setStatus('Keep turning: scramble it by hand. Every turn counts as a move, Undo walks back through them, and solving it again counts as a new win.', 'success'); }
   }
 
   function init() {
@@ -556,9 +517,7 @@
     window.addEventListener('resize', layout);
     cube = E.solvedCube();
     layout(); buildCube();
-    var onceLink = false;
-    try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { }
-    if (onceLink || !restore()) newGame();
+    newGame();
   }
 
   window.RuneCube = {

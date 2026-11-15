@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="5db08147a7";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=5db08147a7"></script>
+<!--vault-version--><script>(function(){var V="ef21a914f3";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=ef21a914f3"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
@@ -887,32 +887,12 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
   ];
   var REALM = ['', 'Underworld', 'Land', 'Sky'];
   var WY = typeof VARIANT_ID !== 'undefined' && VARIANT_ID === 'wyvern';
-  var KEY = WY ? 'wyvern.v3' : 'dragonchess.v1'; // bump the version when the Wyvern layout changes, so old saves are ignored
   var $ = function (id) { return document.getElementById(id); };
   var cfg = { mode: 'ai', side: 1, level: 1, simG: 0, simS: 0, sound: true };
   var st, moves = [], texts = [], caps = [], legal = [], stat = null;
   var sel = -1, targets = {}, pendRem = -1, flipped = false, side = false, busy = false, worker = null, useWorker = true, reqId = 0, reqAt = 0;
   var cells = new Array(288), guideByLetter = {};
   GUIDE.forEach(function (g) { guideByLetter[g.letter] = g; });
-
-  /* ---------- storage ---------- */
-  function store() {
-    try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, moves: moves, flipped: flipped, side: side })); } catch (e) { }
-  }
-  function restore() {
-    try {
-      var o = JSON.parse(localStorage.getItem(KEY));
-      if (!o || !o.cfg) return null;
-      if (o.cfg.mode === 'ai' || o.cfg.mode === '2p' || o.cfg.mode === 'sim') cfg.mode = o.cfg.mode;
-      ['simG', 'simS'].forEach(function (k) { if (o.cfg[k] >= 0 && o.cfg[k] < LEVELS.length) cfg[k] = o.cfg[k] | 0; });
-      if (o.cfg.side === 1 || o.cfg.side === -1) cfg.side = o.cfg.side;
-      if (o.cfg.level >= 0 && o.cfg.level < LEVELS.length) cfg.level = o.cfg.level | 0;
-      cfg.sound = o.cfg.sound !== false;
-      flipped = !!o.flipped;
-      side = !!o.side;
-      return Array.isArray(o.moves) ? o.moves : null;
-    } catch (e) { return null; }
-  }
 
   /* ---------- game state ---------- */
   function push(m) {
@@ -1186,7 +1166,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       else if (frozenCount() > wasFrozen) SFX.play('freeze');
       else SFX.play('move');
     }
-    refreshMarks(); refreshPanel(); store();
+    refreshMarks(); refreshPanel();
     if (stat.over) setTimeout(showOver, 700);
     else if (!humanTurn()) askAI();
   }
@@ -1281,7 +1261,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     replay([]); deselect();
     $('dlgNew').hidden = true;
     $('info').textContent = 'Tap a piece to see where it can go.';
-    buildBoards(); refreshMarks(); refreshPanel(); store();
+    buildBoards(); refreshMarks(); refreshPanel();
     if (!humanTurn()) askAI();
   }
   function undo() {
@@ -1292,7 +1272,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     if (cfg.mode === 'ai' && list.length % 2 !== (cfg.side > 0 ? 0 : 1) && list.length) list.pop();
     replay(list); deselect();
     $('dlgOver').hidden = true;
-    buildBoards(); refreshMarks(); refreshPanel(); store();
+    buildBoards(); refreshMarks(); refreshPanel();
     if (!stat.over && !humanTurn()) askAI();
   }
   function buildGuide() {
@@ -1333,8 +1313,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     DC.setVariant(WY ? 'wyvern' : 'dragonchess');
     var onceLink = false;
     try { onceLink = new URL(location.href).searchParams.has('once'); } catch (e) { onceLink = false; }
-    var saved = onceLink ? null : restore();
-    replay(saved || []);
+    replay([]);
     SFX.setMuted(!cfg.sound);
     LEVELS.forEach(function (L, i) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-v', i); b.textContent = L.name;
@@ -1359,9 +1338,9 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     $('newCancel').onclick = function () { $('dlgNew').hidden = true; };
     $('newStart').onclick = startNew;
     $('bUndo').onclick = undo;
-    $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); store(); };
-    $('bSide').onclick = function () { sidePinned = true; side = !side; layout(); store(); };
-    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
+    $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); };
+    $('bSide').onclick = function () { sidePinned = true; side = !side; layout(); };
+    $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); if (cfg.sound) SFX.play('move'); };
     $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
     $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
     $('overClose').onclick = function () { $('dlgOver').hidden = true; };
@@ -1375,9 +1354,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
     window.addEventListener('load', function () { setTimeout(layout, 0); setTimeout(layout, 50); });
     if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
-    else if (!saved) openNew();
-    else if (stat.over) showOver();
-    else if (!humanTurn()) askAI();
+    else openNew();
   }
   window.DragonChessUI = {
     startOnce: function (opts) {

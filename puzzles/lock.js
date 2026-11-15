@@ -11,7 +11,6 @@
   var UNLOCK_TURN = Math.PI / 2;
   var TURN_SPEED = UNLOCK_TURN / 0.75;
   var RETURN_SPEED = UNLOCK_TURN / 0.45;
-  var STORE_KEY = 'vault-lockpick';
   var REDUCE = false;
   try {
     REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,36 +49,6 @@
     '.lp-mute.off{opacity:0.55}',
     '.lp-health-label{font-family:Cinzel,serif;font-size:0.7rem;letter-spacing:0.12em;color:var(--gold-dim);text-transform:uppercase}'
   ].join('');
-
-  /* ---------- storage ---------- */
-
-  function loadStore() {
-    var out = { difficulty: 'easy', muted: false, locksOpened: 0, pinsBroken: 0 };
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return out;
-      var o = JSON.parse(raw);
-      if (o && typeof o === 'object') {
-        if (diffByKey(o.difficulty)) out.difficulty = o.difficulty;
-        else if (o.difficulty === 'veryhard') out.difficulty = 'hard';
-        out.muted = !!o.muted;
-        if (isFinite(o.locksOpened) && o.locksOpened >= 0) out.locksOpened = Math.floor(o.locksOpened);
-        if (isFinite(o.pinsBroken) && o.pinsBroken >= 0) out.pinsBroken = Math.floor(o.pinsBroken);
-      }
-    } catch (e) { /* private mode */ }
-    return out;
-  }
-
-  function saveStore() {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({
-        difficulty: state.diffKey,
-        muted: state.muted,
-        locksOpened: state.locksOpened,
-        pinsBroken: state.pinsBroken
-      }));
-    } catch (e) { /* ignore */ }
-  }
 
   /* ---------- audio (original Web Audio tones; no samples) ---------- */
 
@@ -223,7 +192,6 @@
   var canvas = null;
   var ctx = null;
   var dpr = 1;
-  var saved = loadStore();
   var tensionKeys = {};
   var tensionButton = false;
   var lastTs = 0;
@@ -241,16 +209,16 @@
   var statusHold = { text: '', cls: '', until: 0 };
 
   var state = {
-    diffKey: saved.difficulty,
+    diffKey: 'easy',
     sweet: 0,
     pin: 0,
     cylinder: 0,
     pinHealth: 1,
     pinsLeft: 7,
-    locksOpened: saved.locksOpened,
-    pinsBroken: saved.pinsBroken,
+    locksOpened: 0,
+    pinsBroken: 0,
     status: 'picking',
-    muted: saved.muted,
+    muted: false,
     wiggle: 0,
     tumblersSet: 0,
     tumblerLift: [],
@@ -1016,7 +984,6 @@
     tumblersFalling = true;
     awaitReturn = false;
     refreshActive();
-    saveStore();
     // One pick per lock: a snap fails the lock.
     state.status = 'failed';
     state.cylinder = Math.min(state.cylinder, maxAllowed());
@@ -1074,7 +1041,6 @@
     for (var i = 0; i < n; i++) state.tumblerLift[i] = 1;
     unlockFlash = 1;
     state.locksOpened += 1;
-    saveStore();
     sfxClunk();
     syncUi();
     if (typeof window.showWin === 'function') {
@@ -1280,7 +1246,6 @@
       btns[i].classList.toggle('active', on);
       btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
     }
-    saveStore();
     newLock();
   }
 
@@ -1288,7 +1253,6 @@
     state.muted = !state.muted;
     if (state.muted) stopScrape();
     else ensureAudio();
-    saveStore();
     syncUi();
   }
 
