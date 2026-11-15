@@ -3,9 +3,13 @@
 (function () {
   'use strict';
 
-  var SIZE_FOR = { 4: 5, 5: 5, 6: 6, 7: 7 };
+  var SIZE_FOR = { 8: 7, 10: 8, 12: 9, 15: 10 };
+  // Most bridges allowed between one pair of stones on each level (classic Hashi uses 2).
+  var MAX_FOR = { 8: 3, 10: 3, 12: 4, 15: 4 };
+  // Chance of each bridge count (1..max) when the generator lays a bridge.
+  var COUNT_WEIGHTS = { 2: [0.6, 0.4], 3: [0.42, 0.33, 0.25], 4: [0.32, 0.28, 0.22, 0.18] };
   var MAX_ATTEMPTS = 200;
-  var EASY_ISLANDS = 4;       // the Easy tier
+  var EASY_ISLANDS = 8;       // the Easy tier
   var EASY_MIN_SOLUTIONS = 2; // Easy puzzles need at least this many solutions
   var DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 
@@ -13,7 +17,7 @@
   var SPACING = 72;   // distance between neighbouring lattice points
   var PAD = 40;       // margin around the grid
   var RADIUS = 32;    // island radius
-  var LANE = 6;       // offset of each line of a double bridge
+  var LANES = { 1: [0], 2: [-6, 6], 3: [-9, 0, 9], 4: [-12, -4, 4, 12] }; // line offsets per bridge count
 
   function rnd(n) { return Math.floor(Math.random() * n); }
 
@@ -71,11 +75,11 @@
   // Exact solution counter (stops once `limit` solutions are found).
   function countSolutions(puzzle, limit) {
     if (limit === undefined) limit = Infinity;
-    var isl = puzzle.islands, n = isl.length;
+    var isl = puzzle.islands, n = isl.length, MAX = puzzle.max || 2;
     var edges = visibleEdges(isl), E = edges.length;
     var need = [], cap = [], i;
     for (i = 0; i < n; i++) { need.push(isl[i].n); cap.push(0); }
-    for (i = 0; i < E; i++) { cap[edges[i].a] += 2; cap[edges[i].b] += 2; }
+    for (i = 0; i < E; i++) { cap[edges[i].a] += MAX; cap[edges[i].b] += MAX; }
     for (i = 0; i < n; i++) if (need[i] < 0 || need[i] > cap[i]) return 0;
 
     var counts = [], active = [], found = 0;
@@ -90,7 +94,7 @@
         return;
       }
       var e = edges[idx];
-      for (var cnt = 0; cnt <= 2; cnt++) {
+      for (var cnt = 0; cnt <= MAX; cnt++) {
         if (cnt > need[e.a] || cnt > need[e.b]) break;
         if (cnt > 0) {
           var clash = false;
@@ -100,7 +104,7 @@
           if (clash) continue;
         }
         need[e.a] -= cnt; need[e.b] -= cnt;
-        cap[e.a] -= 2; cap[e.b] -= 2;
+        cap[e.a] -= MAX; cap[e.b] -= MAX;
         if (need[e.a] <= cap[e.a] && need[e.b] <= cap[e.b]) {
           counts[idx] = cnt;
           if (cnt > 0) active.push(idx);
@@ -109,7 +113,7 @@
           counts[idx] = 0;
         }
         need[e.a] += cnt; need[e.b] += cnt;
-        cap[e.a] += 2; cap[e.b] += 2;
+        cap[e.a] += MAX; cap[e.b] += MAX;
         if (found >= limit) return;
       }
     }
@@ -119,7 +123,7 @@
 
   // Full rule check of a bridge configuration against a puzzle.
   function isSolved(puzzle, bridges) {
-    var isl = puzzle.islands, n = isl.length;
+    var isl = puzzle.islands, n = isl.length, MAX = puzzle.max || 2;
     var edges = visibleEdges(isl);
     var index = {}, e, i, j;
     for (e = 0; e < edges.length; e++) index[edges[e].a + ',' + edges[e].b] = e;
@@ -133,12 +137,12 @@
       if (!br) continue;
       var c = br.count;
       if (c === 0) continue;
-      if (c !== 1 && c !== 2) return false;
+      if (c !== Math.floor(c) || c < 1 || c > MAX) return false;
       if (br.a === br.b) return false;
       var idx = index[Math.min(br.a, br.b) + ',' + Math.max(br.a, br.b)];
       if (idx === undefined) return false;
       cnt[idx] += c;
-      if (cnt[idx] > 2) return false;
+      if (cnt[idx] > MAX) return false;
     }
 
     var pairs = [];
@@ -159,7 +163,8 @@
   }
 
   // One random construction from a solution. Returns null if it gets stuck.
-  function buildOnce(k, size) {
+  function buildOnce(k, size, max) {
+    max = max || 2;
     var isl = [{ r: rnd(size), c: rnd(size) }];
     var bridges = []; // {a, b, count, g}
 
@@ -191,7 +196,11 @@
       }
       return false;
     }
-    function pickCount() { return Math.random() < 0.6 ? 1 : 2; }
+    function pickCount() {
+      var w = COUNT_WEIGHTS[max], x = Math.random();
+      for (var q = 0; q < w.length; q++) { x -= w[q]; if (x < 0) return q + 1; }
+      return w.length;
+    }
 
     var guard = 0;
     while (isl.length < k) {
@@ -208,7 +217,7 @@
               var existing = findBridge(i, j);
               if (!existing) {
                 if (!crossesAny(geom(isl[i].r, isl[i].c, pr, pc))) links.push({ a: i, b: j, br: null });
-              } else if (existing.count === 1) {
+              } else if (existing.count < max) {
                 links.push({ a: i, b: j, br: existing });
               }
               break;
@@ -228,7 +237,7 @@
       if (useLink) {
         var L = links[rnd(links.length)];
         if (L.br) {
-          L.br.count = 2;
+          L.br.count += 1 + rnd(max - L.br.count);
         } else {
           bridges.push({
             a: L.a, b: L.b, count: pickCount(),
@@ -250,20 +259,21 @@
       islands[b.b].n += b.count;
       return { a: Math.min(b.a, b.b), b: Math.max(b.a, b.b), count: b.count };
     });
-    return { size: size, islands: islands, solution: solution };
+    return { size: size, max: max, islands: islands, solution: solution };
   }
 
   // Build a puzzle with exactly `islandCount` islands and (preferably) exactly one solution.
-  // Easy (4 islands) is the exception: it must have at least two solutions, so there is
+  // Islands per level: Easy 8, Medium 10, Hard 12, Very Hard 15 (grid 7x7, 8x8, 9x9, 10x10).
+  // Easy (8 islands) is the exception: it must have at least two solutions, so there is
   // more than one way to win.
   function generate(islandCount) {
-    var k = SIZE_FOR[islandCount] ? islandCount : 4;
-    if (k === EASY_ISLANDS) return generateEasy(k, SIZE_FOR[k]);
-    var size = SIZE_FOR[k];
+    var k = SIZE_FOR[islandCount] ? islandCount : EASY_ISLANDS;
+    var size = SIZE_FOR[k], max = MAX_FOR[k];
+    if (k === EASY_ISLANDS) return generateEasy(k, size, max);
     var best = null, tries = 0, emergency = 0;
     while ((tries < MAX_ATTEMPTS || !best) && emergency < 5000) {
       emergency++;
-      var p = buildOnce(k, size);
+      var p = buildOnce(k, size, max);
       if (!p) continue;
       tries++;
       var cnt = countSolutions(p, 2);
@@ -274,9 +284,9 @@
     return best.p;
   }
 
-  function generateEasy(k, size) {
+  function generateEasy(k, size, max) {
     for (;;) {
-      var p = buildOnce(k, size);
+      var p = buildOnce(k, size, max);
       if (p && countSolutions(p, EASY_MIN_SOLUTIONS) >= EASY_MIN_SOLUTIONS) return p;
     }
   }
@@ -284,6 +294,7 @@
   window.RuneBridges = {
     generate: generate,
     countSolutions: countSolutions,
+    MAX_FOR: MAX_FOR,
     isSolved: isSolved
   };
 
@@ -294,7 +305,7 @@
     '.rb-diff{flex-wrap:wrap;}',
     '.rb-diff .btn{font-size:.82rem;padding:.5rem .75rem;}',
     '.rb-stage{display:flex;flex-direction:column;align-items:center;gap:1rem;width:100%;}',
-    '.rb-board{width:100%;max-width:460px;margin:0 auto;}',
+    '.rb-board{width:100%;max-width:560px;margin:0 auto;}',
     '.rb-board svg{display:block;width:100%;height:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none;}',
     '.rb-bridge{stroke:var(--gold);stroke-linecap:round;}',
     '.rb-solved .rb-bridge{stroke:var(--success);}',
@@ -308,7 +319,11 @@
     '.rb-ok text{fill:var(--success);}',
     '.rb-over circle{stroke:var(--danger);}',
     '.rb-over text{fill:var(--danger);}',
-    '.rb-isl.rb-sel circle{stroke:var(--rune);stroke-width:8;}'
+    '.rb-isl.rb-sel circle{stroke:var(--rune);stroke-width:8;}',
+    '.rb-badge{pointer-events:none;}',
+    '.rb-badge circle{fill:var(--stone);stroke:var(--gold);stroke-width:3;}',
+    '.rb-solved .rb-badge circle{stroke:var(--success);}',
+    '.rb-badge text{font-family:"Cinzel",serif;font-weight:700;font-size:21px;text-anchor:middle;dominant-baseline:central;fill:var(--gold-bright);}'
   ].join('\n');
 
   var MARKUP = [
@@ -321,10 +336,10 @@
     '    must carry exactly the number of bridges it shows, and every stone must join one single span."',
     '  </p>',
     '  <div class="btn-row diff-row rb-diff" role="group" aria-label="Difficulty">',
-    '    <button class="btn active" data-rb-diff="4" aria-pressed="true">Easy 4</button>',
-    '    <button class="btn" data-rb-diff="5" aria-pressed="false">Medium 5</button>',
-    '    <button class="btn" data-rb-diff="6" aria-pressed="false">Hard 6</button>',
-    '    <button class="btn" data-rb-diff="7" aria-pressed="false">Very Hard 7</button>',
+    '    <button class="btn active" data-rb-diff="8" aria-pressed="true">Easy 8</button>',
+    '    <button class="btn" data-rb-diff="10" aria-pressed="false">Medium 10</button>',
+    '    <button class="btn" data-rb-diff="12" aria-pressed="false">Hard 12</button>',
+    '    <button class="btn" data-rb-diff="15" aria-pressed="false">Very Hard 15</button>',
     '  </div>',
     '  <div class="rb-stage">',
     '    <div class="rb-board"></div>',
@@ -338,10 +353,12 @@
     '</div>',
     '<div class="dm-panel">',
     '  <div class="dm-label">Rune Bridges</div>',
-    '  <p>Tap a stone and then a stone in a straight, clear line to add or cycle a bridge (none, single, double).',
-    '  Tap a bridge to cycle it directly. Bridges may not cross. Every stone needs exactly its number of bridges,',
-    '  and all stones must be linked together. Easy spans have at least two different solutions, and any',
-  '  layout that follows the rules wins.</p>',
+    '  <p>Tap a stone and then a stone in a straight, clear line to add a bridge; tap again to add more, and past the limit',
+    '  it goes back to none. Tap a bridge to cycle it directly. Easy and Medium allow up to 3 bridges between two stones,',
+    '  Hard and Very Hard up to 4 (shown as stacked lines with a number). Bridges may not cross. Every stone needs exactly its number of bridges,',
+    '  and all stones must be linked together. The number on each level is how many stones it has: Easy 8 (7 by 7 grid),',
+    '  Medium 10 (8 by 8), Hard 12 (9 by 9), Very Hard 15 (10 by 10). Easy spans have at least two different solutions;',
+    '  harder spans have exactly one. Any layout that follows the rules wins.</p>',
     '</div>'
   ].join('\n');
 
@@ -363,7 +380,7 @@
 
     var S = SPACING, P = PAD, R = RADIUS;
     var state = {
-      diff: 4, puzzle: null, edges: [], index: {}, counts: [], target: [],
+      diff: 8, puzzle: null, edges: [], index: {}, counts: [], target: [],
       sel: -1, solved: false
     };
 
@@ -405,11 +422,13 @@
         var A = xy(e.a), B = xy(e.b);
         if (cnt > 0) {
           deg[e.a] += cnt; deg[e.b] += cnt;
-          if (cnt === 1) {
-            bridgesSvg += seg(A, B, 0, e.g.h, 'rb-bridge', ' stroke-width="8"');
-          } else {
-            bridgesSvg += seg(A, B, -LANE, e.g.h, 'rb-bridge', ' stroke-width="7"');
-            bridgesSvg += seg(A, B, LANE, e.g.h, 'rb-bridge', ' stroke-width="7"');
+          // stacked parallel lines, one per bridge
+          var lanes = LANES[cnt], sw = cnt <= 2 ? (cnt === 1 ? 8 : 7) : (cnt === 3 ? 5.5 : 4.5);
+          for (var li = 0; li < lanes.length; li++) bridgesSvg += seg(A, B, lanes[li], e.g.h, 'rb-bridge', ' stroke-width="' + sw + '"');
+          // numeral badge on triple and quadruple bridges so they read at a glance
+          if (cnt >= 3) {
+            var mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+            bridgesSvg += '<g class="rb-badge"><circle cx="' + mx + '" cy="' + my + '" r="17"/><text x="' + mx + '" y="' + my + '">' + cnt + '</text></g>';
           }
         }
         hitsSvg += seg(A, B, 0, e.g.h, 'rb-hit', ' data-e="' + idx + '"');
@@ -423,7 +442,7 @@
         var q = xy(idx);
         islSvg += '<g class="rb-isl ' + cls + '" data-i="' + idx + '">' +
           '<circle cx="' + q.x + '" cy="' + q.y + '" r="' + R + '"/>' +
-          '<text x="' + q.x + '" y="' + q.y + '">' + need + '</text></g>';
+          '<text x="' + q.x + '" y="' + q.y + '"' + (need > 9 ? ' style="font-size:24px"' : '') + '>' + need + '</text></g>';
       });
 
       board.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + W + '" role="img" aria-label="Rune Bridges board, ' +
@@ -459,7 +478,7 @@
         render();
         return;
       }
-      state.counts[e] = (cur + 1) % 3;
+      state.counts[e] = (cur + 1) % ((state.puzzle.max || 2) + 1);
       setStatus('', '');
       afterChange();
     }
@@ -506,7 +525,7 @@
       });
       state.sel = -1;
       state.solved = false;
-      setStatus('A new span of ' + p.islands.length + ' stones awaits. Tap two stones in line to bridge them.', '');
+      setStatus('A new span of ' + p.islands.length + ' stones awaits, with up to ' + (p.max || 2) + ' bridges between two stones. Tap two stones in line to bridge them.', '');
       render();
     }
 

@@ -118,31 +118,53 @@ function load(file, extra) {
   const R = ctx.window.RuneBridges;
   // Independent brute force over bridge counts (0..2) for each visible pair, judged by the game's isSolved.
   function allSolutions(p) {
-    const isl = p.islands, pairs = [];
-    for (let a = 0; a < isl.length; a++) for (let b = a + 1; b < isl.length; b++) if (isl[a].r === isl[b].r || isl[a].c === isl[b].c) pairs.push([a, b]);
-    const sols = [], cnt = new Array(pairs.length).fill(0);
+    // Only pairs with no stone between them can carry a bridge (isSolved rejects the rest), and a stone
+    // can never carry more bridges than its number, so those branches are skipped. Counts go up to p.max.
+    const isl = p.islands, pairs = [], MAX = p.max || 2;
+    for (let a = 0; a < isl.length; a++) for (let b = a + 1; b < isl.length; b++) {
+      const A = isl[a], B = isl[b];
+      if (A.r !== B.r && A.c !== B.c) continue;
+      const between = isl.some((s, t) => t !== a && t !== b && (A.r === B.r ? s.r === A.r && s.c > Math.min(A.c, B.c) && s.c < Math.max(A.c, B.c) : s.c === A.c && s.r > Math.min(A.r, B.r) && s.r < Math.max(A.r, B.r)));
+      if (!between) pairs.push([a, b]);
+    }
+    const sols = [], cnt = new Array(pairs.length).fill(0), left = isl.map(s => s.n);
     (function rec(i) {
       if (i === pairs.length) {
+        if (left.some(x => x !== 0)) return;
         const br = pairs.map((q, j) => ({ a: q[0], b: q[1], count: cnt[j] })).filter(x => x.count);
         if (R.isSolved(p, br)) sols.push(br);
         return;
       }
-      for (let c = 0; c <= 2; c++) { cnt[i] = c; rec(i + 1); }
+      const [a, b] = pairs[i];
+      for (let c = 0; c <= MAX && c <= left[a] && c <= left[b]; c++) { cnt[i] = c; left[a] -= c; left[b] -= c; rec(i + 1); left[a] += c; left[b] += c; }
       cnt[i] = 0;
     })(0);
     return sols;
   }
   const hist = {};
   for (let i = 0; i < SAMPLES; i++) {
-    const p = R.generate(4), sols = allSolutions(p);
+    const p = R.generate(8), sols = allSolutions(p);
     hist[sols.length] = (hist[sols.length] || 0) + 1;
     ok(sols.length >= 2, `easy bridges with ${sols.length} solution(s)`);
-    ok(R.countSolutions(p, 10) === sols.length, 'countSolutions disagrees with brute force');
+    ok(R.countSolutions(p, 1000) === sols.length, 'countSolutions disagrees with brute force');
+    ok(p.max === 3 && p.solution.every(b => b.count >= 1 && b.count <= 3), 'easy bridge counts outside 1..3');
   }
-  console.log(`  ${SAMPLES} easy puzzles, solutions per puzzle (brute force via isSolved): ${JSON.stringify(hist)}`);
-  const med = {};
-  for (let i = 0; i < 40; i++) { const c = R.countSolutions(R.generate(5), 2); med[c] = (med[c] || 0) + 1; }
-  console.log(`  medium (unchanged generator) sample solution counts capped at 2: ${JSON.stringify(med)}`);
+  console.log(`  ${SAMPLES} easy (8 stones, up to 3 bridges a pair) puzzles, solutions per puzzle (brute force via isSolved): ${JSON.stringify(hist)}`);
+  for (const k of [10, 12, 15]) {
+    const h = {}, top = {}; let ms = 0;
+    for (let i = 0; i < 40; i++) {
+      const t = Date.now(), p = R.generate(k); ms += Date.now() - t;
+      ok(p.islands.length === k, `${k}-stone level built ${p.islands.length} stones`);
+      ok(p.max === R.MAX_FOR[k] && p.solution.every(b => b.count >= 1 && b.count <= p.max), `${k}-stone bridge counts outside 1..max`);
+      ok(R.isSolved(p, p.solution), `${k}-stone stored solution rejected`);
+      const c = R.countSolutions(p, 2); h[c] = (h[c] || 0) + 1;
+      ok(c === 1, `${k}-stone puzzle with ${c} solution(s)`);
+      const m = Math.max(...p.solution.map(b => b.count)); top[m] = (top[m] || 0) + 1;
+    }
+    console.log(`  ${k} stones (max ${R.MAX_FOR[k]} a pair): 40 puzzles, solutions ${JSON.stringify(h)}, biggest bridge per puzzle ${JSON.stringify(top)}, avg ${(ms / 40).toFixed(1)} ms`);
+  }
+  // a smaller cross-check of the counter against brute force on harder levels
+  for (let i = 0; i < 15; i++) { const p = R.generate(10); ok(allSolutions(p).length === 1, 'brute force finds more than one medium solution'); }
 })();
 
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nAll checks passed.');

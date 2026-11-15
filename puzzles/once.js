@@ -44,10 +44,10 @@
       hasSeed: true },
     { id: 'bridges', file: 'bridges.html', name: 'Rune Bridges',
       diffs: [
-        { key: '4', label: 'Easy 4' },
-        { key: '5', label: 'Medium 5' },
-        { key: '6', label: 'Hard 6' },
-        { key: '7', label: 'Very Hard 7' }
+        { key: '8', label: 'Easy 8' },
+        { key: '10', label: 'Medium 10' },
+        { key: '12', label: 'Hard 12' },
+        { key: '15', label: 'Very Hard 15' }
       ],
       hasSeed: true },
     { id: 'allfall', file: 'allfall.html', name: 'Allfall',
@@ -673,7 +673,7 @@
   function bootBridges() {
     if (root.RuneBridges && typeof root.RuneBridges.setDifficulty === 'function') {
       var k = parseInt(params.d, 10);
-      withSeed(function () { root.RuneBridges.setDifficulty(isFinite(k) ? k : 4); });
+      withSeed(function () { root.RuneBridges.setDifficulty(isFinite(k) ? k : 8); });
     }
   }
 
