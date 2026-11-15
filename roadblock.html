@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="349ec76504";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=349ec76504"></script>
+<!--vault-version--><script>(function(){var V="fd4381e356";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<<<<<<< Updated upstream
+<script src="puzzles/once.js?v=fd4381e356"></script>
+=======
+<script src="puzzles/once.js?v=fd4381e356"></script>
+>>>>>>> Stashed changes
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -37,7 +41,8 @@ button.off{opacity:.55}
 #main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
 body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
 #play{display:flex;flex-direction:column;align-items:center;min-width:0;width:var(--bw);max-width:100%}
-#status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
+#status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 8px;min-height:30px;font-weight:600;font-size:15px;text-align:center;max-width:100%}
+#status.cut #statusText{color:#ffe08a}
 #turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
 #turnTok.g{background:radial-gradient(circle at 35% 30%,#fff1bf,#f2c14e 55%,#9a6b10);border-color:#5d3d00}
 #turnTok.s{background:radial-gradient(circle at 35% 30%,#ffc2b8,#e0483e 55%,#7a1712);border-color:#3d0805}
@@ -110,6 +115,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 .row.between>button{flex:0 0 auto}
 .note{color:var(--dim);font-size:13px;margin:8px 0 0;min-height:36px}
 #optLevel>button{flex:1 1 28%}
+#dlgOver{background:rgba(4,7,14,.3);-webkit-backdrop-filter:none;backdrop-filter:none;align-items:flex-end;padding-bottom:max(5vh,env(safe-area-inset-bottom))}
 #guideBody{-webkit-user-select:text;user-select:text}
 #guideBody p,#guideBody li{color:#cfd6e6;font-size:14px}
 #guideBody ul{padding-left:18px;margin:6px 0}
@@ -145,7 +151,8 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
         <li>Gold opens with 1 road. After that every turn is <b>2 roads</b>.</li>
         <li>Each road must touch one of your ports or roads.</li>
         <li>A crossroads your road touches is yours: your opponent can never build there.</li>
-        <li>Win by linking your ports, or by cutting your opponent off so no route is left.</li>
+        <li>Win by linking your two harbours with one road.</li>
+        <li>Cut your opponent off (no route left) and they pass every turn while you finish your road.</li>
       </ul>
       <h2>Turns</h2>
       <ol id="movelist"></ol>
@@ -203,8 +210,9 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
         <li><b>Turns.</b> Gold opens with a single road. From then on every turn, for both players, is <b>two roads</b>, like playing a Road Building card each turn. (One road a turn gives the first player a big edge; this order makes it close to even.)</li>
         <li><b>Building.</b> Each new road must go on an empty edge and touch your network: one of your harbour crossroads, or the end of one of your roads. Your network may branch.</li>
         <li><b>Roadblock rule.</b> A crossroads touched by your road, or at your harbour, belongs to you. Your opponent can never build a road that touches it, the same way a rival settlement stops a road in Catan. Because the two routes have to cross somewhere, only one player can get through each crossing.</li>
-        <li><b>Winning.</b> You win the moment your harbours are linked, or the moment your opponent has <b>no possible route left</b> between their harbours (cut off). The game checks this after every road and highlights the winning road, or the winner's open route if it ended by a cut-off.</li>
-        <li><b>No legal road.</b> A player who cannot build loses. This can only happen to a player who is already cut off.</li>
+        <li><b>Winning.</b> The game ends only when someone links their two harbours with one unbroken road. That road glows when the game ends.</li>
+        <li><b>Cut off.</b> If your opponent has <b>no possible route left</b> between their harbours, they are cut off. The game says so, and from then on a cut-off player passes automatically every turn and builds nothing, so they can't block your last route out of spite. You place every remaining road yourself; a dotted line shows one shortest way to finish. (Because the two routes have to cross, a cut-off player could never link anyway.)</li>
+        <li><b>No legal road.</b> A player with no legal road also passes. Only a cut-off player can end up there, and the other player always has a road to build, so the game can't stall. If neither side could ever link, it would be a draw; the rules make that impossible, but it's handled.</li>
         <li><b>Shortest routes</b> in the sidebar show how many more roads each player needs at best.</li>
         <li><b>Controls.</b> With a mouse, hover to preview a road and click to build. On a touch screen, tap an edge to preview it and tap it again to build. Dashed lines mark every legal road.</li>
       </ul>
@@ -221,7 +229,7 @@ var RB = (function () {
   // Rule knobs (fixed in play; config() exists for experiments and tests).
   var TH = 1;          // a crossroads is closed to you once the opponent has TH roads touching it (1 = any road claims it)
   var DOUBLE = 2;      // turn order: 2 = Gold opens with 1 road, then every turn is 2 roads; 0 = 1 road each; 1 = Scarlet's first turn is 2
-  var WIN = 100000, INF = 1000;
+  var WIN = 100000, INF = 1000, PASS = -1;
   var hexes = [], verts = [], edges = [], vkey = {}, ekey = {};
   var q, r, k;
   function vid(x, y) {
@@ -285,7 +293,6 @@ var RB = (function () {
   function fromData(d) { var st = newGame(); (d.moves || []).forEach(function (m) { make(st, m); }); return st; }
   // colour to move after `ply` roads: 0 Gold, 1 Scarlet
   function colorAt(ply) {
-    if (DOUBLE === 3) { if (ply <= 1) return ply; return ((ply - 2) >> 1) & 1; }
     if (DOUBLE === 2) { if (ply === 0) return 0; return ((ply - 1) >> 1) & 1 ? 0 : 1; }
     if (DOUBLE) { if (ply === 0) return 0; if (ply <= 2) return 1; return (ply + 1) & 1; }
     return ply & 1;
@@ -293,7 +300,17 @@ var RB = (function () {
   function turnColor(st) { return colorAt(st.ply); }
   function open(st, v, c) { return PORTV[v] !== 1 - c && st.cnt[(1 - c) * V + v] < TH; }
   function inNet(st, v, c) { return PORTV[v] === c || st.cnt[c * V + v] > 0; }
+  // A player with no possible route left (cut off) can only pass; so can a player with no legal road.
+  function mustPass(st, c) {
+    if (dist(st, c) >= INF) return true;
+    for (var m = 0; m < E; m++) if (roadOk(st, m, c)) return false;
+    return true;
+  }
   function legalFor(st, m, c) {
+    if (m === PASS) return mustPass(st, c);
+    return roadOk(st, m, c) && dist(st, c) < INF;
+  }
+  function roadOk(st, m, c) {
     if (m < 0 || m >= E || st.e[m]) return false;
     var a = EA[m], b = EB[m];
     if (!open(st, a, c) || !open(st, b, c)) return false;
@@ -302,16 +319,19 @@ var RB = (function () {
   function genMoves(st, out) {
     out = out || [];
     var c = turnColor(st);
-    for (var m = 0; m < E; m++) if (legalFor(st, m, c)) out.push(m);
+    if (dist(st, c) < INF) for (var m = 0; m < E; m++) if (roadOk(st, m, c)) out.push(m);
+    if (!out.length) out.push(PASS);
     return out;
   }
   function make(st, m) {
     var c = turnColor(st);
+    if (m === PASS) { st.ply++; return m; }
     st.e[m] = c + 1; st.cnt[c * V + EA[m]]++; st.cnt[c * V + EB[m]]++; st.ply++;
     return m;
   }
   function unmake(st, m) {
     st.ply--;
+    if (m === PASS) return;
     var c = st.e[m] - 1;
     st.e[m] = 0; st.cnt[c * V + EA[m]]--; st.cnt[c * V + EB[m]]--;
   }
@@ -399,15 +419,20 @@ var RB = (function () {
     while (P[end] >= 0 && g++ < V) { path.push(P[end]); end = other(P[end], end); }
     return path;
   }
-  // Game status after the last move
-  function status(st) {
-    if (st.ply === 0) return { over: false };
-    var last = colorAt(st.ply - 1), opp = 1 - last;
-    if (connected(st, last)) return { over: true, winner: last, result: 'connect' };
-    if (dist(st, opp) >= INF) return { over: true, winner: last, result: 'cutoff' };
-    var c = turnColor(st);
-    if (!genMoves(st).length) return { over: true, winner: 1 - c, result: 'nomoves' };
-    return { over: false };
+  // Game status after the last move. The game ends only when someone links their harbours.
+  // A cut-off player keeps passing until the other finishes; cut stays reported for the UI.
+  function status(st, moves) {
+    var cut = [dist(st, 0) >= INF, dist(st, 1) >= INF];
+    if (st.ply === 0) return { over: false, cut: cut };
+    for (var k = 0; k < 2; k++) if (connected(st, k)) return { over: true, winner: k, result: 'connect', cut: cut };
+    // Safety nets (cannot arise under these rules): nobody can ever link, or both sides only pass.
+    if (cut[0] && cut[1]) return { over: true, winner: -1, result: 'stuck', cut: cut };
+    if (moves && moves.length >= 4) {
+      var n = moves.length, allPass = true;
+      for (var j = n - 4; j < n; j++) if (moves[j] !== PASS) allPass = false;
+      if (allPass) return { over: true, winner: -1, result: 'stuck', cut: cut };
+    }
+    return { over: false, cut: cut };
   }
 
   // ---------- search ----------
@@ -467,7 +492,13 @@ var RB = (function () {
     BEAM = opt.beam || 10;
     nodes = 0; aborted = false; deadline = opt.time ? now() + opt.time : 0;
     var c = turnColor(st), moves = genMoves(st);
-    if (!moves.length) return -1;
+    if (moves[0] === PASS) return PASS;
+    // Opponent cut off: nothing can stop us any more, so build straight along a shortest route.
+    if (dist(st, 1 - c) >= INF) {
+      var rp = routePath(st, c);
+      if (rp) for (var q2 = rp.length - 1; q2 >= 0; q2--) if (!st.e[rp[q2]] && roadOk(st, rp[q2], c)) return rp[q2];
+      for (var q3 = 0; q3 < rp.length; q3++) if (!st.e[rp[q3]] && roadOk(st, rp[q3], c)) return rp[q3];
+    }
     var sc0 = scored(st, moves, c);
     if (sc0[0].s >= WIN - 1) return sc0[0].m;
     // Purposeful candidates: moves that shorten our route or lengthen theirs. Fall back to everything.
@@ -518,7 +549,7 @@ var RB = (function () {
 
   return {
     R: R, V: V, E: E, verts: verts, edges: edges, hexes: hexes, EA: EA, EB: EB, ADJ: ADJ, PORTS: PORTS, PORTV: PORTV, INF: INF, WIN: WIN,
-    newGame: newGame, clone: clone, fromData: fromData, genMoves: genMoves, legalFor: legalFor, make: make, unmake: unmake,
+    PASS: PASS, mustPass: mustPass, newGame: newGame, clone: clone, fromData: fromData, genMoves: genMoves, legalFor: legalFor, make: make, unmake: unmake,
     turnColor: turnColor, colorAt: colorAt, open: open, inNet: inNet, dist: dist, connected: connected, winPath: winPath, routePath: routePath,
     status: status, think: think, evaluate: evaluate,
     config: function (o) { if (o.ev !== undefined) EV = o.ev; if (o.th) TH = o.th; if (o.double !== undefined) DOUBLE = o.double; },
@@ -604,9 +635,9 @@ var SFX = (function () {
     legal = stat.over ? [] : RB.genMoves(st); legalSet = {};
     for (var i = 0; i < legal.length; i++) legalSet[legal[i]] = 1;
   }
-  function push(m) { RB.make(st, m); moves.push(m); stat = RB.status(st); refreshLegal(); }
+  function push(m) { RB.make(st, m); moves.push(m); stat = RB.status(st, moves); refreshLegal(); }
   function replay(list) {
-    st = RB.newGame(); moves = []; stat = { over: false }; refreshLegal();
+    st = RB.newGame(); moves = []; stat = RB.status(st, moves); refreshLegal();
     for (var i = 0; i < list.length; i++) {
       if (stat.over || !legalSet[list[i]]) break;
       push(list[i]);
@@ -740,12 +771,12 @@ var SFX = (function () {
   function drawDyn() {
     gDyn.innerHTML = '';
     var e, v, last = lastTurnEdges(), lc = moves.length ? CC[RB.colorAt(moves.length - 1)] : 'g';
-    // win highlight underneath
+    // win highlight underneath: the completed harbour-to-harbour road glows
     if (stat.over && stat.winner >= 0) {
-      var wp = stat.result === 'cutoff' ? RB.routePath(st, stat.winner) : RB.winPath(st, stat.winner);
-      if (wp) wp.forEach(function (x) { if (st.e[x]) line(gDyn, x, 'winline'); });
+      var wp = RB.winPath(st, stat.winner);
+      if (wp) wp.forEach(function (x) { line(gDyn, x, 'winline'); });
     }
-    last.forEach(function (x) { line(gDyn, x, 'road last' + lc); });
+    last.forEach(function (x) { if (x >= 0) line(gDyn, x, 'road last' + lc); });
     for (e = 0; e < E; e++) if (st.e[e]) line(gDyn, e, 'road out');
     for (e = 0; e < E; e++) if (st.e[e]) line(gDyn, e, 'road ' + CC[st.e[e] - 1] + (e === fresh ? ' fresh' : ''), e === fresh ? { pathLength: 1 } : null);
     // claimed crossroads
@@ -754,14 +785,23 @@ var SFX = (function () {
       var g0 = st.cnt[v] > 0, s0 = st.cnt[V + v] > 0;
       if (g0 || s0) el('circle', { class: 'claim ' + (g0 ? 'g' : 's'), cx: vx(v), cy: vy(v), r: 4.2 }, gDyn);
     }
-    // cut-off win: show the winner's open route
-    if (stat.over && stat.result === 'cutoff') {
-      var rp = RB.routePath(st, stat.winner);
-      if (rp) rp.forEach(function (x) { if (!st.e[x]) line(gDyn, x, 'rghost ' + CC[stat.winner]); });
+    // one side cut off: faintly dot the other side's remaining shortest route as guidance
+    var fin = finisher();
+    if (fin >= 0) {
+      var rp = RB.routePath(st, fin);
+      if (rp) rp.forEach(function (x) { if (!st.e[x]) line(gDyn, x, 'rghost ' + CC[fin]); });
     }
     fresh = -1;
   }
-  function canAct() { return !stat.over && !busy && humanTurn(); }
+  // colour that is finishing its road while the other is cut off, or -1
+  function finisher() {
+    if (stat.over || !stat.cut) return -1;
+    if (stat.cut[0] && !stat.cut[1]) return 1;
+    if (stat.cut[1] && !stat.cut[0]) return 0;
+    return -1;
+  }
+  function mustPassNow() { return !stat.over && legal.length === 1 && legal[0] === RB.PASS; }
+  function canAct() { return !stat.over && !busy && !passTimer && humanTurn() && !mustPassNow(); }
   function drawHints() {
     gHint.innerHTML = '';
     svg.classList.toggle('can', canAct());
@@ -773,14 +813,18 @@ var SFX = (function () {
   }
   function refreshPanel() {
     var c = toMove();
-    $('turnTok').className = stat.over ? CC[stat.winner] : CC[c];
-    var txt;
-    if (stat.over) txt = CN[stat.winner] + ' wins';
+    $('turnTok').className = stat.over ? (stat.winner >= 0 ? CC[stat.winner] : '') : CC[c];
+    var txt, fin = finisher();
+    $('status').classList.toggle('cut', fin >= 0);
+    if (!stat.over && fin >= 0) $('turnTok').className = CC[fin];
+    if (stat.over) txt = stat.winner >= 0 ? CN[stat.winner] + ' linked their harbours!' : 'Draw';
+    else if (fin >= 0 && cfg.mode === 'ai' && fin !== humanColor()) txt = 'You are cut off. ' + LEVELS[cfg.level].name + ' bot is finishing its road';
+    else if (fin >= 0) txt = CN[1 - fin] + ' is cut off. ' + CN[fin] + ', finish your road!';
     else if (cfg.mode === 'ai') txt = humanTurn() ? 'Your turn (' + CN[c] + ')' : LEVELS[cfg.level].name + ' bot is building';
     else txt = CN[c] + ' to build';
     $('statusText').textContent = txt;
     var ph = '';
-    if (!stat.over) {
+    if (!stat.over && !mustPassNow()) {
       var tot = roadsThisTurn(), left = roadsLeft();
       for (var i = 0; i < tot; i++) ph += '<i class="' + (i < tot - left ? 'used' : '') + '" style="background:' + (c ? '#e0483e' : '#f2c14e') + '"></i>';
     }
@@ -800,16 +844,16 @@ var SFX = (function () {
     var items = [], i2 = 0, n = 0;
     while (i2 < moves.length) {
       var cc = RB.colorAt(i2), cnt = 0;
-      while (i2 < moves.length && RB.colorAt(i2) === cc) { cnt++; i2++; }
+      while (i2 < moves.length && RB.colorAt(i2) === cc) { if (moves[i2] !== RB.PASS) cnt++; i2++; }
       n++;
-      items.push('<li><span class="d' + CC[cc] + '">' + n + '. ' + CN[cc] + '</span> ' + cnt + ' road' + (cnt === 1 ? '' : 's') + '</li>');
+      items.push('<li><span class="d' + CC[cc] + '">' + n + '. ' + CN[cc] + '</span> ' + (cnt ? cnt + ' road' + (cnt === 1 ? '' : 's') : 'passes (no route)') + '</li>');
     }
-    if (stat.over) items.push('<li>' + CN[stat.winner] + ' wins: ' + WHY[stat.result].toLowerCase().replace(/\.$/, '') + '</li>');
+    if (stat.over) items.push('<li>' + (stat.winner >= 0 ? CN[stat.winner] + ' linked their harbours' : 'Draw: no one can link') + '</li>');
     var ml = $('movelist');
     ml.innerHTML = items.join('');
     if (ml.lastChild) ml.lastChild.className = 'cur';
     ml.scrollTop = ml.scrollHeight;
-    $('bUndo').disabled = moves.length === 0 || (cfg.mode === 'ai' && !moves.some(function (m, j) { return RB.colorAt(j) === humanColor(); }));
+    $('bUndo').disabled = !moves.some(function (m) { return m !== RB.PASS; }) || (cfg.mode === 'ai' && !moves.some(function (m, j) { return m !== RB.PASS && RB.colorAt(j) === humanColor(); }));
     $('bSound').classList.toggle('off', !cfg.sound);
   }
   function redraw() { drawDyn(); drawHints(); refreshPanel(); }
@@ -857,17 +901,38 @@ var SFX = (function () {
     doMove(e);
   }
   function doMove(m) {
-    var c = toMove();
+    var c = toMove(), wasCut = stat.cut && stat.cut[1 - c];
     push(m); fresh = m;
     SFX.play('move');
-    if (!stat.over) {
+    if (stat.over) $('info').textContent = overText();
+    else if (!wasCut && stat.cut[1 - c]) $('info').textContent = CN[1 - c] + ' is cut off! ' + CN[c] + ' still has to finish the road.';
+    else {
       var nc = toMove();
       if (nc === c) $('info').textContent = CN[c] + ' builds a second road.';
-      else $('info').textContent = CN[nc] + '\u2019s turn: ' + roadsLeft() + ' road' + (roadsLeft() === 1 ? '' : 's') + '.';
-    } else $('info').textContent = WHY[stat.result];
+      else if (!mustPassNow()) $('info').textContent = CN[nc] + '\u2019s turn: ' + roadsLeft() + ' road' + (roadsLeft() === 1 ? '' : 's') + '.';
+    }
     redraw(); store();
+    advance(380);
+  }
+  // After any change: end the game, auto-pass a cut-off player, or hand the turn to the bot.
+  var passTimer = null;
+  function advance(delay) {
     if (stat.over) { setTimeout(function () { SFX.play(cfg.mode === '2p' || stat.winner === humanColor() ? 'win' : 'lose'); showOver(); }, 700); return; }
-    if (!humanTurn()) setTimeout(askAI, 380);
+    if (mustPassNow()) {
+      if (!passTimer) passTimer = setTimeout(autoPass, 750);
+      drawHints(); refreshPanel();
+      return;
+    }
+    if (!humanTurn()) setTimeout(askAI, delay);
+  }
+  function autoPass() {
+    passTimer = null;
+    if (!mustPassNow()) return;
+    var c = toMove(), cut = stat.cut[c];
+    push(RB.PASS);
+    $('info').textContent = CN[c] + (cut ? ' has no route and passes.' : ' has no legal road and passes.');
+    redraw(); store();
+    advance(380);
   }
 
   /* ---------- AI ---------- */
@@ -883,7 +948,7 @@ var SFX = (function () {
   }
   var lastReq = null;
   function askAI() {
-    if (stat.over || humanTurn() || busy) return;
+    if (stat.over || humanTurn() || busy || mustPassNow()) return;
     busy = true; drawHints(); refreshPanel();
     var L = LEVELS[cfg.level];
     reqId++; reqAt = Date.now();
@@ -910,31 +975,31 @@ var SFX = (function () {
   }
   function cancelAI() {
     reqId++;
+    if (passTimer) { clearTimeout(passTimer); passTimer = null; }
     if (busy && worker) { worker.terminate(); worker = null; }
     busy = false;
   }
 
   /* ---------- dialogs ---------- */
-  var WHY = {
-    connect: 'The winner linked both harbours with one road.',
-    cutoff: 'The loser was cut off: no route between their harbours is left.',
-    nomoves: 'The side to move had no legal road.'
-  };
   function whyText() {
     if (!stat.over) return '';
-    var w = CN[stat.winner], l = CN[1 - stat.winner];
-    if (stat.result === 'connect') return w + ' linked both harbours with one unbroken road.';
-    if (stat.result === 'cutoff') return w + ' cut ' + l + ' off: ' + l + ' has no route left between their harbours. The dotted line shows ' + w + '\u2019s open route.';
-    return l + ' had no legal road to build.';
+    if (stat.winner < 0) return 'Neither side can link its harbours any more, so the game is a draw.';
+    return CN[stat.winner] + ' linked their harbours!';
   }
   function overTitle() {
-    if (cfg.mode === 'ai') return stat.winner === humanColor() ? 'You win!' : 'You lose';
-    return CN[stat.winner] + ' wins';
+    if (stat.winner < 0) return 'Draw';
+    return CN[stat.winner] + ' linked their harbours!';
+  }
+  function overText() {
+    if (stat.winner < 0) return whyText();
+    var road = 'The glowing road runs harbour to harbour.';
+    if (cfg.mode === 'ai') return (stat.winner === humanColor() ? 'You win! ' : 'You lose. ') + road;
+    return CN[stat.winner] + ' wins. ' + road;
   }
   function showOver() {
     if (!stat.over) return;
     $('overTitle').textContent = overTitle();
-    $('overText').textContent = whyText();
+    $('overText').textContent = overText();
     $('dlgOver').hidden = false;
   }
   var pend = { mode: 'ai', side: 1, level: 1 };
@@ -961,25 +1026,30 @@ var SFX = (function () {
     $('dlgNew').hidden = true; $('dlgOver').hidden = true;
     $('info').textContent = 'Gold opens with one road; then every turn is two.';
     buildBoard(); redraw(); store();
-    if (!humanTurn()) setTimeout(askAI, 350);
+    advance(350);
   }
   function undo() {
     if (window.VaultOnce && window.VaultOnce.active()) return;
     if (!moves.length) return;
     cancelAI();
-    var list = moves.slice(0, -1);
+    var list = moves.slice(), j;
     if (cfg.mode === 'ai') {
-      // back to the start of the human's most recent turn
-      var hc = humanColor(), j = moves.length - 1;
-      while (j >= 0 && RB.colorAt(j) !== hc) j--;
+      // back to the start of the human's most recent turn in which they built a road (passes are skipped)
+      var hc = humanColor();
+      j = list.length - 1;
+      while (j >= 0 && (RB.colorAt(j) !== hc || list[j] === RB.PASS)) j--;
       while (j > 0 && RB.colorAt(j - 1) === hc) j--;
-      list = moves.slice(0, Math.max(0, j));
+      list = list.slice(0, Math.max(0, j));
+    } else {
+      // take back the last road, together with any passes that followed it
+      while (list.length && list[list.length - 1] === RB.PASS) list.pop();
+      list.pop();
     }
     replay(list); hover = -1; pending = -1;
     $('dlgOver').hidden = true;
     $('info').textContent = 'Took back a turn.';
     redraw(); store();
-    if (!stat.over && !humanTurn()) askAI();
+    if (!stat.over) advance(300);
   }
 
   /* ---------- wiring ---------- */
@@ -1024,7 +1094,7 @@ var SFX = (function () {
     if (onceLink) { /* VaultOnce boots the pinned bot game through RoadblockUI.startOnce. */ }
     else if (!saved) openNew();
     else if (stat.over) showOver();
-    else if (!humanTurn()) askAI();
+    else advance(300);
   }
   window.RoadblockUI = {
     startOnce: function (opts) {
@@ -1037,9 +1107,9 @@ var SFX = (function () {
     },
     result: function () {
       if (!stat || !stat.over) return { over: false };
-      var success = stat.winner === humanColor();
-      var summary = (success ? 'You won. ' : 'You lost. ') + whyText();
-      return { over: true, success: success, draw: false, summary: summary, result: stat.result, winner: stat.winner };
+      var draw = stat.winner < 0, success = !draw && stat.winner === humanColor();
+      var summary = (success ? 'You won. ' : draw ? 'Draw. ' : 'You lost. ') + whyText();
+      return { over: true, success: success, draw: draw, summary: summary, result: stat.result, winner: stat.winner };
     },
     isOver: function () { return !!(stat && stat.over); },
     // test hooks
