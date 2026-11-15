@@ -223,6 +223,24 @@
     return { seen: seen, min: min };
   }
 
+  /* True if the warden can walk to a crate and push it. A position with no
+     reachable push cannot be solved unless it is already solved. */
+  function hasReachablePush(level, crates, player) {
+    var reach = playerReach(level, crates, player);
+    var w = level.w, i, j;
+    for (i = 0; i < crates.length; i++) {
+      for (j = 0; j < 4; j++) {
+        var d = DIRS[ORDER[j]];
+        var cr = crates[i][0], cc = crates[i][1];
+        var pr = cr - d[0], pc = cc - d[1];
+        var nr = cr + d[0], nc = cc + d[1];
+        if (isWall(level, pr, pc) || isWall(level, nr, nc) || indexAt(crates, nr, nc) >= 0) continue;
+        if (reach.seen[pr * w + pc]) return true;
+      }
+    }
+    return false;
+  }
+
   /* Cheap dead-position check, then a capped BFS of crate configurations.
      If the search hits the node cap we treat the position as still open —
      we never fail a player on an uncertain solver abort. */
@@ -256,7 +274,9 @@
           var cr = st.crates[i][0], cc = st.crates[i][1];
           var pr = cr - d[0], pc = cc - d[1];
           var nr = cr + d[0], nc = cc + d[1];
-          if (isWall(level, nr, nc) || indexAt(st.crates, nr, nc) >= 0) continue;
+          /* Reject an off-board standing cell before using pr * w + pc as a
+             key; otherwise a left/right wrap can alias into reach.seen. */
+          if (isWall(level, pr, pc) || isWall(level, nr, nc) || indexAt(st.crates, nr, nc) >= 0) continue;
           if (!reach.seen[pr * w + pc]) continue;
           var ncrates = cloneCells(st.crates);
           ncrates[i] = [nr, nc];
@@ -426,11 +446,14 @@
     if (next.solved && typeof window.showWin === 'function') {
       window.showWin('Every crate rests on a rune. The vault door grinds open.');
     } else if (window.VaultOnce && window.VaultOnce.active() && !window.VaultOnce.frozen()) {
-      var dead = isSolvable(lvl, next.crates, next.player);
-      if (!dead.solvable && !dead.aborted) {
+      /* Only end the run when no crate can be pushed from any square the
+         warden can walk to. A position can be unsolvable while pushes still
+         remain, and ending there felt like a false game over. A frozen
+         unsolved board is provably lost. */
+      if (!hasReachablePush(lvl, next.crates, next.player)) {
         if (typeof window.VaultOnce.fail === 'function') {
           window.VaultOnce.fail({
-            summary: 'The crates can no longer be solved.',
+            summary: 'The crates can no longer be pushed — game over.',
             reason: 'unsolvable'
           });
         }
@@ -577,7 +600,8 @@
     getState: getState,
     move: move,
     isSolvable: isSolvable,
-    isCornerDead: isCornerDead
+    isCornerDead: isCornerDead,
+    hasReachablePush: hasReachablePush
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
