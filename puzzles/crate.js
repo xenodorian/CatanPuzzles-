@@ -297,6 +297,89 @@
 
   var root = null;
   var state = { k: 2, level: null, history: '', status: '', statusClass: '' };
+  var lost = false, onceDeadline = 0, onceTimerId = 0;
+  var ONCE_MS = 5 * 60 * 1000;
+
+  function once() { return !!(window.VaultOnce && window.VaultOnce.active && window.VaultOnce.active()); }
+  function onceCode() {
+    if (window.VaultOnce && typeof window.VaultOnce.code === 'function' && window.VaultOnce.code()) return window.VaultOnce.code();
+    try { return String(new URL(location.href).searchParams.get('once') || '').trim().toLowerCase(); } catch (e) { return ''; }
+  }
+  function onceLimitMs() {
+    try { if (typeof window.__CV_ONCE_LIMIT_MS === 'number' && window.__CV_ONCE_LIMIT_MS > 0) return window.__CV_ONCE_LIMIT_MS; } catch (e) { }
+    return ONCE_MS;
+  }
+  function onceStartKey() {
+    var c = onceCode();
+    return c ? 'crate.once.start:' + c : '';
+  }
+  function readOnceStart() {
+    var k = onceStartKey();
+    if (!k) return 0;
+    try { var v = +localStorage.getItem(k); return v > 0 ? v : 0; } catch (e) { return 0; }
+  }
+  function writeOnceStart(t) {
+    var k = onceStartKey();
+    if (!k) return;
+    try { localStorage.setItem(k, String(t)); } catch (e) { }
+  }
+  function onceAlreadyFinished() {
+    if (window.VaultOnce && typeof window.VaultOnce.frozen === 'function' && window.VaultOnce.frozen()) return true;
+    var rec = window.VaultOnce && typeof window.VaultOnce.record === 'function' && window.VaultOnce.record();
+    return !!(rec && rec.result);
+  }
+  function fmtTime(ms) {
+    var s = Math.floor(Math.max(0, ms) / 1000);
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+  function remainingMs() { return onceDeadline ? Math.max(0, onceDeadline - Date.now()) : 0; }
+  function countdownEls() {
+    if (!root) return { span: null, time: null };
+    var span = root.querySelector('[data-cv="timespan"]');
+    var time = span ? span.querySelector('[data-cv="time"]') : null;
+    return { span: span, time: time };
+  }
+  function isBoardSolved() {
+    return !!(state.level && applyMoves(state.level, state.history).solved);
+  }
+  function showOnceTime() {
+    var els = countdownEls();
+    if (!els.time) return;
+    var left = remainingMs();
+    els.time.textContent = fmtTime(left);
+    if (els.span) els.span.classList.toggle('cv-low', left <= 30000 && !lost && !isBoardSolved());
+  }
+  function stopOnceTimer() { clearInterval(onceTimerId); onceTimerId = 0; showOnceTime(); }
+  function tickOnce() {
+    showOnceTime();
+    if (!lost && !isBoardSolved() && remainingMs() <= 0) timeoutFail();
+  }
+  function ensureOnceTimer() {
+    if (!once() || onceAlreadyFinished()) return;
+    var t0 = readOnceStart();
+    if (!t0) { t0 = Date.now(); writeOnceStart(t0); }
+    onceDeadline = t0 + onceLimitMs();
+    var els = countdownEls();
+    if (els.span) els.span.hidden = false;
+    showOnceTime();
+    clearInterval(onceTimerId);
+    onceTimerId = setInterval(tickOnce, 250);
+    if (remainingMs() <= 0) timeoutFail();
+  }
+  function timeoutFail() {
+    if (lost || isBoardSolved()) return;
+    if (window.VaultOnce && typeof window.VaultOnce.frozen === 'function' && window.VaultOnce.frozen()) return;
+    lost = true;
+    stopOnceTimer();
+    setStatus("Time's up — game over", 'fail');
+    if (root) render();
+    if (window.VaultOnce && typeof window.VaultOnce.fail === 'function') {
+      window.VaultOnce.fail({
+        summary: "Time's up — game over",
+        reason: 'timeout'
+      });
+    }
+  }
 
   var CSS = [
     '.cv-stage{width:100%;display:flex;justify-content:center;margin-top:0.5rem}',
@@ -321,7 +404,10 @@
     '.cv-warden svg{display:block;width:100%;height:100%;fill:#2f4a7a;stroke:#f0bf5a;stroke-width:1.4}',
     '.cv-dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:6px;justify-content:center;margin:1.25rem auto 0}',
     '.cv-dir{padding:0;font-size:1.1rem;letter-spacing:0;display:flex;align-items:center;justify-content:center;line-height:1}',
-    '.cv-status{min-height:2rem}'
+    '.cv-status{min-height:2rem}',
+    '.cv-countdown{font-variant-numeric:tabular-nums}',
+    '.cv-countdown b{color:var(--gold-bright);font-size:1.05em}',
+    '.cv-countdown.cv-low b{color:var(--danger,#e07070)}'
   ].join('');
 
   function dirButton(ch, glyph, label, row, col) {
@@ -344,6 +430,7 @@
         'Crates can be pushed but never pulled, and the warden moves one crate at a time."</p>' +
         '<div class="btn-row diff-row" role="group" aria-label="Difficulty">' + diffs + '</div>' +
         '<div class="cv-stage"><div class="cv-board" role="application" aria-label="Crate Vault board"></div></div>' +
+        '<div class="move-counter cv-countdown" data-cv="timespan" hidden>Time left <b data-cv="time">5:00</b></div>' +
         '<div class="move-counter cv-moves">Moves: 0</div>' +
         '<div class="move-counter cv-runes">Crates on runes: 0/' + state.k + '</div>' +
         '<div class="status-msg cv-status" aria-live="polite"></div>' +
@@ -432,6 +519,8 @@
   }
 
   function move(ch) {
+    if (lost) return;
+    if (window.VaultOnce && window.VaultOnce.frozen && window.VaultOnce.frozen()) return;
     var lvl = state.level;
     if (applyMoves(lvl, state.history).solved) return;
     var next = applyMoves(lvl, state.history + ch);
@@ -444,6 +533,7 @@
     setStatus('');
     render();
     if (next.solved && typeof window.showWin === 'function') {
+      stopOnceTimer();
       window.showWin('Every crate rests on a rune. The vault door grinds open.');
     } else if (window.VaultOnce && window.VaultOnce.active() && !window.VaultOnce.frozen()) {
       /* Only end the run when no crate can be pushed from any square the
@@ -451,6 +541,8 @@
          remain, and ending there felt like a false game over. A frozen
          unsolved board is provably lost. */
       if (!hasReachablePush(lvl, next.crates, next.player)) {
+        lost = true;
+        stopOnceTimer();
         if (typeof window.VaultOnce.fail === 'function') {
           window.VaultOnce.fail({
             summary: 'The crates can no longer be pushed — game over.',
@@ -483,10 +575,12 @@
 
   function newPuzzle() {
     if (onceLocked()) return;
+    if (!onceAlreadyFinished()) lost = false;
     state.level = generate(state.k);
     state.history = '';
     setStatus('');
     render();
+    if (once()) ensureOnceTimer();
   }
 
   function setDifficulty(k) {
@@ -555,6 +649,7 @@
     board.addEventListener('touchstart', onTouchStart, { passive: true });
     board.addEventListener('touchend', onTouchEnd, { passive: true });
     render();
+    if (once()) ensureOnceTimer();
   }
 
   function load(k, idx, orient) {
@@ -563,6 +658,7 @@
     state.k = level.bankK;
     state.level = level;
     state.history = '';
+    if (!onceAlreadyFinished()) lost = false;
     setStatus('');
     if (root) {
       var btns = root.querySelectorAll('[data-cv-diff]');
@@ -572,6 +668,7 @@
         btns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
       }
       render();
+      if (once()) ensureOnceTimer();
     }
     return getState();
   }
@@ -585,6 +682,8 @@
       orient: state.level && state.level.orient,
       solution: state.level && state.level.solution,
       solved: !!(cur && cur.solved),
+      lost: lost,
+      onceRemaining: once() && onceDeadline ? remainingMs() : null,
       crates: cur && cur.crates,
       player: cur && cur.player
     };
