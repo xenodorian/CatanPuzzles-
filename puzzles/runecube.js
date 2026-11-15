@@ -58,6 +58,8 @@
     '.rc-winmsg { margin: 0.25rem 0 0.55rem; color: var(--parchment); font-size: 0.95rem; }',
     '.rc-winbar .btn-row { margin: 0; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }',
     '.rc-winbar .btn { font-size: 0.66rem; padding: 0.45rem 0.8rem; }',
+    '.rc-stats .rc-countdown b { color: var(--gold-bright); font-variant-numeric: tabular-nums; font-size: 1.05em; }',
+    '.rc-stats .rc-countdown.rc-low b { color: var(--danger, #e07070); }',
     '@media (max-width: 480px) { .rc-stats { gap: 0.9rem; font-size: 0.72rem; } .rc-legend { font-size: 0.82rem; } }'
   ].join('\n');
 
@@ -68,7 +70,7 @@
     '  <p class="flavor-text">"Eight stones of the old vault, each carved on three sides. Twist the layers until every face',
     '  bears a single rune, and the lock remembers its shape."</p>',
     '  <div class="rc-wrap">',
-    '    <div class="rc-stats"><span>Moves <b data-rc="moves">0</b></span><span>Time <b data-rc="time">0:00</b></span></div>',
+    '    <div class="rc-stats"><span>Moves <b data-rc="moves">0</b></span><span data-rc="timespan">Time <b data-rc="time">0:00</b></span></div>',
     '    <div class="rc-winbar" data-rc="winbar" role="status" hidden><div class="rc-wintitle">\u2726 Solved \u2726</div><div class="rc-winmsg" data-rc="winmsg"></div>',
     '      <div class="btn-row"><button type="button" class="btn" data-rc="win-undo">Undo</button><button type="button" class="btn" data-rc="win-keep">Keep turning</button><button type="button" class="btn btn-primary" data-rc="win-new">New scramble</button></div></div>',
     '    <div class="rc-views">',
@@ -97,10 +99,38 @@
   ].join('\n');
 
   var root, els = {}, cube, cubieEls = [], level = 'easy', scr = [], hist = [], startAt = 0, elapsed = 0, timerId = 0, solved = false,
-    queue = [], animating = false;
+    lost = false, onceDeadline = 0, onceTimerId = 0, queue = [], animating = false;
   // The cube is shown from one fixed standard 3/4 view; it never orbits.
   var VIEWS = [{ x: -28, y: -38, size: 96, els: [] }];
+  var ONCE_MS = 5 * 60 * 1000;
   var once = function () { return !!(window.VaultOnce && window.VaultOnce.active && window.VaultOnce.active()); };
+  function onceCode() {
+    if (window.VaultOnce && typeof window.VaultOnce.code === 'function' && window.VaultOnce.code()) return window.VaultOnce.code();
+    try { return String(new URL(location.href).searchParams.get('once') || '').trim().toLowerCase(); } catch (e) { return ''; }
+  }
+  function onceLimitMs() {
+    try { if (typeof window.__RC_ONCE_LIMIT_MS === 'number' && window.__RC_ONCE_LIMIT_MS > 0) return window.__RC_ONCE_LIMIT_MS; } catch (e) { }
+    return ONCE_MS;
+  }
+  function onceStartKey() {
+    var c = onceCode();
+    return c ? 'runecube.once.start:' + c : '';
+  }
+  function readOnceStart() {
+    var k = onceStartKey();
+    if (!k) return 0;
+    try { var v = +localStorage.getItem(k); return v > 0 ? v : 0; } catch (e) { return 0; }
+  }
+  function writeOnceStart(t) {
+    var k = onceStartKey();
+    if (!k) return;
+    try { localStorage.setItem(k, String(t)); } catch (e) { }
+  }
+  function onceAlreadyFinished() {
+    if (window.VaultOnce && typeof window.VaultOnce.frozen === 'function' && window.VaultOnce.frozen()) return true;
+    var rec = window.VaultOnce && typeof window.VaultOnce.record === 'function' && window.VaultOnce.record();
+    return !!(rec && rec.result);
+  }
 
   /* ---------- 3D transforms ---------- */
   // Model coordinates have y up; CSS has y down. Convert with S = diag(1,-1,1).
@@ -173,13 +203,13 @@
     return c;
   }
   function rotateCube(k) {
-    if (!ROTS[k]) return;
+    if (!ROTS[k] || locked()) return;
     queue.push({ rot: k });
     if (!animating) next();
   }
 
   // A solve locks the cube only for one-time challenge links; otherwise play simply carries on.
-  function locked() { return solved && once(); }
+  function locked() { return lost || (solved && once()); }
   function showWinBar(msg) { if (!els.winbar) return; els.winmsg.textContent = msg; els.winbar.hidden = false; }
   function hideWinBar() { if (els.winbar) els.winbar.hidden = true; }
 
@@ -230,7 +260,7 @@
       if (job.undo) hist.pop(); else hist.push(mapMove(job.m, E._internal.transpose(G))); // history in the original frame
       var nowSolved = E.isSolved(cube);
       if (solved && !nowSolved) { solved = false; hideWinBar(); setStatus('Turning on. The timer runs again; solve it once more to finish.'); } // undid the solve, or turning on
-      if (!startAt && !solved && !nowSolved && hist.length) startTimer();
+      if (!once() && !startAt && !solved && !nowSolved && hist.length) startTimer();
       refresh();
       if (nowSolved && !solved && (scr.length || hist.length)) win();
       save();
@@ -242,10 +272,57 @@
     timerId = setInterval(showTime, 250);
   }
   function stopTimer() { if (startAt) elapsed = Date.now() - startAt; startAt = 0; clearInterval(timerId); showTime(); }
-  function fmt(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
-  function showTime() { els.time.textContent = fmt(startAt ? Date.now() - startAt : elapsed); }
+  function fmt(ms) { var s = Math.floor(Math.max(0, ms) / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function remainingMs() { return onceDeadline ? Math.max(0, onceDeadline - Date.now()) : 0; }
+  function showTime() {
+    if (!els.time) return;
+    if (once() && onceDeadline) {
+      var left = remainingMs();
+      els.time.textContent = fmt(left);
+      if (els.timespan) els.timespan.classList.toggle('rc-low', left <= 30000 && !solved && !lost);
+      return;
+    }
+    els.time.textContent = fmt(startAt ? Date.now() - startAt : elapsed);
+  }
+  function stopOnceTimer() { clearInterval(onceTimerId); onceTimerId = 0; showTime(); }
+  function tickOnce() {
+    showTime();
+    if (!lost && !solved && remainingMs() <= 0) timeoutFail();
+  }
+  function ensureOnceTimer() {
+    if (!once() || onceAlreadyFinished()) return;
+    var t0 = readOnceStart();
+    if (!t0) { t0 = Date.now(); writeOnceStart(t0); }
+    onceDeadline = t0 + onceLimitMs();
+    if (els.timespan && !els.timespan.getAttribute('data-rc-labeled')) {
+      els.timespan.innerHTML = 'Time left <b data-rc="time">5:00</b>';
+      els.time = els.timespan.querySelector('[data-rc="time"]');
+      els.timespan.classList.add('rc-countdown');
+      els.timespan.setAttribute('data-rc-labeled', '1');
+    }
+    showTime();
+    clearInterval(onceTimerId);
+    onceTimerId = setInterval(tickOnce, 250);
+    if (remainingMs() <= 0) timeoutFail();
+  }
+  function timeoutFail() {
+    if (lost || solved) return;
+    lost = true;
+    stopOnceTimer();
+    hideArrows();
+    queue = [];
+    setStatus("Time's up — game over", 'fail');
+    refresh();
+    if (window.VaultOnce && typeof window.VaultOnce.fail === 'function') {
+      window.VaultOnce.fail({
+        summary: "Time's up — game over",
+        reason: 'timeout'
+      });
+    }
+  }
   function win() {
-    solved = true; stopTimer();
+    if (lost) return;
+    solved = true; stopTimer(); stopOnceTimer();
     var msg = 'Every face bears a single rune. Solved in ' + hist.length + ' move' + (hist.length === 1 ? '' : 's') + ' and ' + fmt(elapsed) + '.';
     setStatus(msg, 'success');
     refresh(); save();
@@ -267,9 +344,23 @@
     scr = fixed || E.scramble(SCRAMBLE_TURNS); G = IDENT.slice();
     cube = E.applyMoves(E.solvedCube(), scr);
     if (E.isSolved(cube)) { scr = E.scramble(4); cube = E.applyMoves(E.solvedCube(), scr); }
-    hist = []; solved = false; elapsed = 0; startAt = 0; clearInterval(timerId); hideWinBar();
+    hist = []; solved = false; lost = false; elapsed = 0; startAt = 0; clearInterval(timerId); hideWinBar();
     buildCube(); refresh();
-    setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer; W A S D rotate the whole cube.');
+    if (once()) {
+      if (onceAlreadyFinished()) {
+        var rec = window.VaultOnce && typeof window.VaultOnce.record === 'function' && window.VaultOnce.record();
+        if (rec && rec.result === 'fail') lost = true;
+        if (rec && rec.result === 'success') solved = true;
+        stopOnceTimer();
+        if (lost) setStatus("Time's up — game over", 'fail');
+      } else {
+        ensureOnceTimer();
+        if (!lost) setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. You have 5 minutes. Press a rune and drag toward an arrow to turn its layer; W A S D rotate the whole cube.');
+      }
+    } else {
+      onceDeadline = 0; stopOnceTimer();
+      setStatus('Scrambled with ' + SCRAMBLE_TURNS + ' random turns. Press a rune and drag toward an arrow to turn its layer; W A S D rotate the whole cube.');
+    }
     save();
   }
   function undo() {
@@ -427,6 +518,7 @@
   function onKey(e) {
     if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
     if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (locked()) return;
     var k = (e.key || '').toLowerCase();
     if (k.length !== 1 || !ROTS[k]) return;
     rotateCube(k);
@@ -448,7 +540,7 @@
     if (!root || !E) return;
     var st = document.createElement('style'); st.textContent = STYLE; document.head.appendChild(st);
     root.innerHTML = MARKUP;
-    ['stage0', 'view0', 'arrows0', 'winbar', 'winmsg', 'status', 'moves', 'time', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
+    ['stage0', 'view0', 'arrows0', 'winbar', 'winmsg', 'status', 'moves', 'time', 'timespan', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
     els.legend.innerHTML = E.FACES.map(function (F, i) {
       return '<span>' + runeSvg(i, 'rc-mini') + E.RUNES[i].name + ' <small>(' + F.key + ')</small></span>';
     }).join('');
@@ -473,7 +565,7 @@
     setLevel: setLevel,
     newGame: function () { newGame(); },
     turn: function (m) { turn(typeof m === 'string' ? E.parseMove(m) : m); },
-    state: function () { return { level: level, scramble: scr.slice(), history: hist.slice(), solved: solved, isSolved: E.isSolved(cube), busy: animating || queue.length > 0, moves: hist.length }; },
+    state: function () { return { level: level, scramble: scr.slice(), history: hist.slice(), solved: solved, lost: lost, isSolved: E.isSolved(cube), busy: animating || queue.length > 0, moves: hist.length, onceRemaining: once() && onceDeadline ? remainingMs() : null }; },
     _options: function (vi, id, face) { return stickerOptions(vi, id, face).map(function (o) { return { m: o.m, name: E.MOVE_NAMES[o.m], dir: o.dir }; }); },
     rotate: function (k) { rotateCube(String(k).toLowerCase()); },
     _orient: function () { return G.slice(); },
