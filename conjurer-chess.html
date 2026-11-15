@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="f2ff41086d";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<!--vault-version--><script>(function(){var V="c3ad38bef9";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
@@ -12,10 +12,11 @@
 
 :root{--cell:52px;--ink:#e9e4d6;--dim:#9aa3b8;--bg:#0d1322;--card:#182033;--line:#2b3654;--gold:#f2c14e}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%}
+html,body{margin:0;height:100%;min-height:100%;min-height:100dvh}
 body{background:radial-gradient(1200px 700px at 50% -10%,#24345c 0%,#111a30 45%,#080c17 100%) fixed #0d1322;color:var(--ink);
   font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none;touch-action:manipulation;
   -webkit-user-select:none;user-select:none}
+#app{display:flex;flex-direction:column;align-items:stretch;width:100%;min-height:100%;min-height:100dvh}
 button{font:inherit;color:var(--ink);background:#222d49;border:1px solid #3a4870;border-radius:8px;padding:7px 12px;cursor:pointer;
   transition:background .15s,border-color .15s,transform .05s}
 button:hover{background:#2c3a5e;border-color:#5669a0}
@@ -35,8 +36,11 @@ button:disabled{opacity:.45;cursor:default}
 #top nav{display:flex;gap:6px}
 #top nav button{padding:6px 10px;font-size:13px}
 
-#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
-body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px;width:100%;box-sizing:border-box}
+body.wide #main{display:grid;grid-template-columns:auto minmax(220px,300px);
+  align-items:start;justify-content:center;justify-items:stretch;gap:12px 18px;flex-direction:unset}
+body.wide #play{grid-column:1;grid-row:1}
+body.wide #panel{grid-column:2;grid-row:1}
 #play{display:flex;flex-direction:column;align-items:center;min-width:0}
 #status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
 #turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
@@ -103,7 +107,16 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
   box-shadow:inset 0 0 0 2px #e8c76a,0 0 0 2px rgba(0,0,0,.4);background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(232,199,106,.45) 4px,rgba(232,199,106,.45) 6px)}
 
 #panel{width:100%;max-width:calc(var(--cell)*8 + 24px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
-body.wide #panel{width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+body.wide #panel{width:300px;max-width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100dvh - var(--chrome-top, 90px) - 12px);min-height:0;overflow:auto}
+html.vault-once #once-banner{flex:none;width:min(640px,calc(100% - 24px));margin:6px auto 4px;padding:0.45rem 1rem}
+html.vault-once #once-giveup, #panel #once-giveup{margin:12px 0 0;width:100%;justify-content:flex-start;flex:none;
+  position:sticky;bottom:0;z-index:2;padding:8px 0 2px;background:linear-gradient(180deg,transparent,#182033 28%)}
+@media (max-height:560px){
+  html.vault-once #once-banner{padding:0.35rem 0.8rem;margin:4px auto 2px;font-size:0.7rem}
+  #status{height:24px;font-size:13px}
+  #info{height:16px;font-size:11px;margin-bottom:2px}
+  body.wide #panel{margin-top:26px;padding:8px 10px}
+}
 #panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 #matchup{font-weight:600}
 #matchup small{display:block;color:var(--dim);font-weight:400}
@@ -149,7 +162,7 @@ body.wide #movelist{max-height:none;flex:1;min-height:80px}
 #choice button{font-size:13px;text-align:left}
 
 </style>
-<script src="puzzles/once.js?v=f2ff41086d"></script>
+<script src="puzzles/once.js?v=c3ad38bef9"></script>
 </head>
 <body>
 
@@ -610,23 +623,18 @@ var DC = (function () {
   }
 
   function genSpecial(st, side) {
-    var typ, hs, h, s, p, typCode;
+    var typ, hs, h, s, p;
     for (var i = 0; i < HOME_TYPES.length; i++) {
       typ = HOME_TYPES[i];
       hs = homeSquares(side, typ);
       for (h = 0; h < hs.length; h++) {
         s = hs[h];
         if (st.board[s] !== 0) continue;
-        if (resOf(st, side)[typ]) pushMove(0, s, F_SUMMON, typ);
-        if (countIllusions(st, side) < MAX_ILLUSIONS) pushMove(0, s, F_ILLUSION, typ);
+        if (!resOf(st, side)[typ]) continue;
+        pushMove(0, s, F_SUMMON, typ);
+        pushMove(0, s, F_ILLUSION, typ);
       }
     }
-    if (countIllusions(st, side) >= MAX_ILLUSIONS) {
-      // illusion moves already skipped; summons still added above when reserve remains
-    }
-    // If already at max illusions, the loop still tried to add illusions — fix: check inside
-    // Recheck: I added illusions even when at max if some were added in the same gen (count doesn't change until make). Use a single check at start.
-    // I'll clean this in a follow-up if tests fail. Actually the check is countIllusions < MAX at each square, count doesn't change during gen, OK.
     for (s = 0; s < 64; s++) {
       p = st.board[s];
       if (!p || (p > 0) === (side > 0)) continue;
@@ -635,8 +643,6 @@ var DC = (function () {
     }
   }
 
-  // Fix: don't generate illusions when at max — already guarded per-square with same count. Good.
-  // Bug: I generate illusions even when count is max? No, `if (countIllusions(st, side) < MAX_ILLUSIONS)` inside the home loop. Good.
 
   function make(st, m) {
     snapFlags(st);
@@ -655,6 +661,7 @@ var DC = (function () {
       st.ucap.push(0); st.uhit.push(2);
       b[to] = side > 0 ? typ : -typ;
       st.illusion[to] = 1; st.revealed[to] = 0; st.paralyzed[to] = 0; st.unmoved[to] = 1;
+      resOf(st, side)[typ]--;
       st.half += 1; st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
     }
     if (m & F_REVEAL) {
@@ -669,7 +676,9 @@ var DC = (function () {
     if (hit) {
       st.uhit.push(4);
       var owner = cap > 0 ? 1 : -1;
+      var capTyp = cap > 0 ? cap : -cap;
       b[capSq] = 0; clearFlags(st, capSq);
+      if (capTyp >= P && capTyp <= Q) resOf(st, owner)[capTyp]++;
       st.paralyzed[from] = owner; // permanent
       st.half = 0; st.ep = -1; st.turn = -st.turn; st.hist.push(0); refresh(st); return;
     }
@@ -1228,8 +1237,52 @@ var SFX = (function () {
       var b = $(id);
       if (!b) return;
       b.classList.toggle('on', (id === 'bSummon' && mode === 'summon') || (id === 'bIllusion' && mode === 'illusion') || (id === 'bReveal' && mode === 'reveal'));
-      b.disabled = !humanTurn() || busy || !!(stat && stat.over);
+      var blocked = !humanTurn() || busy || !!(stat && stat.over);
+      var kind = id === 'bSummon' ? 'summon' : (id === 'bIllusion' ? 'illusionAct' : 'reveal');
+      var noMoves = !blocked && !hasSpecial(kind);
+      b.disabled = blocked || noMoves;
+      if (id === 'bIllusion') b.title = noMoves ? (illusionWhyBlocked() || 'No legal illusion to weave right now.') : 'Weave an illusion on an empty starting square';
+      else if (id === 'bSummon') b.title = noMoves ? (summonWhyBlocked() || 'No legal summon right now.') : 'Summon a reserved piece onto an empty starting square';
+      else b.title = noMoves ? 'No unrevealed enemy piece to inspect.' : 'Reveal an unrevealed enemy piece';
     });
+  }
+
+  function hasSpecial(kind) {
+    var i, o;
+    for (i = 0; i < legal.length; i++) {
+      o = DC.toObj(legal[i]);
+      if (o[kind]) return true;
+    }
+    return false;
+  }
+  function reserveHasEmptyHome(side) {
+    var res = DC.resOf(st, side), i, typ, hs, h, anyRes = false, anyHome = false;
+    for (i = 0; i < DC.HOME_TYPES.length; i++) {
+      typ = DC.HOME_TYPES[i];
+      if (!res[typ]) continue;
+      anyRes = true;
+      hs = DC.homeSquares(side, typ);
+      for (h = 0; h < hs.length; h++) if (st.board[hs[h]] === 0) { anyHome = true; break; }
+    }
+    return { anyRes: anyRes, anyHome: anyHome };
+  }
+  function illusionWhyBlocked() {
+    if (!humanTurn() || busy || (stat && stat.over)) return '';
+    if (hasSpecial('illusionAct')) return '';
+    var info = reserveHasEmptyHome(st.turn);
+    if (!info.anyRes) return 'No reserve left to weave an illusion. Each type is limited to the usual set (8 pawns, 2 knights, 2 bishops, 2 rooks, 1 queen), shared with real summons.';
+    if (!info.anyHome) return 'No empty starting squares left to weave an illusion on.';
+    if (stat && stat.check) return 'You are in check — weaving an illusion cannot get you out of check.';
+    return 'No legal illusion to weave right now.';
+  }
+  function summonWhyBlocked() {
+    if (!humanTurn() || busy || (stat && stat.over)) return '';
+    if (hasSpecial('summon')) return '';
+    var info = reserveHasEmptyHome(st.turn);
+    if (!info.anyRes) return 'No pieces left in reserve to summon.';
+    if (!info.anyHome) return 'No empty starting squares left to summon onto.';
+    if (stat && stat.check) return 'You are in check — summoning cannot get you out of check.';
+    return 'No legal summon right now.';
   }
 
   function renderReserve() {
@@ -1241,9 +1294,8 @@ var SFX = (function () {
       h += '<div class="rg"><b>' + lab + '</b> ';
       for (i = 0; i < DC.HOME_TYPES.length; i++) {
         typ = DC.HOME_TYPES[i]; n = res[typ] || 0;
-        if (n) h += DC.NAMES[typ] + '×' + n + ' ';
+        h += DC.NAMES[typ] + '×' + n + (i < DC.HOME_TYPES.length - 1 ? ' ' : '');
       }
-      h += 'illusions ' + DC.countIllusions(st, side) + '/' + DC.MAX_ILLUSIONS;
       h += '</div>';
     }
     box.innerHTML = h;
@@ -1288,16 +1340,33 @@ var SFX = (function () {
     else if (st.revealed && st.revealed[s] === 2 && own) msg += ' (real)';
     $('info').innerHTML = msg;
   }
+  function nestGiveUp() {
+    var g = document.getElementById('once-giveup'), panel = $('panel');
+    if (g && panel && g.parentNode !== panel) panel.appendChild(g);
+  }
   function layout() {
+    nestGiveUp();
     var W = window.innerWidth, H = window.innerHeight;
     var wide = W >= 880 && W > H;
     document.body.classList.toggle('wide', wide);
-    var top = $('top').offsetHeight + 6 + 30 + 24;
-    var cw = ((wide ? W - 340 : W) - 16) / 8;
-    var ch = (H - top - 16) / 8;
-    var c = Math.floor(Math.min(cw, ch, 72));
+    var main = $('main');
+    var statusEl = $('status'), infoEl = $('info');
+    var topH = 0;
+    if (main) topH = main.getBoundingClientRect().top;
+    else {
+      var topEl = $('top'), banner = document.getElementById('once-banner');
+      topH = topEl ? topEl.getBoundingClientRect().bottom : 0;
+      if (banner) topH = Math.max(topH, banner.getBoundingClientRect().bottom);
+    }
+    var statusH = (statusEl ? statusEl.offsetHeight : 30) + (infoEl ? infoEl.offsetHeight : 20);
+    var infoMb = infoEl ? (parseFloat(window.getComputedStyle(infoEl).marginBottom) || 0) : 4;
+    var padBottom = 12, padX = 16, gap = 18, panelW = 300, border = 6;
+    var availH = H - topH - statusH - infoMb - padBottom;
+    var availW = wide ? (W - panelW - gap - padX) : (W - padX);
+    var c = Math.floor((Math.min(availW, availH) - border) / 8);
     if (c < 28) c = 28;
     document.documentElement.style.setProperty('--cell', c + 'px');
+    document.documentElement.style.setProperty('--chrome-top', Math.round(Math.max(0, topH)) + 'px');
   }
 
   function hideChoice() { var ch = $('choice'); if (ch) { ch.hidden = true; ch.innerHTML = ''; ch.style.visibility = ''; } }
@@ -1305,6 +1374,24 @@ var SFX = (function () {
   function clearMode() { mode = null; }
   function setMode(next) {
     if (!humanTurn() || busy || (stat && stat.over)) return;
+    if (next === 'illusion' && mode !== 'illusion' && !hasSpecial('illusionAct')) {
+      mode = null; deselect();
+      $('info').textContent = illusionWhyBlocked() || 'No legal illusion to weave right now.';
+      refreshMarks();
+      return;
+    }
+    if (next === 'summon' && mode !== 'summon' && !hasSpecial('summon')) {
+      mode = null; deselect();
+      $('info').textContent = summonWhyBlocked() || 'No legal summon right now.';
+      refreshMarks();
+      return;
+    }
+    if (next === 'reveal' && mode !== 'reveal' && !hasSpecial('reveal')) {
+      mode = null; deselect();
+      $('info').textContent = 'No unrevealed enemy piece to inspect.';
+      refreshMarks();
+      return;
+    }
     mode = (mode === next) ? null : next;
     deselect();
     if (mode === 'summon') $('info').textContent = 'Summon: tap a highlighted starting square to place a reserved piece.';
@@ -1574,6 +1661,7 @@ var SFX = (function () {
     replay([]); deselect(); clearMode();
     $('dlgNew').hidden = true;
     $('info').textContent = 'Tap a piece to see where it can go, or use Summon, Illusion or Reveal.';
+    layout();
     buildBoards(); refreshMarks(); refreshPanel(); store();
     if (!humanTurn()) askAI();
   }
@@ -1593,7 +1681,7 @@ var SFX = (function () {
       '<li>This is standard 8×8 chess (including castling, en passant, promotion, check, checkmate and stalemate) with a conjuring twist.</li>' +
       '<li>Each side begins with only a King, on e1 (White) and e8 (Black). All other pieces start in a reserve: 8 pawns, 2 rooks, 2 knights, 2 bishops and a queen.</li>' +
       '<li>A turn is one of: move a piece; press <b>Summon</b> and place a remaining reserve piece on one of that type\'s empty default starting squares; press <b>Illusion</b> and weave an illusion of a reserve type (not the King) onto an empty default home; or press <b>Reveal</b> and choose one unrevealed enemy piece. Reveal is grouped with Illusion as the other illusion-side action.</li>' +
-      '<li>Summon and illusion targets must be empty. Each side may have at most three illusions on the board. An illusion may be woven even if every real copy of that type has already been summoned. Illusions do not use up the reserve.</li>' +
+      '<li>Summon and illusion targets must be empty. Each type can be placed only up to its usual complement — 8 pawns, 2 knights, 2 bishops, 2 rooks and 1 queen. Real summons and illusions share that per-type reserve: weaving an illusion uses a slot just as a summon does. When an illusion vanishes, that slot returns to the reserve. A captured real piece does not.</li>' +
       '<li>You see your own illusions tinted blue. To the opponent they look like ordinary pieces until they are revealed or they vanish.</li>' +
       '<li>Illusions move like the piece they mimic, but they cannot capture; they may only move to empty squares.</li>' +
       '<li>When any piece tries to capture an illusion, the illusion vanishes, the attacker stays on its square, and the attacker is paralyzed permanently. There is no Illusionist piece whose capture could lift the paralysis. Paralyzed pieces cannot move, capture or act, but they can still be captured. A gold-hatched marker is shown to both players. You may still Summon, weave an Illusion or Reveal even if your king is paralyzed.</li>' +
@@ -1654,6 +1742,7 @@ var SFX = (function () {
     });
     window.addEventListener('resize', layout);
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+    window.addEventListener('load', function () { setTimeout(layout, 0); setTimeout(layout, 50); });
     if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
     else if (!saved) openNew();
     else if (stat.over) showOver();
