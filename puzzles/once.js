@@ -70,12 +70,12 @@
         { key: 'easy', label: '4-turn scramble' }
       ],
       hasSeed: true },
-    { id: 'chess-in-one', file: 'chess-in-one.html', name: 'Chess in One',
+    { id: 'chess-in-one', file: 'chess-in-one.html', name: 'Checkmate In One',
       diffs: [
-        { key: '1', label: 'Warm-up' },
-        { key: '2', label: 'Tricky' },
-        { key: '3', label: 'Devious' },
-        { key: '4', label: 'Brutal' }
+        { key: '1', label: 'Easy' },
+        { key: '2', label: 'Medium' },
+        { key: '3', label: 'Hard' },
+        { key: '4', label: 'Very Hard' }
       ],
       hasCio: true },
     { id: 'conjurer-chess', file: 'conjurer-chess.html', name: "Conjurer's Chess",

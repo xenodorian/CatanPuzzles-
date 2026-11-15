@@ -2,10 +2,10 @@
 
 This site includes three games imported from other projects. Each entry lists the source repository, the license, and the third-party credits as stated in that project's README.
 
-## Chess In One Move
+## Checkmate In One
 
 - Page: `chess-in-one.html`
-- Source: https://github.com/xenodorian/ChessInOneMove
+- Source: Chess In One Move, https://github.com/xenodorian/ChessInOneMove
 - License: GPL-3.0-or-later. The full license text is in `LICENSE-ChessInOne.txt`.
 - Third-party credits (from the project README):
   - chessground (board UI): GPL-3.0-or-later
