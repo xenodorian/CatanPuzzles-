@@ -169,7 +169,6 @@
     'html.vault-once [data-rb-diff],',
     'html.vault-once [data-rb-act],',
     'html.vault-once [data-rc="undo"],',
-    'html.vault-once [data-rc="hint"],',
     'html.vault-once [data-rc="new"],',
     'html.vault-once [data-rc-diff],',
     'html.vault-once [data-kt="undo"],',
@@ -600,7 +599,6 @@
     var sels = [
       '[data-cv-act="undo"]',
       '[data-rc="undo"]',
-      '[data-rc="hint"]',
       '[data-kt="undo"]',
       '#bUndo',
       '#reveal',
