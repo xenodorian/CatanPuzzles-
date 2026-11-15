@@ -21,6 +21,20 @@ let pipeDifficulty = 'easy';
 
 let pipeGrid = [], pipeRows = 5, pipeCols = 5, pipeMoves = 0;
 let pipeSource = [0,0], pipeTarget = [4,4];
+let pipeLocked = false;
+
+function isOnceMode() {
+  return !!(window.VaultOnce && typeof window.VaultOnce.active === 'function' && window.VaultOnce.active());
+}
+
+function lockPipeBoard() {
+  pipeLocked = true;
+  const check = document.getElementById('pipe-check');
+  if (check) {
+    check.disabled = true;
+    check.setAttribute('aria-disabled', 'true');
+  }
+}
 
 function isPipeFixed(r, c) {
   return (r===pipeSource[0] && c===pipeSource[1]) || (r===pipeTarget[0] && c===pipeTarget[1]);
@@ -153,6 +167,7 @@ function buildPipeLevel(level, rows, cols, src, tgt) {
 }
 
 function setPipeDifficulty(level) {
+  if (pipeLocked && isOnceMode()) return;
   if (!PIPE_LEVELS[level]) return;
   pipeDifficulty = level;
   initPipe();
@@ -167,11 +182,18 @@ function updateDifficultyButtons() {
 }
 
 function initPipe() {
+  if (pipeLocked && isOnceMode()) return;
   const n = PIPE_LEVELS[pipeDifficulty];
   pipeRows = n; pipeCols = n;
   pipeSource = [0,0];
   pipeTarget = [n-1,n-1];
   pipeMoves = 0;
+  pipeLocked = false;
+  const check = document.getElementById('pipe-check');
+  if (check) {
+    check.disabled = false;
+    check.removeAttribute('aria-disabled');
+  }
   document.getElementById('pipe-moves').textContent = 'Rotations: 0';
   document.getElementById('pipe-status').textContent = '';
   document.getElementById('pipe-status').className = 'status-msg';
@@ -260,6 +282,7 @@ function shuffleArray(arr) {
 }
 
 function rotatePipe(r,c) {
+  if (pipeLocked) return;
   if (isPipeFixed(r,c)) return;
   const cell = pipeGrid[r][c];
   cell.rot = (cell.rot+1)%4;
@@ -276,6 +299,7 @@ function getConnections(r,c) {
 }
 
 function checkPipe() {
+  if (pipeLocked) return;
   const { found, lit } = computePipeFlow(pipeGrid, pipeRows, pipeCols, pipeSource, pipeTarget);
   for (let r=0;r<pipeRows;r++) for (let c=0;c<pipeCols;c++) pipeGrid[r][c].lit = lit.has(`${r},${c}`);
 
@@ -285,6 +309,19 @@ function checkPipe() {
     st.textContent = '✦ The water flows! The seal glows green. ✦';
     st.className = 'status-msg success';
     setTimeout(() => showWin('The mechanism unlocks with a resonant hum.'), 600);
+  } else if (isOnceMode()) {
+    // One-time links: a failed Check Flow is an immediate loss. Keep the stalled
+    // path lit so it stays visible under the game-over overlay, then lock the board.
+    lockPipeBoard();
+    st.textContent = 'The flow failed — game over';
+    st.className = 'status-msg fail';
+    renderPipe();
+    if (window.VaultOnce && typeof window.VaultOnce.fail === 'function') {
+      window.VaultOnce.fail({
+        summary: 'The flow failed — game over',
+        reason: 'flow-fail'
+      });
+    }
   } else {
     st.textContent = 'The water stalls. The flow is blocked.';
     st.className = 'status-msg fail';
@@ -294,6 +331,7 @@ function checkPipe() {
 function renderPipe() {
   const grid = document.getElementById('pipe-grid');
   grid.innerHTML = '';
+  grid.classList.toggle('locked', pipeLocked);
   grid.style.setProperty('--n', pipeCols);
   for (let r=0;r<pipeRows;r++) {
     for (let c=0;c<pipeCols;c++) {
@@ -303,7 +341,7 @@ function renderPipe() {
       if (r===pipeSource[0]&&c===pipeSource[1]) div.classList.add('source');
       if (r===pipeTarget[0]&&c===pipeTarget[1]) div.classList.add('target');
       if (cell.lit) div.classList.add('lit');
-      div.onclick = () => rotatePipe(r,c);
+      if (!pipeLocked) div.onclick = () => rotatePipe(r,c);
 
       // Draw pipe
       const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
