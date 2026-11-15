@@ -65,14 +65,6 @@
         { key: '11', label: '11 · Total Collapse' },
         { key: '12', label: '12 · Allfall' }
       ] },
-    { id: 'knight', file: 'knight.html', name: "Knight's Tour",
-      diffs: [
-        { key: 'easy', label: 'Easy 5x5' },
-        { key: 'medium', label: 'Medium 6x6' },
-        { key: 'hard', label: 'Hard 7x7' },
-        { key: 'veryhard', label: 'Very Hard 8x8' }
-      ],
-      hasSeed: true },
     { id: 'runecube', file: 'runecube.html', name: 'Rune Cube',
       diffs: [
         { key: 'easy', label: '4-turn scramble' }
@@ -96,15 +88,6 @@
       ],
       hasSide: true },
     { id: 'wyvern', file: 'wyvern.html', name: 'Wyvern Chess',
-      diffs: [
-        { key: '0', label: 'Easy' },
-        { key: '1', label: 'Medium' },
-        { key: '2', label: 'Hard' },
-        { key: '3', label: 'Very Hard' },
-        { key: '4', label: 'Expert' }
-      ],
-      hasSide: true },
-    { id: 'conjurer', file: 'conjurer.html', name: "Conjurer's Wyvern Chess",
       diffs: [
         { key: '0', label: 'Easy' },
         { key: '1', label: 'Medium' },
@@ -162,10 +145,6 @@
     'html.vault-once [data-rc="undo"],',
     'html.vault-once [data-rc="new"],',
     'html.vault-once [data-rc-diff],',
-    'html.vault-once [data-kt="undo"],',
-    'html.vault-once [data-kt="restart"],',
-    'html.vault-once [data-kt="new"],',
-    'html.vault-once [data-kt="level"],',
     'html.vault-once [data-lp-diff],',
     'html.vault-once [data-lp-act="new"],',
     'html.vault-once #reveal,',
@@ -590,7 +569,6 @@
     var sels = [
       '[data-cv-act="undo"]',
       '[data-rc="undo"]',
-      '[data-kt="undo"]',
       '#bUndo',
       '#reveal',
       'button#reveal'
@@ -705,12 +683,6 @@
     }
   }
 
-  function bootKnight() {
-    if (root.KnightTour && typeof root.KnightTour.setLevel === 'function') {
-      withSeed(function () { root.KnightTour.setLevel(params.d || 'easy'); });
-    }
-  }
-
   function bootAllfall() {
     if (!root.Allfall || typeof root.Allfall.load !== 'function') return;
     var n = parseInt(params.p, 10);
@@ -753,11 +725,10 @@
       else if (gameId === 'crate') bootCrate();
       else if (gameId === 'pipe') bootPipe();
       else if (gameId === 'bridges') bootBridges();
-      else if (gameId === 'knight') bootKnight();
       else if (gameId === 'runecube') bootRuneCube();
       else if (gameId === 'allfall') bootAllfall();
       else if (gameId === 'chess-in-one') bootChessInOne();
-      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab') bootDragon();
+      else if (gameId === 'dragonchess' || gameId === 'wyvern' || gameId === 'conjurer-chess' || gameId === 'hnefatafl' || gameId === 'backstab') bootDragon();
     } catch (e) { /* adapters must never break a normal page; once mode still freezes via showWin */ }
   }
 

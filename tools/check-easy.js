@@ -145,25 +145,5 @@ function load(file, extra) {
   console.log(`  medium (unchanged generator) sample solution counts capped at 2: ${JSON.stringify(med)}`);
 })();
 
-/* ---------- Knight's Tour ---------- */
-(function knight() {
-  console.log("Knight's Tour");
-  const n = 5, D = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]];
-  const nb = i => { const r = i / n | 0, c = i % n, o = []; for (const [a, b] of D) { const R = r + a, C = c + b; if (R >= 0 && R < n && C >= 0 && C < n) o.push(R * n + C); } return o; };
-  const tours = [];
-  for (let s = 0; s < n * n; s++) {
-    const v = new Uint8Array(n * n); v[s] = 1; let cnt = 0;
-    (function rec(p, l) { if (l === n * n) { cnt++; return; } for (const q of nb(p)) if (!v[q]) { v[q] = 1; rec(q, l + 1); v[q] = 0; } })(s, 1);
-    tours.push(cnt);
-  }
-  const possible = tours.filter(t => t > 0);
-  ok(possible.every(t => t >= 2), 'a 5x5 start with exactly one tour');
-  console.log(`  5x5 tours per start square: ${tours.join(' ')} (every start that has a tour has >= ${Math.min(...possible)})`);
-  const ctx = load('puzzles/knight.js');
-  const K = ctx.window.KnightTour;
-  for (let i = 0; i < 50; i++) { const g = K.generate(5); ok(tours[g.start[0] * n + g.start[1]] >= 2, 'generated start with < 2 tours'); }
-  console.log('  50 generated easy starts all have >= 2 tours; the game wins on any full legal path (no stored-tour check)');
-})();
-
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nAll checks passed.');
 process.exit(failures ? 1 : 0);
