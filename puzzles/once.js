@@ -226,6 +226,15 @@
     '.once-card .once-meta{font-family:Cinzel,serif;font-size:0.75rem;letter-spacing:0.12em;',
     '  text-transform:uppercase;color:var(--gold-dim);margin-top:1rem}',
     '.once-card .once-note{font-size:0.9rem;font-style:italic;margin-top:1.25rem}',
+    '.once-sol-row{margin-top:1.25rem;display:flex;justify-content:center;gap:0.75rem}',
+    'html.vault-once [data-cv-act="solve"]{display:none!important}',
+    '.once-freeze.once-sol-play,.once-freeze.once-sol-done{',
+    '  align-items:flex-end;background:transparent;pointer-events:none;padding:0 1rem 1.25rem',
+    '}',
+    '.once-freeze.once-sol-play .once-card,.once-freeze.once-sol-done .once-card{',
+    '  pointer-events:auto;padding:0.85rem 1.25rem;max-width:420px',
+    '}',
+    '.once-freeze.once-sol-play .once-sol-status,.once-freeze.once-sol-done .once-sol-status{margin:0 0 0.6rem}',
     '.once-invalid{max-width:520px;margin:3rem auto;padding:2rem;text-align:center}',
     '.once-invalid h1{font-family:Cinzel,serif;color:var(--gold-bright);margin-bottom:1rem}'
   ].join('');
@@ -381,6 +390,75 @@
     } catch (e) { return iso; }
   }
 
+  function isCrateGame(rec) {
+    var id = (rec && rec.game) || gameId;
+    return id === 'crate';
+  }
+
+  function freezeCardHtml(rec) {
+    var ok = rec && rec.result === 'success';
+    var title = ok ? '✦ Challenge complete ✦' : '✦ Challenge failed ✦';
+    var gameName = (gameById(rec && rec.game || gameId) || {}).name || (rec && rec.game) || '';
+    var diff = rec && rec.difficultyLabel ? rec.difficultyLabel : diffLabel(rec && rec.game || gameId, rec && rec.difficulty);
+    var when = formatTime(rec && rec.finished);
+    var summary = (rec && rec.summary) || '';
+    return '<div class="once-card' + (ok ? '' : ' fail') + '">' +
+      '<h2>' + title + '</h2>' +
+      '<p>' + escapeHtml(summary) + '</p>' +
+      '<p class="once-meta">' + escapeHtml(gameName) + (diff ? ' · ' + escapeHtml(diff) : '') +
+      (when ? '<br>' + escapeHtml(when) : '') + '</p>' +
+      '<p class="once-note">This link cannot be used again.</p>' +
+      '</div>';
+  }
+
+  function restoreCrateFailCard(wrap, rec) {
+    wrap.classList.remove('once-sol-play', 'once-sol-done');
+    wrap.innerHTML = freezeCardHtml(rec);
+    bindCrateSolutionButton(wrap, rec);
+  }
+
+  function playCrateSolution(wrap, rec) {
+    wrap.classList.add('once-sol-play');
+    wrap.classList.remove('once-sol-done');
+    var card = wrap.querySelector('.once-card');
+    if (!card) return;
+    card.innerHTML = '<p class="once-sol-status">Showing solution</p>' +
+      '<div class="once-sol-row"><button type="button" class="btn" data-once-act="stop-sol">Stop</button></div>';
+    var stop = card.querySelector('[data-once-act="stop-sol"]');
+    if (stop) {
+      stop.addEventListener('click', function () {
+        if (root.CrateVault && typeof root.CrateVault.stopSolution === 'function') root.CrateVault.stopSolution();
+        restoreCrateFailCard(wrap, rec);
+      });
+    }
+    if (root.CrateVault && typeof root.CrateVault.showSolution === 'function') {
+      root.CrateVault.showSolution({
+        onDone: function () {
+          wrap.classList.add('once-sol-done');
+          wrap.classList.add('once-sol-play');
+          var c = wrap.querySelector('.once-card');
+          if (c) c.innerHTML = '<p class="once-sol-status">Solution shown</p>';
+        }
+      });
+    }
+  }
+
+  function bindCrateSolutionButton(wrap, rec) {
+    if (!wrap || !rec || rec.result === 'success' || !isCrateGame(rec)) return;
+    var card = wrap.querySelector('.once-card');
+    if (!card || card.querySelector('[data-once-act="show-sol"]')) return;
+    var row = document.createElement('div');
+    row.className = 'once-sol-row';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-primary';
+    btn.setAttribute('data-once-act', 'show-sol');
+    btn.textContent = 'Show Solution';
+    btn.addEventListener('click', function () { playCrateSolution(wrap, rec); });
+    row.appendChild(btn);
+    card.appendChild(row);
+  }
+
   function showFreeze(rec, opts) {
     opts = opts || {};
     frozen = true;
@@ -393,21 +471,9 @@
     wrap.className = 'once-freeze';
     wrap.setAttribute('role', 'alertdialog');
     wrap.setAttribute('aria-modal', 'true');
-    var ok = rec && rec.result === 'success';
-    var title = ok ? '✦ Challenge complete ✦' : '✦ Challenge failed ✦';
-    var gameName = (gameById(rec && rec.game || gameId) || {}).name || (rec && rec.game) || '';
-    var diff = rec && rec.difficultyLabel ? rec.difficultyLabel : diffLabel(rec && rec.game || gameId, rec && rec.difficulty);
-    var when = formatTime(rec && rec.finished);
-    var summary = (rec && rec.summary) || '';
-    var html = '<div class="once-card' + (ok ? '' : ' fail') + '">' +
-      '<h2>' + title + '</h2>' +
-      '<p>' + escapeHtml(summary) + '</p>' +
-      '<p class="once-meta">' + escapeHtml(gameName) + (diff ? ' · ' + escapeHtml(diff) : '') +
-      (when ? '<br>' + escapeHtml(when) : '') + '</p>' +
-      '<p class="once-note">This link cannot be used again.</p>' +
-      '</div>';
-    wrap.innerHTML = html;
+    wrap.innerHTML = freezeCardHtml(rec);
     (document.body || document.documentElement).appendChild(wrap);
+    bindCrateSolutionButton(wrap, rec);
     blockInput();
   }
 
@@ -598,6 +664,7 @@
   function disableUndoAndReveal() {
     var sels = [
       '[data-cv-act="undo"]',
+      '[data-cv-act="solve"]',
       '[data-rc="undo"]',
       '#bUndo',
       '#reveal',
@@ -775,6 +842,10 @@
     wrapShowWin();
     if (record && record.result) {
       showFreeze(record);
+      if (record.result === 'fail' && gameId === 'crate') {
+        bootCrate();
+        disableUndoAndReveal();
+      }
       return;
     }
     if (record && record.started && !record.result) {

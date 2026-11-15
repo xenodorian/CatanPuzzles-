@@ -293,12 +293,121 @@
     return { solvable: false, reason: 'no-path', aborted: false };
   }
 
+  /* Shortest U/D/L/R walk from `from` to `to`, staying off walls and crates. */
+  function walkPath(level, crates, from, to) {
+    if (from[0] === to[0] && from[1] === to[1]) return '';
+    var w = level.w, blocked = {}, i, j;
+    for (i = 0; i < crates.length; i++) blocked[crates[i][0] * w + crates[i][1]] = true;
+    var prev = {}, start = from[0] * w + from[1];
+    prev[start] = null;
+    var queue = [cell(from)], head = 0;
+    while (head < queue.length) {
+      var p = queue[head++];
+      for (j = 0; j < 4; j++) {
+        var d = DIRS[ORDER[j]];
+        var nr = p[0] + d[0], nc = p[1] + d[1], key = nr * w + nc;
+        if (isWall(level, nr, nc) || blocked[key] || Object.prototype.hasOwnProperty.call(prev, key)) continue;
+        prev[key] = { r: p[0], c: p[1], ch: ORDER[j] };
+        if (nr === to[0] && nc === to[1]) {
+          var s = '', cr = nr, cc = nc, pk;
+          while (prev[cr * w + cc]) {
+            pk = prev[cr * w + cc];
+            s = pk.ch + s;
+            cr = pk.r; cc = pk.c;
+          }
+          return s;
+        }
+        queue.push([nr, nc]);
+      }
+    }
+    return null;
+  }
+
+  /* BFS over crate configurations; returns a U/D/L/R string, or null if none. */
+  function findSolution(level, cap) {
+    cap = cap || 80000;
+    if (isSolvedCrates(level, level.crates)) return '';
+    if (isCornerDead(level, level.crates)) return null;
+    var w = level.w;
+    var startCrates = cloneCells(level.crates);
+    var startPlayer = cell(level.player);
+    var reach0 = playerReach(level, startCrates, startPlayer);
+    function keyOf(cs, min) {
+      var parts = [];
+      for (var i = 0; i < cs.length; i++) parts.push(cs[i][0] * w + cs[i][1]);
+      parts.sort(function (a, b) { return a - b; });
+      return parts.join(',') + '|' + min;
+    }
+    var startKey = keyOf(startCrates, reach0.min);
+    var seen = {};
+    seen[startKey] = true;
+    var queue = [{ crates: startCrates, player: startPlayer, moves: '' }];
+    var head = 0, nodes = 0;
+    while (head < queue.length) {
+      var st = queue[head++];
+      nodes++;
+      if (nodes > cap) return null;
+      if (isSolvedCrates(level, st.crates)) return st.moves;
+      var reach = playerReach(level, st.crates, st.player);
+      for (var i = 0; i < st.crates.length; i++) {
+        for (var j = 0; j < 4; j++) {
+          var d = DIRS[ORDER[j]];
+          var cr = st.crates[i][0], cc = st.crates[i][1];
+          var pr = cr - d[0], pc = cc - d[1];
+          var nr = cr + d[0], nc = cc + d[1];
+          if (isWall(level, pr, pc) || isWall(level, nr, nc) || indexAt(st.crates, nr, nc) >= 0) continue;
+          if (!reach.seen[pr * w + pc]) continue;
+          var walk = walkPath(level, st.crates, st.player, [pr, pc]);
+          if (walk == null) continue;
+          var ncrates = cloneCells(st.crates);
+          ncrates[i] = [nr, nc];
+          if (isCornerDead(level, ncrates) && !isSolvedCrates(level, ncrates)) continue;
+          var nplayer = [cr, cc];
+          var nreach = playerReach(level, ncrates, nplayer);
+          var key = keyOf(ncrates, nreach.min);
+          if (seen[key]) continue;
+          seen[key] = true;
+          var nmoves = st.moves + walk + ORDER[j];
+          if (isSolvedCrates(level, ncrates)) return nmoves;
+          queue.push({ crates: ncrates, player: nplayer, moves: nmoves });
+        }
+      }
+    }
+    return null;
+  }
+
+  /* Preferred path for the Show Solution button: the bank solution (and
+     alternate, for Easy) already transformed for this orientation, then a
+     fresh BFS if those ever fail to replay. */
+  function solutionMoves(level) {
+    if (!level) return '';
+    var list = [];
+    if (level.solution) list.push(level.solution);
+    if (level.alternate && level.alternate !== level.solution) list.push(level.alternate);
+    for (var i = 0; i < list.length; i++) {
+      var r = applyMoves(level, list[i]);
+      if (r.legal && r.solved) return list[i];
+    }
+    var found = findSolution(level);
+    return found || '';
+  }
+
   /* ---------- UI ---------- */
 
   var root = null;
   var state = { k: 2, level: null, history: '', status: '', statusClass: '' };
   var lost = false, onceDeadline = 0, onceTimerId = 0;
   var ONCE_MS = 5 * 60 * 1000;
+  var STEP_MS = 180;
+  var playback = {
+    playing: false,
+    shown: false,
+    moves: '',
+    index: 0,
+    timer: 0,
+    onDone: null,
+    onStop: null
+  };
 
   function once() { return !!(window.VaultOnce && window.VaultOnce.active && window.VaultOnce.active()); }
   function onceCode() {
@@ -383,11 +492,19 @@
 
   var CSS = [
     '.cv-stage{width:100%;display:flex;justify-content:center;margin-top:0.5rem}',
-    '.cv-board{--cols:8;display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));',
+    '.cv-board{--cols:8;--rows:8;position:relative;',
     'width:min(100%,calc(var(--cols) * 56px));border:2px solid var(--gold-dim);background:var(--stone);',
     'box-shadow:0 0 30px rgba(0,0,0,0.6);touch-action:none;user-select:none;-webkit-user-select:none}',
+    '.cv-grid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr))}',
+    '.cv-sprites{position:absolute;inset:0;pointer-events:none;z-index:2}',
+    '.cv-sprite{position:absolute;left:0;top:0;width:calc(100% / var(--cols));height:calc(100% / var(--rows));',
+    'display:flex;align-items:center;justify-content:center;',
+    'transform:translate(calc(var(--c) * 100%),calc(var(--r) * 100%))}',
+    '.cv-sprite.cv-tween{transition:transform 180ms ease-in-out}',
+    '.cv-sprite .cv-crate,.cv-sprite .cv-warden{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}',
     '.cv-board.cv-won{border-color:var(--success);box-shadow:0 0 40px rgba(90,170,112,0.35)}',
     '.cv-cell{position:relative;min-width:0;aspect-ratio:1/1;overflow:hidden}',
+    'button.btn[disabled]{opacity:0.45;pointer-events:none;cursor:default}',
     '.cv-floor{background:radial-gradient(ellipse at 50% 35%,#efe0b8 0%,#d9c393 80%);box-shadow:inset 0 0 0 1px rgba(110,80,35,0.35)}',
     '.cv-wall{background:linear-gradient(145deg,#352c1e,#120e08);box-shadow:inset 0 0 0 1px #050402,inset 0 2px 0 rgba(255,235,190,0.07),inset 0 -3px 0 rgba(0,0,0,0.55)}',
     '.cv-cell > *{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}',
@@ -443,6 +560,7 @@
         '<div class="btn-row">' +
           '<button class="btn" data-cv-act="undo">Undo</button>' +
           '<button class="btn" data-cv-act="restart">Restart</button>' +
+          '<button class="btn" data-cv-act="solve">Show Solution</button>' +
           '<button class="btn btn-primary" data-cv-act="new">New Puzzle</button>' +
         '</div>' +
       '</div>' +
@@ -475,13 +593,18 @@
     state.statusClass = cls || '';
   }
 
-  function render() {
-    var lvl = state.level;
-    var cur = applyMoves(lvl, state.history);
-    var board = root.querySelector('.cv-board');
-    board.style.setProperty('--cols', String(lvl.w));
-    board.classList.toggle('cv-won', cur.solved);
+  function levelSig(lvl) {
+    return String(lvl.bankK) + ':' + String(lvl.bankIdx) + ':' + String(lvl.orient) + ':' + lvl.w + 'x' + lvl.h;
+  }
 
+  function ensureGrid(board, lvl) {
+    var grid = board.querySelector('.cv-grid');
+    if (!grid) {
+      grid = document.createElement('div');
+      grid.className = 'cv-grid';
+      board.insertBefore(grid, board.firstChild);
+    }
+    if (grid.dataset.sig === levelSig(lvl)) return grid;
     var html = '';
     for (var r = 0; r < lvl.h; r++) {
       for (var c = 0; c < lvl.w; c++) {
@@ -489,17 +612,102 @@
           html += '<div class="cv-cell cv-wall"></div>';
           continue;
         }
-        var goal = indexAt(lvl.goals, r, c) >= 0;
-        var ci = indexAt(cur.crates, r, c);
-        var here = cur.player[0] === r && cur.player[1] === c;
-        var inner = '';
-        if (goal && ci < 0) inner += '<span class="cv-rune"></span>';
-        if (ci >= 0) inner += '<span class="cv-crate' + (goal ? ' cv-on' : '') + '"></span>';
-        if (here) inner += WARDEN;
+        var inner = indexAt(lvl.goals, r, c) >= 0 ? '<span class="cv-rune"></span>' : '';
         html += '<div class="cv-cell cv-floor">' + inner + '</div>';
       }
     }
-    board.innerHTML = html;
+    grid.innerHTML = html;
+    grid.dataset.sig = levelSig(lvl);
+    return grid;
+  }
+
+  function setSpritePos(el, r, c, tween) {
+    if (tween) el.classList.add('cv-tween');
+    else el.classList.remove('cv-tween');
+    el.style.setProperty('--r', String(r));
+    el.style.setProperty('--c', String(c));
+  }
+
+  function renderSprites(board, lvl, cur, from) {
+    var layer = board.querySelector('.cv-sprites');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'cv-sprites';
+      board.appendChild(layer);
+    }
+    if (layer.dataset.sig !== levelSig(lvl) || layer.childElementCount !== cur.crates.length + 1) {
+      var html = '';
+      for (var i = 0; i < cur.crates.length; i++) {
+        html += '<div class="cv-sprite cv-sprite-crate" data-crate="' + i + '"><span class="cv-crate"></span></div>';
+      }
+      html += '<div class="cv-sprite cv-sprite-warden">' + WARDEN + '</div>';
+      layer.innerHTML = html;
+      layer.dataset.sig = levelSig(lvl);
+    }
+    var start = from || cur;
+    var sprites = layer.querySelectorAll('.cv-sprite-crate');
+    var warden = layer.querySelector('.cv-sprite-warden');
+    for (i = 0; i < cur.crates.length; i++) {
+      var el = sprites[i];
+      var crateEl = el.querySelector('.cv-crate');
+      setSpritePos(el, start.crates[i][0], start.crates[i][1], false);
+      crateEl.classList.toggle('cv-on', indexAt(lvl.goals, start.crates[i][0], start.crates[i][1]) >= 0);
+    }
+    setSpritePos(warden, start.player[0], start.player[1], false);
+    if (from) {
+      void layer.offsetWidth;
+      for (i = 0; i < cur.crates.length; i++) {
+        setSpritePos(sprites[i], cur.crates[i][0], cur.crates[i][1], true);
+        sprites[i].querySelector('.cv-crate').classList.toggle('cv-on',
+          indexAt(lvl.goals, cur.crates[i][0], cur.crates[i][1]) >= 0);
+      }
+      setSpritePos(warden, cur.player[0], cur.player[1], true);
+    }
+  }
+
+  function stepMs() {
+    try {
+      if (typeof window.__CV_SOLVE_STEP_MS === 'number' && window.__CV_SOLVE_STEP_MS >= 0) {
+        return window.__CV_SOLVE_STEP_MS;
+      }
+    } catch (e) { }
+    return STEP_MS;
+  }
+
+  function clearPlaybackTimer() {
+    if (playback.timer) { clearTimeout(playback.timer); playback.timer = 0; }
+  }
+
+  function updateSolveButton() {
+    if (!root) return;
+    var btn = root.querySelector('[data-cv-act="solve"],[data-cv-act="stop"]');
+    if (!btn) return;
+    if (playback.playing) {
+      btn.setAttribute('data-cv-act', 'stop');
+      btn.textContent = 'Stop';
+    } else {
+      btn.setAttribute('data-cv-act', 'solve');
+      btn.textContent = 'Show Solution';
+    }
+    var locked = playback.playing;
+    var sels = root.querySelectorAll('[data-cv-act="undo"],[data-cv-act="restart"],[data-cv-act="new"],[data-cv-diff],[data-cv-dir]');
+    for (var i = 0; i < sels.length; i++) {
+      if (locked) sels[i].setAttribute('disabled', 'disabled');
+      else sels[i].removeAttribute('disabled');
+    }
+  }
+
+  function render(opts) {
+    opts = opts || {};
+    var lvl = state.level;
+    var cur = applyMoves(lvl, state.history);
+    var board = root.querySelector('.cv-board');
+    board.style.setProperty('--cols', String(lvl.w));
+    board.style.setProperty('--rows', String(lvl.h));
+    board.classList.toggle('cv-won', cur.solved && !playback.playing);
+    board.classList.toggle('cv-playing', playback.playing);
+    ensureGrid(board, lvl);
+    renderSprites(board, lvl, cur, opts.from || null);
 
     var onRunes = 0;
     for (var i = 0; i < cur.crates.length; i++) {
@@ -516,9 +724,108 @@
     var st = root.querySelector('.cv-status');
     st.textContent = text;
     st.className = 'status-msg cv-status' + (cls ? ' ' + cls : '');
+    updateSolveButton();
+  }
+
+  function finishPlayback() {
+    clearPlaybackTimer();
+    playback.playing = false;
+    playback.shown = true;
+    playback.moves = '';
+    playback.index = 0;
+    setStatus('Solution shown', 'success');
+    render();
+    var cb = playback.onDone;
+    playback.onDone = null;
+    playback.onStop = null;
+    if (cb) cb();
+  }
+
+  function playNextStep() {
+    playback.timer = 0;
+    if (!playback.playing) return;
+    var lvl = state.level;
+    if (playback.index >= playback.moves.length) {
+      finishPlayback();
+      return;
+    }
+    var ch = playback.moves.charAt(playback.index);
+    var from = applyMoves(lvl, state.history);
+    var next = applyMoves(lvl, state.history + ch);
+    if (!next.legal) {
+      finishPlayback();
+      return;
+    }
+    state.history += ch;
+    playback.index++;
+    setStatus('Showing solution…');
+    render({ from: from });
+    var delay = stepMs();
+    if (playback.index >= playback.moves.length) {
+      playback.timer = setTimeout(finishPlayback, delay);
+    } else {
+      playback.timer = setTimeout(playNextStep, delay);
+    }
+  }
+
+  function showSolution(opts) {
+    opts = opts || {};
+    if (playback.playing) return false;
+    var lvl = state.level;
+    if (!lvl) return false;
+    var moves = solutionMoves(lvl);
+    if (!moves) {
+      setStatus('No solution is available for this vault.', 'fail');
+      render();
+      return false;
+    }
+    clearPlaybackTimer();
+    state.history = '';
+    playback.playing = true;
+    playback.shown = false;
+    playback.moves = moves;
+    playback.index = 0;
+    playback.onDone = typeof opts.onDone === 'function' ? opts.onDone : null;
+    playback.onStop = typeof opts.onStop === 'function' ? opts.onStop : null;
+    setStatus('Showing solution…');
+    render();
+    var beat = stepMs();
+    playback.timer = setTimeout(playNextStep, beat ? Math.min(80, beat) : 0);
+    return true;
+  }
+
+  function stopSolution() {
+    if (!playback.playing) return;
+    clearPlaybackTimer();
+    var onStop = playback.onStop;
+    playback.playing = false;
+    playback.shown = false;
+    playback.moves = '';
+    playback.index = 0;
+    playback.onDone = null;
+    playback.onStop = null;
+    state.history = '';
+    setStatus('');
+    render();
+    if (onStop) onStop();
+  }
+
+  function cancelPlayback() {
+    if (!playback.playing && !playback.shown) {
+      clearPlaybackTimer();
+      return;
+    }
+    clearPlaybackTimer();
+    playback.playing = false;
+    playback.shown = false;
+    playback.moves = '';
+    playback.index = 0;
+    playback.onDone = null;
+    playback.onStop = null;
   }
 
   function move(ch) {
+    if (playback.playing) return;
     if (lost) return;
     if (window.VaultOnce && window.VaultOnce.frozen && window.VaultOnce.frozen()) return;
     var lvl = state.level;
@@ -559,22 +866,28 @@
   }
 
   function undo() {
+    if (playback.playing) return;
     if (window.VaultOnce && window.VaultOnce.active()) return;
     if (!state.history.length) return;
+    cancelPlayback();
     state.history = state.history.slice(0, -1);
     setStatus('');
     render();
   }
 
   function restart() {
+    if (playback.playing) return;
     if (onceLocked()) return;
+    cancelPlayback();
     state.history = '';
     setStatus('');
     render();
   }
 
   function newPuzzle() {
+    if (playback.playing) return;
     if (onceLocked()) return;
+    cancelPlayback();
     if (!onceAlreadyFinished()) lost = false;
     state.level = generate(state.k);
     state.history = '';
@@ -584,6 +897,7 @@
   }
 
   function setDifficulty(k) {
+    if (playback.playing) return;
     if (onceLocked()) return;
     state.k = k;
     var btns = root.querySelectorAll('[data-cv-diff]');
@@ -607,6 +921,8 @@
       switch (t.getAttribute('data-cv-act')) {
         case 'undo': undo(); break;
         case 'restart': restart(); break;
+        case 'solve': showSolution(); break;
+        case 'stop': stopSolution(); break;
         case 'new': newPuzzle(); break;
       }
     }
@@ -658,6 +974,7 @@
     state.k = level.bankK;
     state.level = level;
     state.history = '';
+    cancelPlayback();
     if (!onceAlreadyFinished()) lost = false;
     setStatus('');
     if (root) {
@@ -683,6 +1000,8 @@
       solution: state.level && state.level.solution,
       solved: !!(cur && cur.solved),
       lost: lost,
+      playingSolution: playback.playing,
+      solutionShown: playback.shown,
       onceRemaining: once() && onceDeadline ? remainingMs() : null,
       crates: cur && cur.crates,
       player: cur && cur.player
@@ -700,7 +1019,11 @@
     move: move,
     isSolvable: isSolvable,
     isCornerDead: isCornerDead,
-    hasReachablePush: hasReachablePush
+    hasReachablePush: hasReachablePush,
+    solutionMoves: solutionMoves,
+    findSolution: findSolution,
+    showSolution: showSolution,
+    stopSolution: stopSolution
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
