@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!--vault-version--><script>(function(){var V="e54f27981b";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
-<script src="puzzles/once.js?v=e54f27981b"></script>
+<!--vault-version--><script>(function(){var V="f81daf2f94";try{fetch("version.txt?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(t){t=t.trim();if(!t||t===V||!/^[a-z0-9]{6,16}$/.test(t))return;var k="vault-reload-"+t+location.pathname;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1")}catch(e){return}var u=new URL(location.href);u.searchParams.set("v",t);location.replace(u.href)}).catch(function(){})}catch(e){}})();</script><!--/vault-version-->
+<script src="puzzles/once.js?v=f81daf2f94"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
@@ -12,7 +12,7 @@
 <style>
 :root{--cell:36px;--gold:#f2c14e;--ink:#e9e4d6;--dim:#9aa3b8;--bg:#0d1322;--card:#182033;--line:#2b3654}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%}
+html,body{margin:0;height:100%;min-height:100%;min-height:100dvh}
 body{background:radial-gradient(1200px 700px at 50% -10%,#24345c 0%,#111a30 45%,#080c17 100%) fixed #0d1322;color:var(--ink);
   font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior:none;touch-action:manipulation;
   -webkit-user-select:none;user-select:none}
@@ -34,8 +34,12 @@ button.off{opacity:.55}
 #top nav{display:flex;gap:6px}
 #top nav button{padding:6px 10px;font-size:13px}
 
-#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px}
-body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center;gap:18px}
+#app{display:flex;flex-direction:column;align-items:stretch;width:100%;min-height:100%;min-height:100dvh}
+#main{display:flex;flex-direction:column;align-items:center;padding:6px 8px 16px;width:100%;box-sizing:border-box}
+body.wide #main{display:grid;grid-template-columns:auto minmax(220px,300px);
+  align-items:start;justify-content:center;justify-items:stretch;gap:12px 18px;flex-direction:unset}
+body.wide #play{grid-column:1;grid-row:1}
+body.wide #panel{grid-column:2;grid-row:1}
 #play{display:flex;flex-direction:column;align-items:center;min-width:0}
 #status{display:flex;align-items:center;gap:8px;height:30px;font-weight:600;font-size:15px}
 #turnTok{width:16px;height:16px;border-radius:50%;border:2px solid #000;flex:none}
@@ -44,7 +48,7 @@ body.wide #main{flex-direction:row;align-items:flex-start;justify-content:center
 #spin{width:14px;height:14px;border-radius:50%;border:2px solid #56648c;border-top-color:var(--gold);animation:spin .8s linear infinite}
 #spin[hidden]{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-#info{height:20px;max-width:calc(var(--cell)*12 + 24px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+#info{height:20px;max-width:calc(var(--cell)*var(--cols,12) + 24px);font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
 #info b{color:var(--ink)}
 
 #boards{display:flex;flex-direction:column;gap:8px}
@@ -99,8 +103,16 @@ body.side #info{max-width:calc(100vw - 32px)}
   box-shadow:0 0 0 calc(var(--cell)*.09) #ff9a1f inset,0 0 10px 3px #ff6a00;animation:flame .6s infinite alternate}
 @keyframes flame{to{box-shadow:0 0 0 calc(var(--cell)*.09) #ffd23f inset,0 0 14px 5px #ff3d00}}
 
-#panel{width:100%;max-width:calc(var(--cell)*12 + 24px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
-body.wide #panel{width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#panel{width:100%;max-width:calc(var(--cell)*var(--cols,12) + 24px);margin-top:12px;background:rgba(24,32,51,.85);border:1px solid var(--line);border-radius:12px;padding:12px}
+body.wide #panel{width:300px;max-width:300px;margin-top:34px;display:flex;flex-direction:column;max-height:calc(100dvh - var(--chrome-top, 90px) - 12px);min-height:0;overflow:auto}
+html.vault-once #once-banner{flex:none;width:min(640px,calc(100% - 24px));margin:6px auto 4px;padding:0.45rem 1rem}
+html.vault-once #once-giveup, #panel #once-giveup{margin:12px 0 0;width:100%;justify-content:flex-start;flex:none}
+@media (max-height:560px){
+  html.vault-once #once-banner{padding:0.35rem 0.8rem;margin:4px auto 2px;font-size:0.7rem}
+  #status{height:24px;font-size:13px}
+  #info{height:16px;font-size:11px;margin-bottom:2px}
+  body.wide #panel{margin-top:26px;padding:8px 10px}
+}
 #panel h2{margin:12px 0 6px;font:700 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 #matchup{font-weight:600}
 #matchup small{display:block;color:var(--dim);font-weight:400}
@@ -1025,35 +1037,77 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     else if (g) s += ': ' + g.lines.join(' ');
     $('info').innerHTML = s; $('info').title = g ? g.lines.join(' ') : '';
   }
+  var sidePinned = false;
+  function nestGiveUp() {
+    var g = document.getElementById('once-giveup'), panel = $('panel');
+    if (g && panel && g.parentNode !== panel) panel.appendChild(g);
+  }
   function layout() {
+    nestGiveUp();
     var W = window.innerWidth, H = window.innerHeight;
-    var wide = W >= 880 && W > H;
-    document.body.classList.toggle('wide', wide);
-    var top = $('top').offsetHeight + 6 + 30 + 24;
+    var canWide = W >= 880 && W > H;
+    var main = $('main');
+    var statusEl = $('status'), infoEl = $('info');
+    var topH = 0;
+    if (main) topH = main.getBoundingClientRect().top;
+    else {
+      var topEl = $('top'), banner = document.getElementById('once-banner');
+      topH = topEl ? topEl.getBoundingClientRect().bottom : 0;
+      if (banner) topH = Math.max(topH, banner.getBoundingClientRect().bottom);
+    }
+    var statusH = (statusEl ? statusEl.offsetHeight : 30) + (infoEl ? infoEl.offsetHeight : 20);
+    var infoMb = infoEl ? (parseFloat(window.getComputedStyle(infoEl).marginBottom) || 0) : 4;
+    var padBottom = 12, padX = 16, gap = 18, panelW = 300, labelW = 18, border = 6, boardGap = 8;
     var nf = DC.fileList().length, nl = DC.levelNums().length;
-    document.documentElement.style.setProperty('--cols', nf);
+    document.documentElement.style.setProperty('--cols', String(nf));
+    var availH = H - topH - statusH - infoMb - padBottom;
+    if (availH < 80) availH = 80;
+
+    function widthFor(useSide, useWide) {
+      var availW = (useWide ? W - panelW - gap - padX : W - padX);
+      if (availW < 80) availW = 80;
+      if (useSide) return (availW - nl * (labelW + border) - (nl - 1) * boardGap) / (nf * nl);
+      return (availW - labelW - border) / nf;
+    }
+    function cellOf(useSide, useWide) {
+      var cw = widthFor(useSide, useWide);
+      var ch;
+      if (useSide) ch = availH / 8;
+      else ch = (availH - nl * border - (nl - 1) * boardGap) / (nl * 8);
+      return Math.floor(Math.min(cw, ch));
+    }
+
+    var best = { side: false, wide: false, c: -1 }, bestWide = { side: false, wide: true, c: -1 };
+    function consider(useSide, useWide) {
+      if (useWide && !canWide) return;
+      if (sidePinned && useSide !== side) return;
+      var c = cellOf(useSide, useWide);
+      if (c > best.c || (c === best.c && useWide && !best.wide)) best = { side: useSide, wide: useWide, c: c };
+      if (useWide && (c > bestWide.c)) bestWide = { side: useSide, wide: true, c: c };
+    }
+    consider(false, false);
+    consider(false, true);
+    consider(true, false);
+    consider(true, true);
+    // Prefer the panel beside the boards on wide screens whenever the squares stay reasonably large.
+    if (canWide && !sidePinned && bestWide.c >= 32) best = bestWide;
+    else if (canWide && sidePinned && bestWide.c >= 32) best = { side: side, wide: true, c: cellOf(side, true) };
+
+    var c = best.c;
+    if (c > 120) c = 120;
+    if (!canWide) {
+      var maxByW = Math.floor(widthFor(best.side, false));
+      if (c < 22) c = Math.max(c, Math.min(22, maxByW));
+      if (c < 18) c = Math.max(14, Math.min(18, maxByW));
+    }
+    if (c < 16) c = 16;
+    if (!sidePinned) side = best.side;
+    document.body.classList.toggle('wide', best.wide);
     document.body.classList.toggle('side', side);
     $('bSide').className = side ? 'on' : '';
     $('bSide').setAttribute('aria-pressed', side ? 'true' : 'false');
-    var cw, ch, c;
-    if (side) {
-      // boards in one row, Sky on the left: every board is a full 8 ranks tall
-      var sideCw = function (w) { return (w - 16 - nl * (18 + 6) - (nl - 1) * 8) / (nf * nl); };
-      ch = (H - top - 6 - 12) / 8;
-      var cBelow = Math.min(sideCw(W), ch, 64), cAside = Math.min(sideCw(W - 340), ch, 64);
-      wide = wide && cAside >= cBelow * 0.85; // keep the side panel only if it costs little board size
-      document.body.classList.toggle('wide', wide);
-      cw = sideCw(wide ? W - 340 : W);
-      c = Math.floor(Math.min(cw, ch));
-      if (c < 18) c = 18; // very narrow screens: the board row scrolls sideways
-    } else {
-      cw = ((wide ? W - 340 : W) - 16 - 18 - 6) / nf;
-      ch = (H - top - (nl - 1) * 6 - (nl - 1) * 8 - 8) / (nl * 8);
-      c = Math.floor(Math.min(cw, ch));
-      if (c < 26) c = Math.max(18, Math.floor(Math.min(cw, 32))); // small screens: larger cells, page scrolls
-    }
-    if (c > 64) c = 64;
     document.documentElement.style.setProperty('--cell', c + 'px');
+    document.documentElement.style.setProperty('--chrome-top', Math.round(Math.max(0, topH)) + 'px');
   }
 
   /* ---------- interaction ---------- */
@@ -1306,7 +1360,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     $('newStart').onclick = startNew;
     $('bUndo').onclick = undo;
     $('bFlip').onclick = function () { flipped = !flipped; buildBoards(); refreshMarks(); store(); };
-    $('bSide').onclick = function () { side = !side; layout(); store(); };
+    $('bSide').onclick = function () { sidePinned = true; side = !side; layout(); store(); };
     $('bSound').onclick = function () { cfg.sound = !cfg.sound; SFX.setMuted(!cfg.sound); refreshPanel(); store(); if (cfg.sound) SFX.play('move'); };
     $('bGuide').onclick = function () { $('dlgGuide').hidden = false; };
     $('guideClose').onclick = function () { $('dlgGuide').hidden = true; };
@@ -1319,6 +1373,7 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
     });
     window.addEventListener('resize', layout);
     window.addEventListener('orientationchange', function () { setTimeout(layout, 200); });
+    window.addEventListener('load', function () { setTimeout(layout, 0); setTimeout(layout, 50); });
     if (onceLink) { /* VaultOnce.startOnce boots the pinned AI game. */ }
     else if (!saved) openNew();
     else if (stat.over) showOver();
@@ -1332,6 +1387,9 @@ var GUIDE = [{"letter":"K","name":"King","value":null,"home":"Land","lines":["On
       var side = opts.side === -1 || opts.side === 'scarlet' ? -1 : 1;
       pend = { mode: 'ai', side: side, level: level };
       startNew();
+      layout();
+      setTimeout(layout, 0);
+      setTimeout(layout, 50);
     },
     result: function () {
       if (!stat || !stat.over) return { over: false };
