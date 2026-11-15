@@ -45,9 +45,12 @@
     '  background: radial-gradient(circle at 35% 30%, #4a3c2a, #2d241a 70%); box-shadow: inset 0 0 0 1px rgba(201,148,58,0.55), inset 0 0 12px rgba(0,0,0,0.6); }',
     '.rc-glyph { width: 46%; height: 70%; fill: none; stroke: var(--gold-bright); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;',
     '  filter: drop-shadow(0 0 3px rgba(240,191,90,0.45)); pointer-events: none; }',
-    '.rc-moves { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.35rem; width: min(100%, 420px); margin-top: 1rem; }',
-    '.rc-moves .btn { padding: 0.45rem 0; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: none; min-width: 0; }',
-    '.rc-moves .btn.rc-hint-on { border-color: var(--rune); color: var(--rune); box-shadow: 0 0 12px rgba(126,207,192,0.45); }',
+    '.rc-stage.rc-picking .rc-hintbox { display: none; }',
+    '.rc-arrow.rc-arrow-hint { width: 40px; height: 40px; margin: -20px 0 0 -20px; border: 2px solid var(--gold-bright); background: rgba(201,148,58,0.35); animation: rcHintPulse 1.1s ease-in-out infinite; }',
+    '.rc-arrow.rc-arrow-hint svg { fill: #fff6dc; }',
+    '@keyframes rcHintPulse { 0%, 100% { box-shadow: 0 0 6px rgba(240,200,110,0.5); } 50% { box-shadow: 0 0 18px rgba(240,200,110,0.95); } }',
+    '.rc-cubie.rc-hint-layer .rc-sticker { box-shadow: inset 0 0 0 2px var(--gold-bright), inset 0 0 14px rgba(240,200,110,0.45); }',
+    '.rc-sticker.rc-hint-sticker { box-shadow: inset 0 0 0 3px #fff6dc, inset 0 0 18px rgba(240,200,110,0.7) !important; }',
     '.rc-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem 0.8rem; margin: 1rem auto 0; width: min(100%, 420px); font-size: 0.9rem; color: var(--parchment-dark); }',
     '.rc-legend span { display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }',
     '.rc-mini { width: 14px; height: 21px; fill: none; stroke: var(--gold-bright); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; flex: none; }',
@@ -66,10 +69,9 @@
     '  <div class="rc-wrap">',
     '    <div class="rc-stats"><span>Moves <b data-rc="moves">0</b></span><span>Time <b data-rc="time">0:00</b></span></div>',
     '    <div class="rc-views">',
-    '      <div class="rc-pane rc-pane-main"><div class="rc-stage" data-rc="stage0"><div class="rc-view" data-rc="view0"></div><div class="rc-arrows" data-rc="arrows0"></div></div>',
+    '      <div class="rc-pane rc-pane-main"><div class="rc-stage" data-rc="stage0"><div class="rc-view" data-rc="view0"></div><div class="rc-arrows rc-hintbox" data-rc="hint0"></div><div class="rc-arrows" data-rc="arrows0"></div></div>',
     '      </div>',
     '    </div>',
-    '    <div class="rc-moves" data-rc="movebtns"></div>',
     '  </div>',
     '  <div class="status-msg info" data-rc="status">Press a rune, then drag (or tap) an arrow to turn its layer. W A S D rotate the whole cube.</div>',
     '  <div class="btn-row">',
@@ -84,9 +86,9 @@
     '      <li>A 2&times;2&times;2 cube. Each face of the solved cube carries one rune; there are no colours to go by.</li>',
     '      <li>Solve it by making every face show a single rune. A 2&times;2 has no fixed centres, so any face may end up on top.</li>',
     '      <li>The cube stays still: it never spins around, only its layers turn.</li>',
-    '      <li>Press any rune on the cube: four arrows appear, two for its row and two for its column. Drag toward an arrow to turn that layer that way (the layer lights up as you go), or tap the rune and then tap an arrow. Tap elsewhere to hide the arrows. The buttons below the cube work too.</li>',
+    '      <li>Press any rune on the cube: four arrows appear, two for its row and two for its column. Drag toward an arrow to turn that layer that way (the layer lights up as you go), or tap the rune and then tap an arrow. Tap elsewhere to hide the arrows.</li>',
     '      <li>Keys rotate the whole cube so you can see its hidden faces: <kbd>W</kbd> tips the front face up (the bottom comes into view), <kbd>S</kbd> tips it down (the top comes to the front), <kbd>A</kbd> turns it left (the right face comes to the front) and <kbd>D</kbd> turns it right (the left face comes to the front). Rotating the cube is free: it is not a move and Undo skips it.</li>',
-    '      <li>Hint shows the next turn of a shortest solution. A 2&times;2 never needs more than 14 quarter turns.</li>',
+    '      <li>Hint lights up the layer to turn next (on a shortest solution) and puts a glowing arrow on one of its runes: drag that rune the way the arrow points, or tap the arrow. A 2&times;2 never needs more than 14 quarter turns.</li>',
     '    </ul>',
     '  </div>',
     '</div>'
@@ -110,7 +112,7 @@
     return (rot || 'rotate3d(1,0,0,0deg)') + ' translate3d(' + q.pos[0] * h + 'px,' + (-q.pos[1] * h) + 'px,' + q.pos[2] * h + 'px) ' + cssMatrix(q.O);
   }
   var FACE_CSS = ['rotateX(90deg)', 'rotateX(-90deg)', 'rotateY(-90deg)', 'rotateY(90deg)', 'rotateY(0deg)', 'rotateY(180deg)'];
-  function buildCube() { VIEWS.forEach(function (V, vi) { buildView(V, vi); }); hideArrows(); }
+  function buildCube() { VIEWS.forEach(function (V, vi) { buildView(V, vi); }); hideArrows(); markHint(); }
   function buildView(V, vi) {
     var host = els['view' + vi], cubeSize = V.size;
     host.innerHTML = '';
@@ -191,7 +193,7 @@
     var a = rot ? rot.a : mi.angleAboutNormal, axis = n[0] + ',' + (-n[1]) + ',' + n[2];
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var dur = reduce || document.hidden ? 0 : 200;
-    hideArrows();
+    hideArrows(); clearHint();
     VIEWS.forEach(function (V) {
       layer.forEach(function (q) {
         var el = V.els[q.id];
@@ -275,12 +277,37 @@
       var sol = E.solve(cube);
       if (!sol.length) { setStatus('Already solved.'); return; }
       hintMove = sol[0]; markHint();
-      setStatus('Hint: turn ' + E.MOVE_NAMES[hintMove] + ' (' + sol.length + ' turn' + (sol.length === 1 ? '' : 's') + ' from solved).');
+      setStatus('Hint: turn the glowing layer the way the arrow points (' + sol.length + ' turn' + (sol.length === 1 ? '' : 's') + ' from solved).');
     }, 20);
   }
+  // Show the hinted turn on the cube: light its layer and put one glowing arrow on a visible rune of it.
+  function clearHint() {
+    if (!els.hint0) return;
+    els.hint0.innerHTML = '';
+    var l = root.querySelectorAll('.rc-hint-layer, .rc-hint-sticker');
+    for (var i = 0; i < l.length; i++) l[i].classList.remove('rc-hint-layer', 'rc-hint-sticker');
+  }
   function markHint() {
-    var bs = els.movebtns.querySelectorAll('[data-move]');
-    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('rc-hint-on', +bs[i].getAttribute('data-move') === hintMove);
+    clearHint();
+    if (hintMove < 0 || solved || !els.hint0) return;
+    var V = VIEWS[0], mi = E.moveInfo(hintMove), n = mi.n, best = null;
+    var stickersEls = els.view0.querySelectorAll('.rc-sticker');
+    for (var i = 0; i < stickersEls.length; i++) {
+      var st = stickersEls[i], id = +st.getAttribute('data-cubie'), hf = +st.getAttribute('data-face');
+      var q = cube.filter(function (c) { return c.id === id; })[0];
+      if (q.pos[0] * n[0] + q.pos[1] * n[1] + q.pos[2] * n[2] <= 0) continue; // not in the hinted layer
+      var w = E._internal.mulMV(q.O, E.FACES[hf].n);
+      if (!(w[1] === 1 || w[2] === 1 || w[0] === 1)) continue; // only the top, front and right faces face the viewer
+      var o = stickerOptions(0, id, hf).filter(function (x) { return x.m === hintMove; })[0];
+      if (o && (!best || o.reach > best.o.reach)) best = { o: o, st: st, id: id, hf: hf };
+    }
+    cube.forEach(function (q) { if (q.pos[0] * n[0] + q.pos[1] * n[1] + q.pos[2] * n[2] > 0 && V.els[q.id]) V.els[q.id].classList.add('rc-hint-layer'); });
+    if (!best) return;
+    var sb = els.stage0.getBoundingClientRect(), r = best.st.getBoundingClientRect();
+    var b = makeArrow(best.o, r.left + r.width / 2 - sb.left, r.top + r.height / 2 - sb.top, sb);
+    b.classList.add('rc-arrow-hint'); b.setAttribute('data-cubie', best.id); b.setAttribute('data-face', best.hf);
+    els.hint0.appendChild(b);
+    best.st.classList.add('rc-hint-sticker');
   }
 
   /* ---------- storage ---------- */
@@ -350,21 +377,28 @@
     var cx = r.left + r.width / 2 - sb.left, cy = r.top + r.height / 2 - sb.top;
 
     opts.forEach(function (o, k) {
-      var b = document.createElement('div');
-      b.className = 'rc-arrow'; b.setAttribute('data-arrow', k); b.setAttribute('data-move', o.m); b.setAttribute('role', 'button');
-      b.setAttribute('aria-label', 'Turn ' + E.MOVE_NAMES[o.m]); b.title = E.MOVE_NAMES[o.m];
-      b.setAttribute('data-dx', o.dir[0].toFixed(4)); b.setAttribute('data-dy', o.dir[1].toFixed(4));
-      var x = Math.max(15, Math.min(sb.width - 15, cx + o.dir[0] * (o.reach + 22))), y = Math.max(15, Math.min(sb.height - 15, cy + o.dir[1] * (o.reach + 22)));
-      b.style.left = x + 'px'; b.style.top = y + 'px';
-      b.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path transform="rotate(' + (Math.atan2(o.dir[1], o.dir[0]) * 180 / Math.PI).toFixed(1) + ')" d="M7.5,0 L0.5,-6.5 L0.5,-2.4 L-7,-2.4 L-7,2.4 L0.5,2.4 L0.5,6.5 Z"/></svg>';
+      var b = makeArrow(o, cx, cy, sb);
+      b.setAttribute('data-arrow', k);
       box.appendChild(b); o.el = b;
     });
     st.classList.add('rc-grab');
+    els.stage0.classList.add('rc-picking');
     arrows = { view: vi, cubie: id, face: face, opts: opts };
+  }
+  function makeArrow(o, cx, cy, sb) {
+    var b = document.createElement('div');
+    b.className = 'rc-arrow'; b.setAttribute('data-move', o.m); b.setAttribute('role', 'button');
+    b.setAttribute('aria-label', 'Turn this layer this way');
+    b.setAttribute('data-dx', o.dir[0].toFixed(4)); b.setAttribute('data-dy', o.dir[1].toFixed(4));
+    var x = Math.max(15, Math.min(sb.width - 15, cx + o.dir[0] * (o.reach + 22))), y = Math.max(15, Math.min(sb.height - 15, cy + o.dir[1] * (o.reach + 22)));
+    b.style.left = x + 'px'; b.style.top = y + 'px';
+    b.innerHTML = '<svg viewBox="-10 -10 20 20" aria-hidden="true"><path transform="rotate(' + (Math.atan2(o.dir[1], o.dir[0]) * 180 / Math.PI).toFixed(1) + ')" d="M7.5,0 L0.5,-6.5 L0.5,-2.4 L-7,-2.4 L-7,2.4 L0.5,2.4 L0.5,6.5 Z"/></svg>';
+    return b;
   }
   function hideArrows() {
     if (!els.arrows0) return;
     els.arrows0.innerHTML = '';
+    els.stage0.classList.remove('rc-picking');
     var g = root.querySelectorAll('.rc-grab'); for (var i = 0; i < g.length; i++) g[i].classList.remove('rc-grab');
     highlight(null);
     arrows = null;
@@ -441,11 +475,7 @@
     if (!root || !E) return;
     var st = document.createElement('style'); st.textContent = STYLE; document.head.appendChild(st);
     root.innerHTML = MARKUP;
-    ['stage0', 'view0', 'arrows0', 'movebtns', 'status', 'moves', 'time', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
-    var mb = '';
-    for (var f = 0; f < 6; f++) mb += '<button type="button" class="btn" data-move="' + (f * 2) + '" title="' + E.FACES[f].key + ' clockwise">' + E.MOVE_NAMES[f * 2] + '</button>';
-    for (f = 0; f < 6; f++) mb += '<button type="button" class="btn" data-move="' + (f * 2 + 1) + '" title="' + E.FACES[f].key + ' anticlockwise">' + E.MOVE_NAMES[f * 2 + 1] + '</button>';
-    els.movebtns.innerHTML = mb;
+    ['stage0', 'view0', 'arrows0', 'hint0', 'status', 'moves', 'time', 'undo', 'legend'].forEach(function (k) { els[k] = root.querySelector('[data-rc="' + k + '"]'); });
     els.legend.innerHTML = E.FACES.map(function (F, i) {
       return '<span>' + runeSvg(i, 'rc-mini') + E.RUNES[i].name + ' <small>(' + F.key + ')</small></span>';
     }).join('');
